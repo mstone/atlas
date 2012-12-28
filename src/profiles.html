@@ -1,0 +1,17 @@
+<h1>List of Question Profiles</h1>
+
+{{range .}}
+<div class="profile">
+	<p>{{.Version}}</p>
+	{{range .Questions}}
+	<div class="question">
+		<p>{{.Version}}</p>
+	</div>
+	{{else}}
+	<p>No questions.</p>
+	{{end}}
+</div>
+{{else}}
+<p>No profiles.</p>
+{{end}}
+

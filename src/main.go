@@ -1,110 +1,174 @@
 package main
 
 import (
+	"entity"
 	"fmt"
 	"html"
+	"html/template"
 	"log"
 	"net/http"
-	"time"
-	//"regexp"
-	"html/template"
+	"persist"
 
 //"go/build"
 // html "github.com/moovweb/gokogiri/html"
 // _ "github.com/nsf/gocode"
+// revel, pat, gorilla
+// gorp, json, xml
 )
 
-type Version struct {
-	Major int
-	Minor int
-	Patch int
+type App struct {
+	idChan chan int
+	entity.ProfileRepo
+	entity.QuestionRepo
+	entity.ReviewRepo
 }
 
-type Profile struct {
-	Id        int
-	Version   Version
-	Questions []*Question
+type ReviewSetApp struct {
+	*App
 }
 
-type Question struct {
-	Id          int
-	Version     Version
-	Label       []byte
-	Text        []byte
-	Help        []byte
-	AnswerType  int
-	DisplayHint []byte
+type RootApp struct {
+	*App
 }
 
-type QuestionDep struct {
-	Id   int
-	From *Question
-	To   []*Question
+type ProfileSetApp struct {
+	*App
 }
 
-type Answer struct {
-	Id           int
-	Question     *Question
-	Datum        []byte
-	CreationTime time.Time
-	Author       []byte
-	// DescribedTime
+func (self *ReviewSetApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	self.HandleReviewSet(w, r)
 }
 
-type QuestionAnswer struct {
-	Question
-	Answer
+func (self *ProfileSetApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	self.HandleProfileSet(w, r)
 }
 
-type AnswerProfile struct {
-	Id        int
-	Version   Version
-	Questions []*QuestionAnswer
+func (self *RootApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	self.HandleRoot(w, r)
 }
 
-type Review struct {
-	Id            int
-	AnswerProfile *AnswerProfile
-}
-
-var idChan chan int
-var rootProfile Profile
-var rootReviews []Review
-
-func handleReviewSetPost(w http.ResponseWriter, r *http.Request) {
+func (self *App) HandleReviewSetPost(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/reviews/" {
 		http.Error(w,
 			fmt.Sprintf("Bad Path %q %q\n",
-					html.EscapeString(r.Method),
-					html.EscapeString(r.URL.Path)),
+				html.EscapeString(r.Method),
+				html.EscapeString(r.URL.Path)),
 			http.StatusBadRequest)
 	} else {
+		// ...
+		// parse body
+		// extract && look up Profile
+		// get a new id
+		// make a new Review
+		// make a new AnswerProfile
+		// make appropriate QuestionAnswers based on the Questions
+		//   contained in the indicated Profile
+		// add the new Review to rootReviews
+		// save
 		fmt.Fprintf(w, "Hello, %q\n", html.EscapeString(r.URL.Path))
-		id := <-idChan
+		id := <-self.idChan
 		fmt.Fprintf(w, "Next ID: %d\n", id)
 	}
 }
 
-func handleReviewSetGet(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, "reviews", nil)
+func (self *App) HandleReviewSetGet(w http.ResponseWriter, r *http.Request) {
+	// ...
+	// list links to all (current?) reviews?
+	reviews, err := self.GetAllReviews()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	renderTemplate(w, "reviews", reviews)
 }
 
-func handleReviewSet(w http.ResponseWriter, r *http.Request) {
+func (self *App) HandleReviewSet(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		handleReviewSetPost(w, r)
+		self.HandleReviewSetPost(w, r)
 	case "GET":
-		handleReviewSetGet(w, r)
+		self.HandleReviewSetGet(w, r)
 	default:
 		http.Error(w,
 			fmt.Sprintf("Unknown Method %q %q\n",
-					html.EscapeString(r.Method),
-					html.EscapeString(r.URL.Path)),
+				html.EscapeString(r.Method),
+				html.EscapeString(r.URL.Path)),
 			http.StatusMethodNotAllowed)
 	}
 }
 
-var templates = template.Must(template.ParseFiles("src/reviews.html"))
+func (self *App) HandleProfileSetPost(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/profiles/" {
+		http.Error(w,
+			fmt.Sprintf("Bad Path %q %q\n",
+				html.EscapeString(r.Method),
+				html.EscapeString(r.URL.Path)),
+			http.StatusBadRequest)
+	} else {
+		// ...
+		// parse body
+		// extract && look up Profile
+		// get a new id
+		// make a new Review
+		// make a new AnswerProfile
+		// make appropriate QuestionAnswers based on the Questions
+		//   contained in the indicated Profile
+		// add the new Review to rootReviews
+		// save
+		fmt.Fprintf(w, "Hello, %q\n", html.EscapeString(r.URL.Path))
+		id := <-self.idChan
+		fmt.Fprintf(w, "Next ID: %d\n", id)
+	}
+}
+
+func (self *App) HandleProfileSetGet(w http.ResponseWriter, r *http.Request) {
+	// ...
+	// list links to all (current?) profiles?
+	profiles, err := self.GetAllProfiles()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	renderTemplate(w, "profiles", profiles)
+}
+
+func (self *App) HandleProfileSet(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		self.HandleProfileSetPost(w, r)
+	case "GET":
+		self.HandleProfileSetGet(w, r)
+	default:
+		http.Error(w,
+			fmt.Sprintf("Unknown Method %q %q\n",
+				html.EscapeString(r.Method),
+				html.EscapeString(r.URL.Path)),
+			http.StatusMethodNotAllowed)
+	}
+}
+
+func (self *App) HandleRootGet(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, "root", nil)
+}
+
+func (self *App) HandleRoot(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		self.HandleRootGet(w, r)
+	default:
+		http.Error(w,
+			fmt.Sprintf("Unknown Method %q %q\n",
+				html.EscapeString(r.Method),
+				html.EscapeString(r.URL.Path)),
+			http.StatusMethodNotAllowed)
+	}
+
+}
+
+var templates = template.Must(template.ParseFiles(
+	"src/reviews.html",
+	"src/root.html",
+	"src/profiles.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
@@ -115,13 +179,28 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 
 func main() {
 	// Create a supply of ids.
-	idChan = make(chan int)
+	idChan := make(chan int)
 	go func() {
 		for i := 0; ; i++ {
 			idChan <- i
 		}
 	}()
+
+	persist := new(persist.PersistMem)
+
+	app := &App{
+		idChan:       idChan,
+		ProfileRepo:  entity.ProfileRepo(persist),
+		QuestionRepo: entity.QuestionRepo(persist),
+		ReviewRepo:   entity.ReviewRepo(persist),
+	}
+
 	fmt.Printf("Hi.\n")
-	http.HandleFunc("/reviews/", handleReviewSet)
+	http.Handle("/reviews/",
+		&ReviewSetApp{app})
+	http.Handle("/profiles/",
+		&ProfileSetApp{app})
+	http.Handle("/",
+		&RootApp{app})
 	log.Fatal(http.ListenAndServe("127.0.0.1:3001", nil))
 }

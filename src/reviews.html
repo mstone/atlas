@@ -1,0 +1,26 @@
+<html>
+<head><title>List of Reviews</title></head>
+<body>
+<h1>List of Reviews</h1>
+
+<form action="" method="POST">  <!-- XXX: WAI-ARIA role -->
+	<div>
+		<label for="review">Review</label>
+		<input autofocus id="review" name="review" accesskey="r" tabindex="1" placeholder="acme-1.2.0" type="text"></input>
+	</div>
+	<div>
+		<label for="profile">Profile</label>
+		<input id="profile" name="profile" accesskey="p" tabindex="2" placeholder="pace-1.0.0" type="text">pace-1.0.0</input>
+	</div>
+	<input type="submit" value="submit"/>
+</form>
+
+{{range .}}
+<div class="review">
+	<p><a href="{{.}}">{{.Version}}</a></p>
+</div>
+{{else}}
+<p>No reviews.</p>
+{{end}}
+</body>
+</html>

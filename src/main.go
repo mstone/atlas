@@ -17,6 +17,24 @@
 // For more information on this architecture, see
 //
 //     http://manuel.kiessling.net/2012/09/28/applying-the-clean-architecture-to-go-applications/
+//
+// Next, a note about naming: the convention used below is that App* is
+// newtype-wrapper that ServeHTTP calls that it receives to a corresponding
+// Handle* method on its embedded App struct. In turn, Handle*Set will parse
+// the request URL and method and will delegate to a more specific
+// Handle*(Set)?(Get|Post)() method. Thus, one typical handling chain might be:
+//
+//   GET /reviews/
+//      -> ReviewSetApp.ServeHTTP()
+//      -> App.HandleReviewSet()
+//      -> App.HandleReviewSetGet()
+//
+// while another might be:
+//
+//   POST /reviews/acme-1.2.0
+//      -> ReviewSetApp.ServeHTTP()
+//      -> App.HandleReviewSet()
+//      -> App.HandleReviewPost(..., "acme-1.2.0")
 package main
 
 import (
@@ -84,6 +102,11 @@ func checkHTTP(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (self *App) HandleReviewPost(w http.ResponseWriter, r *http.Request, reviewName string) {
+	log.Printf("HandleReviewPost(): reviewName: %v\n", reviewName)
+	http.Error(w, "Not implemented.", http.StatusNotImplemented)
 }
 
 // BUG(mistone): CSRF!
@@ -170,12 +193,16 @@ var reviewPat *regexp.Regexp = regexp.MustCompile(`^/reviews/([^-]+-\d+\.\d+\.\d
 
 func (self *App) HandleReviewSet(w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleReviewSet()\n")
+	ms := reviewPat.FindStringSubmatch(r.URL.Path)
+	log.Printf("HandleReviewSet(): ms: %s, len: %d", ms, len(ms))
 	switch r.Method {
 	case "POST":
-		self.HandleReviewSetPost(w, r)
+		if len(ms[1]) == 0 {
+			self.HandleReviewSetPost(w, r)
+		} else {
+			self.HandleReviewPost(w, r, ms[1])
+		}
 	case "GET":
-		ms := reviewPat.FindStringSubmatch(r.URL.Path)
-		log.Printf("HandleReviewSet(): ms: %s, len: %d", ms, len(ms))
 		if len(ms[1]) == 0 {
 			self.HandleReviewSetGet(w, r)
 		} else {

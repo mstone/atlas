@@ -1,0 +1,19 @@
+<html>
+<head><title>Profile: {{.Version.String}}</title></head>
+<body>
+<h1>Profile: {{.Version.String}}</h1>
+
+<div class="profile">
+{{range .Questions}}
+	<div class="question">
+		<p>Question: {{or .Version.String ""}}</p>
+		<p>Text: {{or .Text ""}}</p>
+		<p>Help: {{or .Help ""}}</p>
+	</div>
+</div>
+{{else}}
+<p>No questions.</p>
+{{end}}
+</div>
+</body>
+</html>

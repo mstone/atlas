@@ -2,10 +2,10 @@
 
 {{range .}}
 <div class="profile">
-	<p>{{.Version}}</p>
+	<p><a href="./{{.Version.String}}">{{.Version.String}}</a></p>
 	{{range .Questions}}
 	<div class="question">
-		<p>{{.Version}}</p>
+		<p>Question: {{.Version.String}}</p>
 	</div>
 	{{else}}
 	<p>No questions.</p>

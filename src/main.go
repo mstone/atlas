@@ -171,29 +171,28 @@ func (self *App) HandleReviewSet(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (self *App) HandleProfilePost(w http.ResponseWriter, r *http.Request, profileName string) {
+	log.Printf("HandleProfilePost()\n")
+	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+}
+
+func (self *App) HandleProfileGet(w http.ResponseWriter, r *http.Request, profileName string) {
+	log.Printf("HandleProfileGet(): profileName: %v\n", profileName)
+
+	profileVer, err := entity.NewVersionFromString(profileName)
+	checkHTTP(err)
+	log.Printf("HandleProfileGet(): profileVer: %v\n", profileVer)
+
+	profile, err := self.ProfileRepo.GetProfileById(*profileVer)
+	checkHTTP(err)
+	log.Printf("HandleProfileGet(): profile: %v\n", profile)
+
+	renderTemplate(w, "profile", profile)
+}
+
 func (self *App) HandleProfileSetPost(w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleProfileSetPost()\n")
-	if r.URL.Path != "/profiles/" {
-		http.Error(w,
-			fmt.Sprintf("Bad Path %q %q\n",
-				html.EscapeString(r.Method),
-				html.EscapeString(r.URL.Path)),
-			http.StatusBadRequest)
-	} else {
-		// ...
-		// parse body
-		// extract && look up Profile
-		// get a new id
-		// make a new Review
-		// make a new AnswerProfile
-		// make appropriate QuestionAnswers based on the Questions
-		//   contained in the indicated Profile
-		// add the new Review to rootReviews
-		// save
-		fmt.Fprintf(w, "Hello, %q\n", html.EscapeString(r.URL.Path))
-		id := <-self.idChan
-		fmt.Fprintf(w, "Next ID: %d\n", id)
-	}
+	http.Error(w, "Not implemented.", http.StatusNotImplemented)
 }
 
 func (self *App) HandleProfileSetGet(w http.ResponseWriter, r *http.Request) {
@@ -205,16 +204,28 @@ func (self *App) HandleProfileSetGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	renderTemplate(w, "profiles", profiles)
+	renderTemplate(w, "profile_set", profiles)
 }
+
+var profilePat *regexp.Regexp = regexp.MustCompile(`^/profiles/([^-]+-\d+\.\d+\.\d+)?$`)
 
 func (self *App) HandleProfileSet(w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleProfileSet()\n")
+	ms := profilePat.FindStringSubmatch(r.URL.Path)
+	log.Printf("HandleProfileSet(): ms: %s, len: %d", ms, len(ms))
 	switch r.Method {
 	case "POST":
-		self.HandleProfileSetPost(w, r)
+		if len(ms[1]) == 0 {
+			self.HandleProfileSetPost(w, r)
+		} else {
+			self.HandleProfilePost(w, r, ms[1])
+		}
 	case "GET":
-		self.HandleProfileSetGet(w, r)
+		if len(ms[1]) == 0 {
+			self.HandleProfileSetGet(w, r)
+		} else {
+			self.HandleProfileGet(w, r, ms[1])
+		}
 	default:
 		http.Error(w,
 			fmt.Sprintf("Unknown Method %q %q\n",
@@ -246,6 +257,7 @@ var templates = template.Must(template.ParseFiles(
 	"src/root.html",
 	"src/review.html",
 	"src/review_set.html",
+	"src/profile.html",
 	"src/profile_set.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {

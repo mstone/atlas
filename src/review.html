@@ -1,0 +1,34 @@
+<html>
+<head><title>Review: {{.Version.String}}</title></head>
+<body>
+<h1>Review: {{.Version.String}}</h1>
+
+<p>Profile: {{with .Profile}}{{.Version.String}}{{end}}</p>
+
+<div class="review">
+{{range .Responses}}
+<div class="response">
+	<div class="question">
+		{{with .Question}}
+		<p>Question: {{or .Version.String ""}}</p>
+		<p>Text: {{or .Text ""}}</p>
+		<p>Help: {{or .Help ""}}</p>
+		{{end}}
+	</div>
+	<div class="answer">
+		{{with .Answer}}
+		<p>Answer: </p>
+		<p>Author: {{or .Author "none"}}</p>
+		<p>CreationTime: {{or .CreationTime.String ""}}</p>
+		<p>Datum: {{or .Datum ""}}</p>
+		{{else}}
+		<p>Answer: Not yet answered!</p>
+		{{end}}
+	</div>
+</div>
+{{else}}
+<p>No questions.</p>
+{{end}}
+</div>
+</body>
+</html>

@@ -5,9 +5,9 @@
 package entity
 
 import (
-	"time"
-	"strings"
 	"fmt"
+	"strings"
+	"time"
 )
 
 const (
@@ -58,6 +58,7 @@ type Response struct {
 
 type Review struct {
 	Version   Version
+	Profile   *Profile
 	Responses []*Response
 }
 
@@ -91,7 +92,7 @@ func NewVersionFromString(str string) (*Version, error) {
 		return nil, err
 	}
 	ver := &Version{
-		Name: lhs,
+		Name:  lhs,
 		Major: major,
 		Minor: minor,
 		Patch: patch,

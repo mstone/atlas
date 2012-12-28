@@ -2,8 +2,8 @@
 package persist
 
 import (
-	"errors"
 	"entity"
+	"errors"
 	"fmt"
 )
 
@@ -47,12 +47,12 @@ func (self *PersistMem) GetProfileById(version entity.Version) (*entity.Profile,
 func (self *PersistMem) GetAllQuestions() ([]*entity.Question, error) {
 	v := make([]*entity.Question, 1)
 	v[0] = &entity.Question{
-				Version:     entity.Version{"who", 1, 0, 0},
-				Text:        "Who?",
-				Help:        "...'s on first?",
-				AnswerType:  entity.ANSWER_TYPE_TEXT,
-				DisplayHint: "",
-			}
+		Version:     entity.Version{"who", 1, 0, 0},
+		Text:        "Who?",
+		Help:        "...'s on first?",
+		AnswerType:  entity.ANSWER_TYPE_TEXT,
+		DisplayHint: "",
+	}
 	return v, nil
 }
 
@@ -79,7 +79,17 @@ func (self *PersistMem) GetAllReviews() ([]*entity.Review, error) {
 }
 
 func (self *PersistMem) GetReviewById(version entity.Version) (*entity.Review, error) {
-	return nil, errors.New("PersistMem.GetReviewsById not implemented")
+	//return nil, errors.New("PersistMem.GetReviewById not implemented")
+	reviews, err := self.GetAllReviews()
+	if err != nil {
+		return nil, err
+	}
+	for _, rev := range reviews {
+		if rev.Version == version {
+			return rev, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("PersistMem.GetReviewById(): review version '%v' not found", version))
 }
 
 func (self *PersistMem) AddReview(review *entity.Review) error {

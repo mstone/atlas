@@ -1,7 +1,12 @@
 // Package entity provides the domain syntax for the review wizard.
-// For more information, see 
+// The key ideas are:
 //
-//     http://manuel.kiessling.net/2012/09/28/applying-the-clean-architecture-to-go-applications/
+// 1. A profile is a set of (grouped, versioned) questions.
+//
+// 2. Reviews collect responses to questions in a profile.
+//
+// 3. A dependency graph connects questions. The graph is used to render UI
+//    warnings.
 package entity
 
 import (

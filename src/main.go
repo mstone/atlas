@@ -1,3 +1,22 @@
+// Package main implements a (prototype-quality) review wizard.
+//
+// The code is organized into three packages:
+//
+//    entity
+//      ^   ^
+//      |    \
+//      |    persist
+//      |     ^
+//      |    /
+//      main
+//
+// The entity package contains domain syntax: Reviews, (Question) Profiles, Responses, etc.
+// The persist package implements the *Repo interfaces defined in the entity model.
+// The main package defines the web UI and calls the entity and persist code.
+//
+// For more information on this architecture, see
+//
+//     http://manuel.kiessling.net/2012/09/28/applying-the-clean-architecture-to-go-applications/
 package main
 
 import (

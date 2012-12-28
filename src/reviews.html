@@ -17,7 +17,7 @@
 
 {{range .}}
 <div class="review">
-	<p><a href="{{.}}">{{.Version}}</a></p>
+	<p><a href="./{{.Version.String}}">{{.Version.String}}</a></p>
 </div>
 {{else}}
 <p>No reviews.</p>

@@ -36,15 +36,37 @@ type ProfileSetApp struct {
 }
 
 func (self *ReviewSetApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer recoverHTTP(w, r)
 	self.HandleReviewSet(w, r)
 }
 
 func (self *ProfileSetApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer recoverHTTP(w, r)
 	self.HandleProfileSet(w, r)
 }
 
 func (self *RootApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer recoverHTTP(w, r)
 	self.HandleRoot(w, r)
+}
+
+func recoverHTTP(w http.ResponseWriter, r *http.Request) {
+	if rec := recover(); rec != nil {
+		switch err := rec.(type) {
+		case error:
+			log.Printf("error: %v, req: %v", err, r)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		default:
+			log.Printf("unknown error: %v, req: %v", err, r)
+			http.Error(w, "unknown error", http.StatusInternalServerError)
+		}
+	}
+}
+
+func checkHTTP(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (self *App) HandleReviewSetPost(w http.ResponseWriter, r *http.Request) {
@@ -57,17 +79,43 @@ func (self *App) HandleReviewSetPost(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// ...
 		// parse body
-		// extract && look up Profile
+		reviewName := r.FormValue("review")
+
+		reviewVer, err := entity.NewVersionFromString(reviewName)
+		checkHTTP(err)
+
+		log.Printf("HandleReviewSetPost(): reviewVer: %v\n", reviewVer)
+
+		// extract profile
+		profileName := r.FormValue("profile")
+
+		profileVer, err := entity.NewVersionFromString(profileName)
+		checkHTTP(err)
+
+		profile, err := self.GetProfileById(*profileVer)
+		checkHTTP(err)
+
+		log.Printf("HandleReviewSetPost(): profile: %v\n", profile)
+
 		// get a new id
 		// make a new Review
-		// make a new AnswerProfile
+		review := &entity.Review{
+			Version: *reviewVer,
+			Responses: make([]*entity.Response, len(profile.Questions)),
+		}
+
 		// make appropriate QuestionAnswers based on the Questions
 		//   contained in the indicated Profile
-		// add the new Review to rootReviews
-		// save
-		fmt.Fprintf(w, "Hello, %q\n", html.EscapeString(r.URL.Path))
-		id := <-self.idChan
-		fmt.Fprintf(w, "Next ID: %d\n", id)
+		for idx, q := range profile.Questions {
+			review.Responses[idx] = &entity.Response{
+				Question: q,
+				Answer: nil,
+			}
+		}
+		log.Printf("HandleReviewSetPost(): created review: %v\n", review)
+		// persist the new review
+		err = self.ReviewRepo.AddReview(review)
+		checkHTTP(err)
 	}
 }
 

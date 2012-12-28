@@ -4,11 +4,13 @@ package persist
 import (
 	"errors"
 	"entity"
+	"fmt"
 )
 
 type PersistMem struct {
 	Profiles  []*entity.Profile
 	Questions []*entity.Question
+	Reviews   []*entity.Review
 }
 
 func (self *PersistMem) GetAllProfiles() ([]*entity.Profile, error) {
@@ -29,7 +31,17 @@ func (self *PersistMem) GetAllProfiles() ([]*entity.Profile, error) {
 }
 
 func (self *PersistMem) GetProfileById(version entity.Version) (*entity.Profile, error) {
-	return nil, errors.New("PersistMem.GetProfileById not implemented")
+	//return nil, errors.New("PersistMem.GetProfileById not implemented")
+	profiles, err := self.GetAllProfiles()
+	if err != nil {
+		return nil, err
+	}
+	for _, prof := range profiles {
+		if prof.Version == version {
+			return prof, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("PersistMem.GetProfileById(): profile version '%v' not found", version))
 }
 
 func (self *PersistMem) GetAllQuestions() ([]*entity.Question, error) {
@@ -49,9 +61,29 @@ func (self *PersistMem) GetQuestionById(version entity.Version) (*entity.Questio
 }
 
 func (self *PersistMem) GetAllReviews() ([]*entity.Review, error) {
-	return nil, errors.New("PersistMem.GetAllReviews not implemented")
+	//return nil, errors.New("PersistMem.GetAllReviews not implemented")
+	//v := make([]*entity.Review, 1)
+	//v[0] = &entity.Review{
+	//	Version: entity.Version{"acme", 1, 0, 0},
+	//	Responses: nil,
+	//}
+	//v[0].Responses = make([]*entity.Response, 1)
+	//qs, err := self.GetAllQuestions()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//v[0].Responses[0] = new(entity.Response)
+	//v[0].Responses[0].Question = qs[0]
+	//return v, nil
+	return self.Reviews, nil
 }
 
 func (self *PersistMem) GetReviewById(version entity.Version) (*entity.Review, error) {
 	return nil, errors.New("PersistMem.GetReviewsById not implemented")
+}
+
+func (self *PersistMem) AddReview(review *entity.Review) error {
+	//return errors.New("PersistMem.AddReview not implemented")
+	self.Reviews = append(self.Reviews, review)
+	return nil
 }

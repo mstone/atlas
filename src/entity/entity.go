@@ -6,6 +6,8 @@ package entity
 
 import (
 	"time"
+	"strings"
+	"fmt"
 )
 
 const (
@@ -72,22 +74,29 @@ type QuestionRepo interface {
 type ReviewRepo interface {
 	GetAllReviews() ([]*Review, error)
 	GetReviewById(version Version) (*Review, error)
+	AddReview(*Review) error
 }
 
-func (profile *Profile) AddQuestion(question *Question) {
-	profile.Questions = append(profile.Questions, question)
+func (self *Version) String() string {
+	return fmt.Sprintf("%s-%d.%d.%d", self.Name, self.Major, self.Minor, self.Patch)
 }
 
-func (profile *Profile) AddQuestionDep(dep *QuestionDep) {
-	profile.QuestionDeps = append(profile.QuestionDeps, dep)
-}
-
-func (dep *QuestionDep) AddQuestionDep(question *Question) {
-	dep.To = append(dep.To, question)
-}
-
-func (review *Review) AddResponse(resp *Response) {
-	review.Responses = append(review.Responses, resp)
+func NewVersionFromString(str string) (*Version, error) {
+	cmps := strings.Split(str, "-")
+	lhs := strings.Join(cmps[0:len(cmps)-1], "-")
+	rhs := cmps[len(cmps)-1]
+	var major, minor, patch int
+	_, err := fmt.Sscanf(rhs, "%d.%d.%d", &major, &minor, &patch)
+	if err != nil {
+		return nil, err
+	}
+	ver := &Version{
+		Name: lhs,
+		Major: major,
+		Minor: minor,
+		Patch: patch,
+	}
+	return ver, nil
 }
 
 // Questions: 

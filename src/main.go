@@ -122,8 +122,12 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 		err = self.ReviewRepo.AddReview(review)
 		checkHTTP(err)
 
-		log.Printf("HandleReviewSetPost(): redirecting to: ./%s\n", reviewVer)
-		http.Redirect(w, r, fmt.Sprintf("./%s", reviewVer), http.StatusSeeOther)
+
+		url, err := self.Router.Get("review").URL("review_name", reviewVer.String())
+		checkHTTP(err)
+
+		log.Printf("HandleReviewSetPost(): redirecting to: %v\n", url)
+		http.Redirect(w, r, url.String(), http.StatusSeeOther)
 	}
 }
 
@@ -182,6 +186,7 @@ func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 	url.Fragment = "response-" + questionVer.String()
 
+	log.Printf("HandleReviewPost(): redirecting to: %v\n", url)
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 

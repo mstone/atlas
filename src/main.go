@@ -35,7 +35,6 @@ import (
 )
 
 type App struct {
-	idChan chan int
 	*mux.Router
 	entity.ProfileRepo
 	entity.QuestionRepo
@@ -247,20 +246,11 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 }
 
 func main() {
-	// Create a supply of ids.
-	idChan := make(chan int)
-	go func() {
-		for i := 0; ; i++ {
-			idChan <- i
-		}
-	}()
-
 	persist := new(persist.PersistMem)
 
 	r := mux.NewRouter()
 
 	app := &App{
-		idChan:       idChan,
 		ProfileRepo:  entity.ProfileRepo(persist),
 		QuestionRepo: entity.QuestionRepo(persist),
 		ReviewRepo:   entity.ReviewRepo(persist),

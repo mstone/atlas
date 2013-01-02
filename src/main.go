@@ -180,6 +180,7 @@ func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleReviewPost(): done\n")
 	url, err := self.Router.Get("review").URL("review_name", reviewVer.String())
 	checkHTTP(err)
+	url.Fragment = "response-" + questionVer.String()
 
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }

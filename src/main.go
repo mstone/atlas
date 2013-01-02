@@ -29,12 +29,14 @@ import (
 	"log"
 	"net/http"
 	"persist"
+	"time"
 // revel, pat, gorilla
 // gorp, json, xml
 )
 
 type App struct {
 	idChan chan int
+	*mux.Router
 	entity.ProfileRepo
 	entity.QuestionRepo
 	entity.ReviewRepo
@@ -145,7 +147,41 @@ func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	reviewName := vars["review_name"]
 	log.Printf("HandleReviewPost(): reviewName: %v\n", reviewName)
-	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+
+	reviewVer, err := entity.NewVersionFromString(reviewName)
+	checkHTTP(err)
+	log.Printf("HandleReviewPost(): reviewVer: %v\n", reviewVer)
+
+	review, err := self.ReviewRepo.GetReviewById(*reviewVer)
+	checkHTTP(err)
+	log.Printf("HandleReviewPost(): review: %v\n", review)
+
+	questionName := r.FormValue("question_name")
+	log.Printf("HandleReviewPost(): questionName: %v\n", questionName)
+
+	questionVer, err := entity.NewVersionFromString(questionName)
+	checkHTTP(err)
+	log.Printf("HandleReviewPost(): questionVer: %v\n", questionVer)
+
+	datum := r.FormValue(questionVer.String())
+	log.Printf("HandleReviewPost(): datum: %v\n", datum)
+
+	answer := &entity.Answer{
+				Author: "", // BUG(mistone): need to set author!
+				CreationTime: time.Now(),
+				Datum: datum,
+			}
+	review, err = review.SetResponseAnswer(*questionVer, answer)
+	checkHTTP(err)
+
+	err = self.AddReview(review)
+	checkHTTP(err)
+
+	log.Printf("HandleReviewPost(): done\n")
+	url, err := self.Router.Get("review").URL("review_name", reviewVer.String())
+	checkHTTP(err)
+
+	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
 func HandleProfileSetGet(self *App, w http.ResponseWriter, r *http.Request) {
@@ -181,7 +217,7 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "profile", profile)
 }
 
-func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request, profileName string) {
+func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleProfilePost()\n")
 	http.Error(w, "Not implemented.", http.StatusNotImplemented)
 }
@@ -215,11 +251,14 @@ func main() {
 
 	persist := new(persist.PersistMem)
 
+	r := mux.NewRouter()
+
 	app := &App{
 		idChan:       idChan,
 		ProfileRepo:  entity.ProfileRepo(persist),
 		QuestionRepo: entity.QuestionRepo(persist),
 		ReviewRepo:   entity.ReviewRepo(persist),
+		Router:       r,
 	}
 
 	wrap := func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
@@ -230,17 +269,18 @@ func main() {
 	}
 
 	fmt.Printf("Hi.\n")
-	r := mux.NewRouter()
 
 	s := r.PathPrefix("/reviews").Subrouter()
 	s.HandleFunc("/", wrap(HandleReviewSetGet)).Methods("GET").Name("review_set")
 	s.HandleFunc("/", wrap(HandleReviewSetPost)).Methods("POST")
 	s.HandleFunc("/{review_name}", wrap(HandleReviewGet)).Methods("GET").Name("review")
+	s.HandleFunc("/{review_name}", wrap(HandleReviewPost)).Methods("POST")
 
 	s = r.PathPrefix("/profiles").Subrouter()
 	s.HandleFunc("/", wrap(HandleProfileSetGet)).Methods("GET").Name("profile_set")
 	s.HandleFunc("/", wrap(HandleProfileSetPost)).Methods("POST")
 	s.HandleFunc("/{profile_name}", wrap(HandleProfileGet)).Methods("GET").Name("profile")
+	s.HandleFunc("/{profile_name}", wrap(HandleProfilePost)).Methods("POST")
 
 	r.HandleFunc("/", wrap(HandleRootGet)).Methods("GET").Name("root")
 

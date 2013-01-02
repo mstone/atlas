@@ -31,7 +31,6 @@ func (self *PersistMem) GetAllProfiles() ([]*entity.Profile, error) {
 }
 
 func (self *PersistMem) GetProfileById(version entity.Version) (*entity.Profile, error) {
-	//return nil, errors.New("PersistMem.GetProfileById not implemented")
 	profiles, err := self.GetAllProfiles()
 	if err != nil {
 		return nil, err
@@ -61,25 +60,10 @@ func (self *PersistMem) GetQuestionById(version entity.Version) (*entity.Questio
 }
 
 func (self *PersistMem) GetAllReviews() ([]*entity.Review, error) {
-	//return nil, errors.New("PersistMem.GetAllReviews not implemented")
-	//v := make([]*entity.Review, 1)
-	//v[0] = &entity.Review{
-	//	Version: entity.Version{"acme", 1, 0, 0},
-	//	Responses: nil,
-	//}
-	//v[0].Responses = make([]*entity.Response, 1)
-	//qs, err := self.GetAllQuestions()
-	//if err != nil {
-	//	return nil, err
-	//}
-	//v[0].Responses[0] = new(entity.Response)
-	//v[0].Responses[0].Question = qs[0]
-	//return v, nil
 	return self.Reviews, nil
 }
 
 func (self *PersistMem) GetReviewById(version entity.Version) (*entity.Review, error) {
-	//return nil, errors.New("PersistMem.GetReviewById not implemented")
 	reviews, err := self.GetAllReviews()
 	if err != nil {
 		return nil, err
@@ -93,7 +77,15 @@ func (self *PersistMem) GetReviewById(version entity.Version) (*entity.Review, e
 }
 
 func (self *PersistMem) AddReview(review *entity.Review) error {
-	//return errors.New("PersistMem.AddReview not implemented")
-	self.Reviews = append(self.Reviews, review)
+	found := false
+	for idx, rev := range self.Reviews {
+		if rev.Version == review.Version {
+			found = true
+			self.Reviews[idx] = review
+		}
+	}
+	if !found {
+		self.Reviews = append(self.Reviews, review)
+	}
 	return nil
 }

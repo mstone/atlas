@@ -24,6 +24,14 @@
 		{{else}}
 		<p>Answer: Not yet answered!</p>
 		{{end}}
+		<form action="" method="POST">
+			<div>
+				<label for="{{.Question.Version.String}}">{{.Question.Version.String}}</label>
+				<input id="{{.Question.Version.String}}" name="{{.Question.Version.String}}" value="{{with .Answer}}{{.Datum}}{{end}}" type="text"></input>
+			</div>
+			<input name="question_name" value="{{.Question.Version.String}}" type="hidden"></input>
+			<input value="submit" type="submit"></input>
+		</form>
 	</div>
 </div>
 {{else}}

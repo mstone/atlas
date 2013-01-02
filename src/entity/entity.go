@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"errors"
 )
 
 const (
@@ -103,6 +104,19 @@ func NewVersionFromString(str string) (*Version, error) {
 		Patch: patch,
 	}
 	return ver, nil
+}
+
+func (self *Review) SetResponseAnswer(questionVer Version, answer *Answer) (*Review, error) {
+	err := errors.New(fmt.Sprintf("Review.SetResponseAnswer(): " +
+			              "question not found; questionVer: %v, " +
+				      "answer: %v", questionVer, answer))
+	for _, resp := range self.Responses {
+		if questionVer == resp.Question.Version {
+			err = nil
+			resp.Answer = answer
+		}
+	}
+	return self, err
 }
 
 // Questions: 

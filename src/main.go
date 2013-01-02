@@ -18,35 +18,17 @@
 //
 //     http://manuel.kiessling.net/2012/09/28/applying-the-clean-architecture-to-go-applications/
 //
-// Next, a note about naming: the convention used below is that App* is
-// newtype-wrapper that ServeHTTP calls that it receives to a corresponding
-// Handle* method on its embedded App struct. In turn, Handle*Set will parse
-// the request URL and method and will delegate to a more specific
-// Handle*(Set)?(Get|Post)() method. Thus, one typical handling chain might be:
-//
-//   GET /reviews/
-//      -> ReviewSetApp.ServeHTTP()
-//      -> App.HandleReviewSet()
-//      -> App.HandleReviewSetGet()
-//
-// while another might be:
-//
-//   POST /reviews/acme-1.2.0
-//      -> ReviewSetApp.ServeHTTP()
-//      -> App.HandleReviewSet()
-//      -> App.HandleReviewPost(..., "acme-1.2.0")
 package main
 
 import (
 	"entity"
 	"fmt"
+	"github.com/gorilla/mux"
 	"html"
 	"html/template"
 	"log"
 	"net/http"
 	"persist"
-	"regexp"
-
 // revel, pat, gorilla
 // gorp, json, xml
 )
@@ -56,33 +38,6 @@ type App struct {
 	entity.ProfileRepo
 	entity.QuestionRepo
 	entity.ReviewRepo
-}
-
-type ReviewSetApp struct {
-	*App
-}
-
-type RootApp struct {
-	*App
-}
-
-type ProfileSetApp struct {
-	*App
-}
-
-func (self *ReviewSetApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	defer recoverHTTP(w, r)
-	self.HandleReviewSet(w, r)
-}
-
-func (self *ProfileSetApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	defer recoverHTTP(w, r)
-	self.HandleProfileSet(w, r)
-}
-
-func (self *RootApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	defer recoverHTTP(w, r)
-	self.HandleRoot(w, r)
 }
 
 func recoverHTTP(w http.ResponseWriter, r *http.Request) {
@@ -104,13 +59,20 @@ func checkHTTP(err error) {
 	}
 }
 
-func (self *App) HandleReviewPost(w http.ResponseWriter, r *http.Request, reviewName string) {
-	log.Printf("HandleReviewPost(): reviewName: %v\n", reviewName)
-	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+func HandleReviewSetGet(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleReviewSetGet()\n")
+	// ...
+	// list links to all (current?) reviews?
+	reviews, err := self.GetAllReviews()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	renderTemplate(w, "review_set", reviews)
 }
 
 // BUG(mistone): CSRF!
-func (self *App) HandleReviewSetPost(w http.ResponseWriter, r *http.Request) {
+func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/reviews/" {
 		http.Error(w,
 			fmt.Sprintf("Bad Path %q %q\n",
@@ -163,7 +125,9 @@ func (self *App) HandleReviewSetPost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (self *App) HandleReviewGet(w http.ResponseWriter, r *http.Request, reviewName string) {
+func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	reviewName := vars["review_name"]
 	log.Printf("HandleReviewGet(): reviewName: %v\n", reviewName)
 
 	reviewVer, err := entity.NewVersionFromString(reviewName)
@@ -177,52 +141,33 @@ func (self *App) HandleReviewGet(w http.ResponseWriter, r *http.Request, reviewN
 	renderTemplate(w, "review", review)
 }
 
-func (self *App) HandleReviewSetGet(w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleReviewSetGet()\n")
+func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	reviewName := vars["review_name"]
+	log.Printf("HandleReviewPost(): reviewName: %v\n", reviewName)
+	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+}
+
+func HandleProfileSetGet(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleProfileSetGet()\n")
 	// ...
-	// list links to all (current?) reviews?
-	reviews, err := self.GetAllReviews()
+	// list links to all (current?) profiles?
+	profiles, err := self.GetAllProfiles()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	renderTemplate(w, "review_set", reviews)
+	renderTemplate(w, "profile_set", profiles)
 }
 
-var reviewPat *regexp.Regexp = regexp.MustCompile(`^/reviews/([^-]+-\d+\.\d+\.\d+)?$`)
-
-func (self *App) HandleReviewSet(w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleReviewSet()\n")
-	ms := reviewPat.FindStringSubmatch(r.URL.Path)
-	log.Printf("HandleReviewSet(): ms: %s, len: %d", ms, len(ms))
-	switch r.Method {
-	case "POST":
-		if len(ms[1]) == 0 {
-			self.HandleReviewSetPost(w, r)
-		} else {
-			self.HandleReviewPost(w, r, ms[1])
-		}
-	case "GET":
-		if len(ms[1]) == 0 {
-			self.HandleReviewSetGet(w, r)
-		} else {
-			self.HandleReviewGet(w, r, ms[1])
-		}
-	default:
-		http.Error(w,
-			fmt.Sprintf("Unknown Method %q %q\n",
-				html.EscapeString(r.Method),
-				html.EscapeString(r.URL.Path)),
-			http.StatusMethodNotAllowed)
-	}
-}
-
-func (self *App) HandleProfilePost(w http.ResponseWriter, r *http.Request, profileName string) {
-	log.Printf("HandleProfilePost()\n")
+func HandleProfileSetPost(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleProfileSetPost()\n")
 	http.Error(w, "Not implemented.", http.StatusNotImplemented)
 }
 
-func (self *App) HandleProfileGet(w http.ResponseWriter, r *http.Request, profileName string) {
+func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	profileName := vars["profile_name"]
 	log.Printf("HandleProfileGet(): profileName: %v\n", profileName)
 
 	profileVer, err := entity.NewVersionFromString(profileName)
@@ -236,67 +181,13 @@ func (self *App) HandleProfileGet(w http.ResponseWriter, r *http.Request, profil
 	renderTemplate(w, "profile", profile)
 }
 
-func (self *App) HandleProfileSetPost(w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleProfileSetPost()\n")
+func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request, profileName string) {
+	log.Printf("HandleProfilePost()\n")
 	http.Error(w, "Not implemented.", http.StatusNotImplemented)
 }
 
-func (self *App) HandleProfileSetGet(w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleProfileSetGet()\n")
-	// ...
-	// list links to all (current?) profiles?
-	profiles, err := self.GetAllProfiles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	renderTemplate(w, "profile_set", profiles)
-}
-
-var profilePat *regexp.Regexp = regexp.MustCompile(`^/profiles/([^-]+-\d+\.\d+\.\d+)?$`)
-
-func (self *App) HandleProfileSet(w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleProfileSet()\n")
-	ms := profilePat.FindStringSubmatch(r.URL.Path)
-	log.Printf("HandleProfileSet(): ms: %s, len: %d", ms, len(ms))
-	switch r.Method {
-	case "POST":
-		if len(ms[1]) == 0 {
-			self.HandleProfileSetPost(w, r)
-		} else {
-			self.HandleProfilePost(w, r, ms[1])
-		}
-	case "GET":
-		if len(ms[1]) == 0 {
-			self.HandleProfileSetGet(w, r)
-		} else {
-			self.HandleProfileGet(w, r, ms[1])
-		}
-	default:
-		http.Error(w,
-			fmt.Sprintf("Unknown Method %q %q\n",
-				html.EscapeString(r.Method),
-				html.EscapeString(r.URL.Path)),
-			http.StatusMethodNotAllowed)
-	}
-}
-
-func (self *App) HandleRootGet(w http.ResponseWriter, r *http.Request) {
+func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "root", nil)
-}
-
-func (self *App) HandleRoot(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		self.HandleRootGet(w, r)
-	default:
-		http.Error(w,
-			fmt.Sprintf("Unknown Method %q %q\n",
-				html.EscapeString(r.Method),
-				html.EscapeString(r.URL.Path)),
-			http.StatusMethodNotAllowed)
-	}
-
 }
 
 var templates = template.Must(template.ParseFiles(
@@ -331,12 +222,28 @@ func main() {
 		ReviewRepo:   entity.ReviewRepo(persist),
 	}
 
+	wrap := func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+		return (func(w http.ResponseWriter, r *http.Request) {
+			defer recoverHTTP(w, r)
+			fn(app, w, r)
+		})
+	}
+
 	fmt.Printf("Hi.\n")
-	http.Handle("/reviews/",
-		&ReviewSetApp{app})
-	http.Handle("/profiles/",
-		&ProfileSetApp{app})
-	http.Handle("/",
-		&RootApp{app})
+	r := mux.NewRouter()
+
+	s := r.PathPrefix("/reviews").Subrouter()
+	s.HandleFunc("/", wrap(HandleReviewSetGet)).Methods("GET").Name("review_set")
+	s.HandleFunc("/", wrap(HandleReviewSetPost)).Methods("POST")
+	s.HandleFunc("/{review_name}", wrap(HandleReviewGet)).Methods("GET").Name("review")
+
+	s = r.PathPrefix("/profiles").Subrouter()
+	s.HandleFunc("/", wrap(HandleProfileSetGet)).Methods("GET").Name("profile_set")
+	s.HandleFunc("/", wrap(HandleProfileSetPost)).Methods("POST")
+	s.HandleFunc("/{profile_name}", wrap(HandleProfileGet)).Methods("GET").Name("profile")
+
+	r.HandleFunc("/", wrap(HandleRootGet)).Methods("GET").Name("root")
+
+	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe("127.0.0.1:3001", nil))
 }

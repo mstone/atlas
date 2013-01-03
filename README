@@ -1,0 +1,25 @@
+Welcome to the atlas-forms component.
+
+To run atlas-forms, first install go (Debian package: golang-go), then set up
+the atlas-forms go environment, then install deps, and then run.
+
+   cd ~/src/atlas-forms
+
+   mkdir -p {pkg,bin,src}
+   export GOPATH=$(pwd)
+   export PATH=$(pwd)/bin:${PATH}
+   cd src && go get
+   go run src/main.go
+
+Other fun:
+
+   For omni-completion in vim/emacs, see "nsf/gocode" at
+
+     https://github.com/nsf/gocode
+
+Other fun:
+
+   For online help, see:
+
+     godoc -http=:6060 &
+     open "http://localhost:6060/"

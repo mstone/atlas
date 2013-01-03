@@ -1,7 +1,7 @@
 <html>
 <head>
 	<title>List of Question Profiles</title>
-	<link rel="stylesheet" type="text/css" href="/static/prfile_set.css"></link>
+	<link rel="stylesheet" type="text/css" href="/static/profile_set.css"></link>
 </head>
 <body>
 <h1>List of Question Profiles</h1>
@@ -11,10 +11,8 @@
 	<p><a href="./{{.Version.String}}">{{.Version.String}}</a></p>
 	{{range .Questions}}
 	<div class="question">
-		{{with .Question}}
 		<p>Question: {{or .Version.String ""}}</p>
 		<p>Text: {{or .Text ""}}</p>
-		{{end}}
 	</div>
 	{{else}}
 	<p>No questions.</p>

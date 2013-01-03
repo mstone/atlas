@@ -30,6 +30,7 @@ import (
 	"net/http"
 	"persist"
 	"time"
+	"runtime/debug"
 
 // revel, pat, gorilla
 // gorp, json, xml
@@ -38,7 +39,6 @@ import (
 type App struct {
 	*mux.Router
 	entity.ProfileRepo
-	entity.QuestionRepo
 	entity.ReviewRepo
 }
 
@@ -47,9 +47,11 @@ func recoverHTTP(w http.ResponseWriter, r *http.Request) {
 		switch err := rec.(type) {
 		case error:
 			log.Printf("error: %v, req: %v", err, r)
+			debug.PrintStack()
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		default:
 			log.Printf("unknown error: %v, req: %v", err, r)
+			debug.PrintStack()
 			http.Error(w, "unknown error", http.StatusInternalServerError)
 		}
 	}
@@ -246,13 +248,13 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 }
 
 func main() {
-	persist := new(persist.PersistMem)
+	//persist := new(persist.PersistMem)
+	persist := persist.NewPersistJSON()
 
 	r := mux.NewRouter()
 
 	app := &App{
 		ProfileRepo:  entity.ProfileRepo(persist),
-		QuestionRepo: entity.QuestionRepo(persist),
 		ReviewRepo:   entity.ReviewRepo(persist),
 		Router:       r,
 	}

@@ -72,11 +72,6 @@ type ProfileRepo interface {
 	GetProfileById(version Version) (*Profile, error)
 }
 
-type QuestionRepo interface {
-	GetAllQuestions() ([]*Question, error)
-	GetQuestionById(version Version) (*Question, error)
-}
-
 type ReviewRepo interface {
 	GetAllReviews() ([]*Review, error)
 	GetReviewById(version Version) (*Review, error)

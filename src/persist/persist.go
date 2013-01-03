@@ -183,14 +183,6 @@ func (self *PersistMem) GetProfileById(version entity.Version) (*entity.Profile,
 	return nil, errors.New(fmt.Sprintf("PersistMem.GetProfileById(): profile version '%v' not found", version))
 }
 
-func (self *PersistMem) GetAllQuestions() ([]*entity.Question, error) {
-	return nil, errors.New("PersistMem.GetAllQuestions() not implemented")
-}
-
-func (self *PersistMem) GetQuestionById(version entity.Version) (*entity.Question, error) {
-	return nil, errors.New("PersistMem.GetQuestionById() not implemented")
-}
-
 func (self *PersistMem) GetAllReviews() ([]*entity.Review, error) {
 	return self.Reviews, nil
 }

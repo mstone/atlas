@@ -183,6 +183,20 @@ func (self *PersistMem) GetProfileById(version entity.Version) (*entity.Profile,
 	return nil, errors.New(fmt.Sprintf("PersistMem.GetProfileById(): profile version '%v' not found", version))
 }
 
+func (self *PersistMem) AddProfile(profile *entity.Profile) error {
+	found := false
+	for idx, prof := range self.Profiles {
+		if prof.Version == profile.Version {
+			found = true
+			self.Profiles[idx] = profile
+		}
+	}
+	if !found {
+		self.Profiles = append(self.Profiles, profile)
+	}
+	return nil
+}
+
 func (self *PersistMem) GetAllReviews() ([]*entity.Review, error) {
 	return self.Reviews, nil
 }

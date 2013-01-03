@@ -22,6 +22,7 @@ package main
 
 import (
 	"entity"
+	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
 	"html"
@@ -29,8 +30,8 @@ import (
 	"log"
 	"net/http"
 	"persist"
-	"time"
 	"runtime/debug"
+	"time"
 
 // revel, pat, gorilla
 // gorp, json, xml
@@ -247,16 +248,17 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-func main() {
-	//persist := new(persist.PersistMem)
+var prefill = flag.Bool("prefill", false, "prefill data.json")
+
+func doServe() {
 	persist := persist.NewPersistJSON()
 
 	r := mux.NewRouter()
 
 	app := &App{
-		ProfileRepo:  entity.ProfileRepo(persist),
-		ReviewRepo:   entity.ReviewRepo(persist),
-		Router:       r,
+		ProfileRepo: entity.ProfileRepo(persist),
+		ReviewRepo:  entity.ReviewRepo(persist),
+		Router:      r,
 	}
 
 	wrap := func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
@@ -285,4 +287,30 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe("127.0.0.1:3001", nil))
+}
+
+func doPrefill() {
+	pMem := &persist.PersistMem{}
+	pJS := persist.NewPersistJSON()
+
+	profiles, err := pMem.GetAllProfiles()
+	if err != nil {
+		panic(err)
+	}
+	for _, prof := range profiles {
+		err = pJS.AddProfile(prof)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func main() {
+	flag.Parse()
+
+	if *prefill {
+		doPrefill()
+	} else {
+		doServe()
+	}
 }

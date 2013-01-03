@@ -70,6 +70,7 @@ type Review struct {
 type ProfileRepo interface {
 	GetAllProfiles() ([]*Profile, error)
 	GetProfileById(version Version) (*Profile, error)
+	AddProfile(*Profile) error
 }
 
 type ReviewRepo interface {

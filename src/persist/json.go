@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"entity"
 	"errors"
-	//"fmt"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -53,7 +53,16 @@ func (self *PersistJSON) GetProfileById(version entity.Version) (*entity.Profile
 	self.RLock()
 	defer self.RUnlock()
 
-	return nil, errors.New("PersistJSON.GetAllProfiles(): not implemented")
+	profiles, err := self.GetAllProfiles()
+	if err != nil {
+		return nil, err
+	}
+	for _, prof := range profiles {
+		if prof.Version == version {
+			return prof, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("PersistJSON.GetProfileById(): profile version '%v' not found", version))
 }
 
 func (self *PersistJSON) AddProfile(profile *entity.Profile) error {

@@ -1,3 +1,9 @@
+<html>
+<head>
+	<title>List of Question Profiles</title>
+	<link rel="stylesheet" type="text/css" href="/static/prfile_set.css"></link>
+</head>
+<body>
 <h1>List of Question Profiles</h1>
 
 {{range .}}
@@ -5,7 +11,10 @@
 	<p><a href="./{{.Version.String}}">{{.Version.String}}</a></p>
 	{{range .Questions}}
 	<div class="question">
-		<p>Question: {{.Version.String}}</p>
+		{{with .Question}}
+		<p>Question: {{or .Version.String ""}}</p>
+		<p>Text: {{or .Text ""}}</p>
+		{{end}}
 	</div>
 	{{else}}
 	<p>No questions.</p>
@@ -14,4 +23,5 @@
 {{else}}
 <p>No profiles.</p>
 {{end}}
-
+</body>
+</html>

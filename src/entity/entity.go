@@ -5,15 +5,14 @@
 //
 // 2. Reviews collect responses to questions in a profile.
 //
-// 3. A dependency graph connects questions. The graph is used to render UI
-//    warnings.
+// 3. A dependency graph connects questions. The graph is used to render UI warnings.
 package entity
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
-	"errors"
 )
 
 const (
@@ -107,9 +106,9 @@ func NewVersionFromString(str string) (*Version, error) {
 }
 
 func (self *Review) SetResponseAnswer(questionVer Version, answer *Answer) (*Review, error) {
-	err := errors.New(fmt.Sprintf("Review.SetResponseAnswer(): " +
-			              "question not found; questionVer: %v, " +
-				      "answer: %v", questionVer, answer))
+	err := errors.New(fmt.Sprintf("Review.SetResponseAnswer(): "+
+		"question not found; questionVer: %v, "+
+		"answer: %v", questionVer, answer))
 	for _, resp := range self.Responses {
 		if questionVer == resp.Question.Version {
 			err = nil

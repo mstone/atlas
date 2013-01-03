@@ -30,6 +30,7 @@ import (
 	"net/http"
 	"persist"
 	"time"
+
 // revel, pat, gorilla
 // gorp, json, xml
 )
@@ -121,7 +122,6 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 		err = self.ReviewRepo.AddReview(review)
 		checkHTTP(err)
 
-
 		url, err := self.Router.Get("review").URL("review_name", reviewVer.String())
 		checkHTTP(err)
 
@@ -170,10 +170,10 @@ func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleReviewPost(): datum: %v\n", datum)
 
 	answer := &entity.Answer{
-				Author: "", // BUG(mistone): need to set author!
-				CreationTime: time.Now(),
-				Datum: datum,
-			}
+		Author:       "", // BUG(mistone): need to set author!
+		CreationTime: time.Now(),
+		Datum:        datum,
+	}
 	review, err = review.SetResponseAnswer(*questionVer, answer)
 	checkHTTP(err)
 
@@ -280,6 +280,7 @@ func main() {
 
 	r.HandleFunc("/", wrap(HandleRootGet)).Methods("GET").Name("root")
 
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe("127.0.0.1:3001", nil))
 }

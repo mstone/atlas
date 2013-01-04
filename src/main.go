@@ -108,7 +108,7 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 		review := &entity.Review{
 			Version:   *reviewVer,
 			Profile:   profile,
-			Responses: make([]*entity.Response, len(profile.Questions)),
+			Responses: make(map[entity.Version]*entity.Response, len(profile.Questions)),
 		}
 
 		// make appropriate Responses based on the Questions
@@ -116,7 +116,7 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 		for idx, q := range profile.Questions {
 			review.Responses[idx] = &entity.Response{
 				Question: q,
-				Answer:   nil,
+				Answer: entity.NewAnswer(),
 			}
 		}
 		log.Printf("HandleReviewSetPost(): created review: %v\n", review)
@@ -248,8 +248,6 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var prefill = flag.Bool("prefill", false, "prefill data.json")
-
 func doServe() {
 	persist := persist.NewPersistJSON()
 
@@ -289,28 +287,8 @@ func doServe() {
 	log.Fatal(http.ListenAndServe("127.0.0.1:3001", nil))
 }
 
-func doPrefill() {
-	pMem := &persist.PersistMem{}
-	pJS := persist.NewPersistJSON()
-
-	profiles, err := pMem.GetAllProfiles()
-	if err != nil {
-		panic(err)
-	}
-	for _, prof := range profiles {
-		err = pJS.AddProfile(prof)
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
 func main() {
 	flag.Parse()
 
-	if *prefill {
-		doPrefill()
-	} else {
-		doServe()
-	}
+	doServe()
 }

@@ -28,8 +28,8 @@ type Version struct {
 
 type Profile struct {
 	Version      Version
-	Questions    []*Question
-	QuestionDeps []*QuestionDep
+	Questions    map[Version] *Question
+	QuestionDeps map[Version] *QuestionDep
 }
 
 type Question struct {
@@ -44,7 +44,7 @@ type Question struct {
 
 type QuestionDep struct {
 	From        *Question
-	To          []*Question
+	To          map[Version] *Question
 	Text        string
 	DisplayHint string
 }
@@ -64,7 +64,7 @@ type Response struct {
 type Review struct {
 	Version   Version
 	Profile   *Profile
-	Responses []*Response
+	Responses map[Version] *Response
 }
 
 type ProfileRepo interface {
@@ -105,13 +105,16 @@ func (self *Review) SetResponseAnswer(questionVer Version, answer *Answer) (*Rev
 	err := errors.New(fmt.Sprintf("Review.SetResponseAnswer(): "+
 		"question not found; questionVer: %v, "+
 		"answer: %v", questionVer, answer))
-	for _, resp := range self.Responses {
-		if questionVer == resp.Question.Version {
-			err = nil
-			resp.Answer = answer
-		}
-	}
+	self.Responses[questionVer].Answer = answer
 	return self, err
+}
+
+func NewAnswer() *Answer {
+	return &Answer{
+		Author: "",
+		CreationTime: time.Unix(0, 0),
+		Datum: "",
+	}
 }
 
 // Questions: 

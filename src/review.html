@@ -10,6 +10,7 @@
 
 <div class="review">
 {{range .Responses}}
+{{if .Question}}
 <div class="response" id="response-{{.Question.Version.String}}">
 	<div class="question">
 		{{with .Question}}
@@ -37,6 +38,7 @@
 		</form>
 	</div>
 </div>
+{{end}}
 {{else}}
 <p>No questions.</p>
 {{end}}

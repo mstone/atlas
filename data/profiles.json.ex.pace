@@ -1,1 +1,295 @@
-{"Profiles":[{"Version":{"Name":"pace","Major":1,"Minor":0,"Patch":0},"Questions":[{"Version":{"Name":"agora-pages","Major":1,"Minor":0,"Patch":0},"Text":"Which agora pages describe your product?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"bart-releases","Major":1,"Minor":0,"Patch":0},"Text":"Which BART releases are you using?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"billing-method","Major":1,"Minor":0,"Patch":0},"Text":"What's your billing method?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"code-lines","Major":1,"Minor":0,"Patch":0},"Text":"What are your code lines?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"component-names","Major":1,"Minor":0,"Patch":0},"Text":"What are your components called?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"features","Major":1,"Minor":0,"Patch":0},"Text":"What features does your product build on?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"bugzilla-tickets","Major":1,"Minor":0,"Patch":0},"Text":"What CRs does your launch close?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"deployed-networks","Major":1,"Minor":0,"Patch":0},"Text":"What networks will you be deploying to?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"engineering-schedule-contact","Major":1,"Minor":0,"Patch":0},"Text":"Who can speak authoritatively about your engineering schedule?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"etherpad-links","Major":1,"Minor":0,"Patch":0},"Text":"Which etherpad should we use to collaborate on writing up your review?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"implementation-contact","Major":1,"Minor":0,"Patch":0},"Text":"Who can speak authoritatively about your product's technical implementation details?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"implementation-contact","Major":1,"Minor":0,"Patch":0},"Text":"Who can speak authoritatively about your product's technical implementation details?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"secarch-review-link","Major":1,"Minor":0,"Patch":0},"Text":"Which SecArch review covers your product?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"olympus-tickets","Major":1,"Minor":0,"Patch":0},"Text":"Which Olympus KFs does your product address?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"module-design-link","Major":1,"Minor":0,"Patch":0},"Text":"Where is your module design document?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"product-contacts","Major":1,"Minor":0,"Patch":0},"Text":"Who can speak authoritatively about your product's strategy, packaging, etc.","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"program-manager","Major":1,"Minor":0,"Patch":0},"Text":"Who is program-managing your product?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"secarch-advisor","Major":1,"Minor":0,"Patch":0},"Text":"Who from SecArch is advising you?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"secarch-reviewer","Major":1,"Minor":0,"Patch":0},"Text":"Who from SecArch is reviewing your product's security considerations?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"technical-design-contact","Major":1,"Minor":0,"Patch":0},"Text":"Who can speak authoritatively about your product's technical architecture and design?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0},{"Version":{"Name":"jira-tickets","Major":1,"Minor":0,"Patch":0},"Text":"What Jira tickets does this launch or commit address?","Help":"","AnswerType":0,"DisplayHint":"","GroupKey":"","SortKey":0}],"QuestionDeps":null}]}
+{
+    "Profiles": [
+        {
+            "QuestionDeps": null, 
+            "Version": {
+                "Major": 1, 
+                "Name": "pace", 
+                "Minor": 0, 
+                "Patch": 0
+            }, 
+            "Questions": [
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "build", 
+                    "Text": "What networks will you be deploying to?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "deployed-networks", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "build", 
+                    "Text": "Which BART releases are you using?", 
+                    "SortKey": 5, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "bart-releases", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "build", 
+                    "Text": "What are your components called?", 
+                    "SortKey": 10, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "component-names", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "build", 
+                    "Text": "What are your code lines?", 
+                    "SortKey": 20, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "code-lines", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "build", 
+                    "Text": "What CRs does your launch close?", 
+                    "SortKey": 30, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "bugzilla-tickets", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "compliance", 
+                    "Text": "What's your billing method?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "billing-method", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "docs", 
+                    "Text": "Which agora pages describe your product?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "agora-pages", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "docs", 
+                    "Text": "Which etherpad should we use to collaborate on writing up your review?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "etherpad-links", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "docs", 
+                    "Text": "Which SecArch review covers your product?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "secarch-review-link", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "docs", 
+                    "Text": "Where is your module design document?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "module-design-link", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "product", 
+                    "Text": "What features does your product build on?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "features", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "product", 
+                    "Text": "Which Olympus KFs does your product address?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "olympus-tickets", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "product", 
+                    "Text": "What Jira tickets does this launch or commit address?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "jira-tickets", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "team", 
+                    "Text": "Who can speak authoritatively about your product's strategy, packaging, etc.", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "product-contacts", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "team", 
+                    "Text": "Who can speak authoritatively about your product's technical implementation details?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "implementation-contact", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "team", 
+                    "Text": "Who can speak authoritatively about your product's technical architecture and design?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "technical-design-contact", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "team", 
+                    "Text": "Who can speak authoritatively about your engineering schedule?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "engineering-schedule-contact", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "team", 
+                    "Text": "Who is program-managing your product?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "program-manager", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "team", 
+                    "Text": "Who from SecArch is advising you?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "secarch-advisor", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }, 
+                {
+                    "DisplayHint": "", 
+                    "Help": "", 
+                    "GroupKey": "team", 
+                    "Text": "Who from SecArch is reviewing your product's security considerations?", 
+                    "SortKey": 0, 
+                    "Version": {
+                        "Major": 1, 
+                        "Name": "secarch-reviewer", 
+                        "Minor": 0, 
+                        "Patch": 0
+                    }, 
+                    "AnswerType": 0
+                }
+            ]
+        }
+    ]
+}

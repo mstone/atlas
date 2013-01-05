@@ -17,9 +17,11 @@ Other fun:
 
      https://github.com/nsf/gocode
 
-Other fun:
-
    For online help, see:
 
      godoc -http=:6060 &
      open "http://localhost:6060/"
+
+   To sort & pretty-print json:
+
+     python bin/sort_questions.py IN OUT

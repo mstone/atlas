@@ -31,6 +31,7 @@ import (
 	"net/http"
 	"persist"
 	"runtime/debug"
+	"sort"
 	"time"
 
 // revel, pat, gorilla
@@ -133,6 +134,33 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+
+type vResponseList []*entity.Response
+func (s vResponseList) Len() int { return len(s) }
+func (s vResponseList) Less(i, j int) bool {
+	if s[i].SortKey == s[j].SortKey {
+		return s[i].Question.Version.Name < s[j].Question.Version.Name
+	}
+	return s[i].SortKey < s[j].SortKey
+}
+func (s vResponseList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+type vResponseGroup struct {
+	GroupKey string
+	ResponseList vResponseList
+}
+
+type vResponseGroupList []*vResponseGroup
+func (s vResponseGroupList) Len() int { return len(s) }
+func (s vResponseGroupList) Less(i, j int) bool { return s[i].GroupKey < s[j].GroupKey }
+func (s vResponseGroupList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+type vReview struct {
+	ReviewName string
+	ProfileName string
+	ResponseGroups vResponseGroupList
+}
+
 func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	reviewName := vars["review_name"]
@@ -146,7 +174,43 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 	log.Printf("HandleReviewGet(): review: %v\n", review)
 
-	renderTemplate(w, "review", review)
+	// produce sorted groups of sorted responses
+	responseGroupsMap := make(map[string]vResponseList)
+	for _, resp := range review.Responses {
+		log.Printf("HandleReviewGet(): considering resp %v", resp)
+		if responseGroupsMap[resp.Question.GroupKey] == nil {
+			responseGroupsMap[resp.Question.GroupKey] = make(vResponseList, 1)
+			responseGroupsMap[resp.Question.GroupKey][0] = resp
+		} else {
+			responseGroupsMap[resp.Question.GroupKey] = append(responseGroupsMap[resp.Question.GroupKey], resp)
+		}
+	}
+	log.Printf("HandleReviewGet(): produced responseGroupsMap %v", responseGroupsMap)
+	responseGroupsList := make(vResponseGroupList, len(responseGroupsMap))
+	counter := 0
+	for groupKey, respList := range responseGroupsMap {
+		sort.Sort(respList)
+		responseGroup := &vResponseGroup{
+			GroupKey: groupKey,
+			ResponseList: respList,
+		}
+		responseGroupsList[counter] = responseGroup
+		counter++
+	}
+	log.Printf("HandleReviewGet(): produced responseGroupsList %v", responseGroupsList)
+	log.Printf("HandleReviewGet(): sorting responseGroupsList", responseGroupsList)
+	sort.Sort(responseGroupsList)
+	log.Printf("HandleReviewGet(): got final responseGroupsList", responseGroupsList)
+
+	view := vReview{
+		ReviewName: review.Version.String(),
+		ProfileName: review.Profile.Version.String(),
+		ResponseGroups: responseGroupsList,
+	}
+	log.Printf("HandleReviewGet(): view: %v\n", view)
+
+	// render view
+	renderTemplate(w, "review", view)
 }
 
 func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {

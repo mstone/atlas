@@ -105,7 +105,17 @@ func (self *Review) SetResponseAnswer(questionVer Version, answer *Answer) (*Rev
 	err := errors.New(fmt.Sprintf("Review.SetResponseAnswer(): "+
 		"question not found; questionVer: %v, "+
 		"answer: %v", questionVer, answer))
-	self.Responses[questionVer].Answer = answer
+
+	question := self.Profile.Questions[questionVer]
+
+	if question != nil {
+		self.Responses[questionVer] = &Response{
+			Question: question,
+			Answer: answer,
+		}
+		err = nil
+	}
+
 	return self, err
 }
 

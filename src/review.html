@@ -4,40 +4,40 @@
 	<link rel="stylesheet" type="text/css" href="/static/review.css"></link>
 </head>
 <body>
-<h1>Review: {{.ReviewName}}</h1>
-
-<p>Profile: {{.ProfileName}}</p>
+<div class="review-name">{{.ReviewName}}</div>
+<div class="profile-name">{{.ProfileName}}</div>
 
 <div class="review">
 {{range .ResponseGroups}}
+<div class="response-group-title">{{.GroupKey}}</div>
 <div class="response-group" id="response-group-{{.GroupKey}}">
 	{{range .ResponseList}}
 	<div class="response" id="response-{{.Question.Version.String}}">
 		<div class="question">
 			{{with .Question}}
-			<p>Question: {{or .Version.String ""}}</p>
-			<p>Text: {{or .Text ""}}</p>
-			<p>Help: {{or .Help ""}}</p>
+			<p class="question-version">{{or .Version.String ""}}</p>
+			<p class="question-text">{{or .Text ""}}</p>
+			<p class="question-help">{{or .Help ""}}</p>
 			{{end}}
 		</div>
 		<div class="answer">
 			{{with .Answer}}
-			<p>Answer: </p>
-			<p>Author: {{or .Author "none"}}</p>
-			<p>CreationTime: {{or .CreationTime.String ""}}</p>
-			<p>Datum: {{or .Datum ""}}</p>
+			<p class="answer-title"></p>
+			<p class="answer-author">{{or .Author "none"}}</p>
+			<p class="answer-creationtime">{{or .CreationTime.String ""}}</p>
+			<p class="answer-datum">{{or .Datum ""}}</p>
 			{{else}}
-			<p>Answer: Not yet answered!</p>
+			<p class="answer-empty">Answer: Not yet answered!</p>
 			{{end}}
-			<form action="" method="POST">
+			<form class="answer-form" action="" method="POST">
 				<div>
-					<label for="{{.Question.Version.String}}">{{.Question.Version.String}}</label>
-					<input id="{{.Question.Version.String}}" 
-						name="{{.Question.Version.String}}" 
+					<label class="answer-form-label" for="{{.Question.Version.String}}">{{.Question.Version.String}}</label>
+					<input class="answer-input" id="{{.Question.Version.String}}"
+						name="{{.Question.Version.String}}"
 						value="{{with .Answer}}{{.Datum}}{{end}}" type="text"></input>
 				</div>
 				<input name="question_name" value="{{.Question.Version.String}}" type="hidden"></input>
-				<input value="submit" type="submit"></input>
+				<input class="answer-submit" value="submit" type="submit"></input>
 			</form>
 		</div>
 	</div>

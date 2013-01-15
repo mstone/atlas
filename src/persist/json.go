@@ -20,6 +20,7 @@ type getAllProfilesOpRx struct {
 }
 
 type getAllProfilesOp struct {
+	Persist *PersistJSON
 	ReplyChan chan getAllProfilesOpRx
 }
 
@@ -30,6 +31,7 @@ type getProfileByIdOpRx struct {
 }
 
 type getProfileByIdOp struct {
+	Persist *PersistJSON
 	ReplyChan chan getProfileByIdOpRx
 	Id entity.Version
 }
@@ -39,6 +41,7 @@ type addProfileOpRx struct {
 }
 
 type addProfileOp struct {
+	Persist *PersistJSON
 	ReplyChan chan addProfileOpRx
 	Profile *entity.Profile
 }
@@ -49,6 +52,7 @@ type getAllReviewsOpRx struct {
 }
 
 type getAllReviewsOp struct {
+	Persist *PersistJSON
 	ReplyChan chan getAllReviewsOpRx
 }
 
@@ -58,6 +62,7 @@ type getReviewByIdOpRx struct {
 }
 
 type getReviewByIdOp struct {
+	Persist *PersistJSON
 	ReplyChan chan getReviewByIdOpRx
 	Id entity.Version
 }
@@ -67,12 +72,13 @@ type addReviewOpRx struct {
 }
 
 type addReviewOp struct {
+	Persist *PersistJSON
 	ReplyChan chan addReviewOpRx
 	Review *entity.Review
 }
 
 // Messages on opChan will be type-switched to Ops. (See above.)
-type OpChan chan interface{}
+type opChan chan interface{}
 
 var jsonOpChan = make(chan interface{})
 
@@ -123,12 +129,12 @@ type reviewSetV1 struct {
 }
 
 type PersistJSON struct {
-	opChan OpChan
+	opChan opChan
 }
 
 func NewPersistJSON() *PersistJSON {
 	return &PersistJSON{
-		opChan: OpChan(jsonOpChan),
+		opChan: opChan(jsonOpChan),
 	}
 }
 
@@ -251,8 +257,9 @@ func persistResponseMapV1ToEntityResponseMap(profile *entity.Profile, r map[stri
 }
 
 func persistReviewV1ToEntityReview(r reviewV1) *entity.Review {
+	var persist *PersistJSON = nil
 	profileVer := persistVersionV1ToEntityVersion(r.ProfileId)
-	profile, err := jsonGetProfileById(profileVer)
+	profile, err := persist.jsonGetProfileById(profileVer)
 	if err != nil {
 		panic(err)
 	}
@@ -280,22 +287,22 @@ func init() {
 				default:
 					panic(fmt.Sprintf("persist: unknown operation: %v", op))
 				case getAllProfilesOp:
-					val, err := jsonGetAllProfiles()
+					val, err := op.Persist.jsonGetAllProfiles()
 					op.ReplyChan <- getAllProfilesOpRx{val, err}
 				case getProfileByIdOp:
-					val, err := jsonGetProfileById(op.Id)
+					val, err := op.Persist.jsonGetProfileById(op.Id)
 					op.ReplyChan <- getProfileByIdOpRx{val, err}
 				case addProfileOp:
-					err := jsonAddProfile(op.Profile)
+					err := op.Persist.jsonAddProfile(op.Profile)
 					op.ReplyChan <- addProfileOpRx{err}
 				case getAllReviewsOp:
-					val, err := jsonGetAllReviews()
+					val, err := op.Persist.jsonGetAllReviews()
 					op.ReplyChan <- getAllReviewsOpRx{val, err}
 				case getReviewByIdOp:
-					val, err := jsonGetReviewById(op.Id)
+					val, err := op.Persist.jsonGetReviewById(op.Id)
 					op.ReplyChan <- getReviewByIdOpRx{val, err}
 				case addReviewOp:
-					err := jsonAddReview(op.Review)
+					err := op.Persist.jsonAddReview(op.Review)
 					op.ReplyChan <- addReviewOpRx{err}
 				}
 			}
@@ -313,8 +320,12 @@ func (self *PersistJSON) GetAllProfiles() ([]*entity.Profile, error) {
 	return rx.Val, rx.Err
 }
 
-func jsonGetAllProfiles() ([]*entity.Profile, error) {
-	f, err := os.Open("data/profiles.json")
+func (self *PersistJSON) jsonOpenProfilesFile() (*os.File, error) {
+	return os.Open("data/profiles.json")
+}
+
+func (self *PersistJSON) jsonGetAllProfiles() ([]*entity.Profile, error) {
+	f, err := self.jsonOpenProfilesFile()
 	if err != nil {
 		return nil, err
 	}
@@ -346,8 +357,8 @@ func (self *PersistJSON) GetProfileById(version entity.Version) (*entity.Profile
 	return rx.Val, rx.Err
 }
 
-func jsonGetProfileById(id entity.Version) (*entity.Profile, error) {
-	profiles, err := jsonGetAllProfiles()
+func (self *PersistJSON) jsonGetProfileById(id entity.Version) (*entity.Profile, error) {
+	profiles, err := self.jsonGetAllProfiles()
 	if err != nil {
 		return nil, err
 	}
@@ -370,8 +381,8 @@ func (self *PersistJSON) AddProfile(profile *entity.Profile) error {
 	return rx.Err
 }
 
-func jsonAddProfile(profile *entity.Profile) error {
-	allProfs, err := jsonGetAllProfiles()
+func (self *PersistJSON) jsonAddProfile(profile *entity.Profile) error {
+	allProfs, err := self.jsonGetAllProfiles()
 	log.Printf("jsonAddProfile(): profs: %v", allProfs)
 	if err != nil {
 		return err
@@ -388,7 +399,9 @@ func jsonAddProfile(profile *entity.Profile) error {
 		allProfs = append(allProfs, profile)
 	}
 
-	f, err := os.OpenFile("data/profiles.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0)
+	f, err := os.OpenFile("data/profiles.json",
+		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
+		0)
 	if err != nil {
 		return err
 	}
@@ -420,7 +433,7 @@ func (self *PersistJSON) GetAllReviews() ([]*entity.Review, error) {
 	return rx.Val, rx.Err
 }
 
-func jsonGetAllReviews() ([]*entity.Review, error) {
+func (self *PersistJSON) jsonGetAllReviews() ([]*entity.Review, error) {
 	f, err := os.Open("data/reviews.json")
 	if err != nil {
 		return nil, err
@@ -452,8 +465,8 @@ func (self *PersistJSON) GetReviewById(version entity.Version) (*entity.Review, 
 	return rx.Val, rx.Err
 }
 
-func jsonGetReviewById(id entity.Version) (*entity.Review, error) {
-	reviews, err := jsonGetAllReviews()
+func (self *PersistJSON) jsonGetReviewById(id entity.Version) (*entity.Review, error) {
+	reviews, err := self.jsonGetAllReviews()
 	if err != nil {
 		return nil, err
 	}
@@ -476,8 +489,8 @@ func (self *PersistJSON) AddReview(review *entity.Review) error {
 	return rx.Err
 }
 
-func jsonAddReview(review *entity.Review) error {
-	allRevs, err := jsonGetAllReviews()
+func (self *PersistJSON) jsonAddReview(review *entity.Review) error {
+	allRevs, err := self.jsonGetAllReviews()
 	log.Printf("PersistJSON.AddReview(): revs: %v", allRevs)
 	if err != nil {
 		return err
@@ -495,7 +508,9 @@ func jsonAddReview(review *entity.Review) error {
 	}
 
 	// BUG(mistone): how does the rename()-on-success idiom work with defer(), close(), and flush()?
-	f, err := os.OpenFile("data/reviews.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0)
+	f, err := os.OpenFile("data/reviews.json",
+		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
+		0)
 	if err != nil {
 		return err
 	}

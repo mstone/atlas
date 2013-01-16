@@ -55,10 +55,14 @@ body {
     font-size:  160%;
 }
 
-.answer-input {
+textarea.answer-input {
     margin: 1em 0 1em 0;
     width: 80%;
     display: inline-block;
+}
+
+select.answer-input {
+    width: 80%;
 }
 
 .answer-submit {

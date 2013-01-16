@@ -21,6 +21,7 @@
 package main
 
 import (
+	"bytes"
 	"entity"
 	"flag"
 	"fmt"
@@ -32,6 +33,7 @@ import (
 	"persist"
 	"runtime/debug"
 	"sort"
+	"strings"
 	"time"
 
 // revel, pat, gorilla
@@ -180,7 +182,14 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type vResponseList []*entity.Response
+
+type vResponse struct {
+	*entity.Response
+	AnswerInput template.HTML
+	DatumList []string
+}
+
+type vResponseList []*vResponse
 
 func (s vResponseList) Len() int { return len(s) }
 func (s vResponseList) Less(i, j int) bool {
@@ -225,11 +234,32 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	responseGroupsMap := make(map[string]vResponseList)
 	for _, resp := range review.Responses {
 		log.Printf("HandleReviewGet(): considering resp %v", resp)
+
+		vresp := &vResponse{
+			Response: resp,
+		}
+
+		var templateName string
+		switch resp.Question.AnswerType {
+			default: panic(fmt.Sprintf("Unknown answer type for question: %s", resp.Question.Version))
+			case 0:
+				templateName = "textarea.html"
+			case 1:
+				templateName = "multiselect.html"
+				vresp.DatumList = strings.Split(resp.Answer.Datum, " ")
+		}
+
+		var buf bytes.Buffer
+		err = templates.ExecuteTemplate(&buf, templateName, vresp)
+		checkHTTP(err)
+
+		vresp.AnswerInput = template.HTML(buf.String())
+
 		if responseGroupsMap[resp.Question.GroupKey] == nil {
 			responseGroupsMap[resp.Question.GroupKey] = make(vResponseList, 1)
-			responseGroupsMap[resp.Question.GroupKey][0] = resp
+			responseGroupsMap[resp.Question.GroupKey][0] = vresp
 		} else {
-			responseGroupsMap[resp.Question.GroupKey] = append(responseGroupsMap[resp.Question.GroupKey], resp)
+			responseGroupsMap[resp.Question.GroupKey] = append(responseGroupsMap[vresp.Question.GroupKey], vresp)
 		}
 	}
 	log.Printf("HandleReviewGet(): produced responseGroupsMap %v", responseGroupsMap)
@@ -350,7 +380,9 @@ var templates = template.Must(template.ParseFiles(
 	"src/review.html",
 	"src/review_set.html",
 	"src/profile.html",
-	"src/profile_set.html"))
+	"src/profile_set.html",
+	"src/textarea.html",
+	"src/multiselect.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)

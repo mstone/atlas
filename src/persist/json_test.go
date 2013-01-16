@@ -9,7 +9,6 @@ import "testing"
 //
 // What shall I use as my seam? Perhaps a method call?
 
-
 func TestPersist(t *testing.T) {
 	t.Log("hi")
 }

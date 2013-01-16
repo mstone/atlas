@@ -20,10 +20,9 @@ type getAllProfilesOpRx struct {
 }
 
 type getAllProfilesOp struct {
-	Persist *PersistJSON
+	Persist   *PersistJSON
 	ReplyChan chan getAllProfilesOpRx
 }
-
 
 type getProfileByIdOpRx struct {
 	Val *entity.Profile
@@ -31,9 +30,9 @@ type getProfileByIdOpRx struct {
 }
 
 type getProfileByIdOp struct {
-	Persist *PersistJSON
+	Persist   *PersistJSON
 	ReplyChan chan getProfileByIdOpRx
-	Id entity.Version
+	Id        entity.Version
 }
 
 type addProfileOpRx struct {
@@ -41,9 +40,9 @@ type addProfileOpRx struct {
 }
 
 type addProfileOp struct {
-	Persist *PersistJSON
+	Persist   *PersistJSON
 	ReplyChan chan addProfileOpRx
-	Profile *entity.Profile
+	Profile   *entity.Profile
 }
 
 type getAllReviewsOpRx struct {
@@ -52,7 +51,7 @@ type getAllReviewsOpRx struct {
 }
 
 type getAllReviewsOp struct {
-	Persist *PersistJSON
+	Persist   *PersistJSON
 	ReplyChan chan getAllReviewsOpRx
 }
 
@@ -62,9 +61,9 @@ type getReviewByIdOpRx struct {
 }
 
 type getReviewByIdOp struct {
-	Persist *PersistJSON
+	Persist   *PersistJSON
 	ReplyChan chan getReviewByIdOpRx
-	Id entity.Version
+	Id        entity.Version
 }
 
 type addReviewOpRx struct {
@@ -72,9 +71,9 @@ type addReviewOpRx struct {
 }
 
 type addReviewOp struct {
-	Persist *PersistJSON
+	Persist   *PersistJSON
 	ReplyChan chan addReviewOpRx
-	Review *entity.Review
+	Review    *entity.Review
 }
 
 // Messages on opChan will be type-switched to Ops. (See above.)
@@ -83,27 +82,27 @@ type opChan chan interface{}
 var jsonOpChan = make(chan interface{})
 
 type versionV1 struct {
-	Name string
+	Name  string
 	Major int
 	Minor int
 	Patch int
 }
 
 type questionV1 struct {
-	Version versionV1
-	Text string
-	Help string
-	AnswerType int
+	Version     versionV1
+	Text        string
+	Help        string
+	AnswerType  int
 	DisplayHint string
-	GroupKey string
-	SortKey int
+	GroupKey    string
+	SortKey     int
 }
 
-type questionDepV1 struct { }
+type questionDepV1 struct{}
 
 type profileV1 struct {
-	Version versionV1
-	Questions []questionV1
+	Version      versionV1
+	Questions    []questionV1
 	QuestionDeps []questionDepV1
 }
 
@@ -112,16 +111,16 @@ type profileSetV1 struct {
 }
 
 type answerV1 struct {
-	Author string
-	CreationTimeSecs int64
+	Author               string
+	CreationTimeSecs     int64
 	CreationTimeNanoSecs int64
-	Datum string
+	Datum                string
 }
 
 type reviewV1 struct {
-	Version versionV1
+	Version   versionV1
 	ProfileId versionV1
-	Responses map[string] answerV1
+	Responses map[string]answerV1
 }
 
 type reviewSetV1 struct {
@@ -144,7 +143,7 @@ type profileSet struct {
 
 func persistVersionV1ToEntityVersion(v versionV1) entity.Version {
 	return entity.Version{
-		Name: v.Name,
+		Name:  v.Name,
 		Major: v.Major,
 		Minor: v.Minor,
 		Patch: v.Patch,
@@ -153,7 +152,7 @@ func persistVersionV1ToEntityVersion(v versionV1) entity.Version {
 
 func entityVersionToPersistVersionV1(v entity.Version) versionV1 {
 	return versionV1{
-		Name: v.Name,
+		Name:  v.Name,
 		Major: v.Major,
 		Minor: v.Minor,
 		Patch: v.Patch,
@@ -162,13 +161,13 @@ func entityVersionToPersistVersionV1(v entity.Version) versionV1 {
 
 func persistQuestionV1ToEntityQuestion(q questionV1) entity.Question {
 	return entity.Question{
-		Version: persistVersionV1ToEntityVersion(q.Version),
-		Text: q.Text,
-		Help: q.Help,
-		AnswerType: q.AnswerType,
+		Version:     persistVersionV1ToEntityVersion(q.Version),
+		Text:        q.Text,
+		Help:        q.Help,
+		AnswerType:  q.AnswerType,
 		DisplayHint: q.DisplayHint,
-		GroupKey: q.GroupKey,
-		SortKey: q.SortKey,
+		GroupKey:    q.GroupKey,
+		SortKey:     q.SortKey,
 	}
 }
 
@@ -176,13 +175,13 @@ func persistProfileSetV1ToEntityProfilePtrSlice(ps profileSetV1) []*entity.Profi
 	root := make([]*entity.Profile, len(ps.Profiles))
 	for k, v := range ps.Profiles {
 		root[k] = &entity.Profile{
-			Version: persistVersionV1ToEntityVersion(v.Version),
-			Questions: make(map[entity.Version] *entity.Question),
-			QuestionDeps: make(map[entity.Version] *entity.QuestionDep),
+			Version:      persistVersionV1ToEntityVersion(v.Version),
+			Questions:    make(map[entity.Version]*entity.Question),
+			QuestionDeps: make(map[entity.Version]*entity.QuestionDep),
 		}
 		for _, v2 := range v.Questions {
 			questionVer := persistVersionV1ToEntityVersion(v2.Version)
-		        question := persistQuestionV1ToEntityQuestion(v2)
+			question := persistQuestionV1ToEntityQuestion(v2)
 			root[k].Questions[questionVer] = &question
 		}
 		// BUG(mistone): QuestionDeps not propagated
@@ -192,15 +191,15 @@ func persistProfileSetV1ToEntityProfilePtrSlice(ps profileSetV1) []*entity.Profi
 
 func entityAnswerToPersistAnswerV1(a *entity.Answer) answerV1 {
 	return answerV1{
-		Author: a.Author,
-		CreationTimeSecs: a.CreationTime.Unix(),
+		Author:               a.Author,
+		CreationTimeSecs:     a.CreationTime.Unix(),
 		CreationTimeNanoSecs: a.CreationTime.UnixNano(),
-		Datum: a.Datum,
+		Datum:                a.Datum,
 	}
 }
 
-func entityResponseMapToPersistResponsesMapV1(rs map[entity.Version]*entity.Response) map[string] answerV1 {
-	m := make(map[string] answerV1, len(rs))
+func entityResponseMapToPersistResponsesMapV1(rs map[entity.Version]*entity.Response) map[string]answerV1 {
+	m := make(map[string]answerV1, len(rs))
 	for k, v := range rs {
 		m[k.String()] = entityAnswerToPersistAnswerV1(v.Answer)
 	}
@@ -209,7 +208,7 @@ func entityResponseMapToPersistResponsesMapV1(rs map[entity.Version]*entity.Resp
 
 func entityReviewToPersistReviewV1(r *entity.Review) reviewV1 {
 	return reviewV1{
-		Version: entityVersionToPersistVersionV1(r.Version),
+		Version:   entityVersionToPersistVersionV1(r.Version),
 		ProfileId: entityVersionToPersistVersionV1(r.Profile.Version),
 		Responses: entityResponseMapToPersistResponsesMapV1(r.Responses),
 	}
@@ -227,28 +226,28 @@ func entityReviewPtrSliceToPersistReviewSetV1(rs []*entity.Review) reviewSetV1 {
 
 func persistAnswerV1ToEntityAnswer(a answerV1) *entity.Answer {
 	return &entity.Answer{
-		Author: a.Author,
+		Author:       a.Author,
 		CreationTime: time.Unix(a.CreationTimeSecs, a.CreationTimeNanoSecs),
-		Datum: a.Datum,
+		Datum:        a.Datum,
 	}
 }
 
 func persistResponseV1ToEntityResponse(question *entity.Question, ans answerV1) *entity.Response {
 	return &entity.Response{
 		Question: question,
-		Answer: persistAnswerV1ToEntityAnswer(ans),
+		Answer:   persistAnswerV1ToEntityAnswer(ans),
 	}
 }
 
-func persistResponseMapV1ToEntityResponseMap(profile *entity.Profile, r map[string] answerV1) map[entity.Version] *entity.Response {
-	root := make(map[entity.Version] *entity.Response, len(r))
+func persistResponseMapV1ToEntityResponseMap(profile *entity.Profile, r map[string]answerV1) map[entity.Version]*entity.Response {
+	root := make(map[entity.Version]*entity.Response, len(r))
 	for k, v := range r {
 		questionVer, err := entity.NewVersionFromString(k)
 		if err != nil {
 			panic(err)
 		}
 		question, ok := profile.Questions[*questionVer]
-		if ! ok {
+		if !ok {
 			panic(fmt.Sprintf("unable to find questionVer: %v", questionVer))
 		}
 		root[*questionVer] = persistResponseV1ToEntityResponse(question, v)
@@ -264,8 +263,8 @@ func persistReviewV1ToEntityReview(r reviewV1) *entity.Review {
 		panic(err)
 	}
 	return &entity.Review{
-		Version: persistVersionV1ToEntityVersion(r.Version),
-		Profile: profile,
+		Version:   persistVersionV1ToEntityVersion(r.Version),
+		Profile:   profile,
 		Responses: persistResponseMapV1ToEntityResponseMap(profile, r.Responses),
 	}
 }
@@ -307,7 +306,7 @@ func init() {
 				}
 			}
 		}
-	} ()
+	}()
 }
 
 func (self *PersistJSON) GetAllProfiles() ([]*entity.Profile, error) {
@@ -350,7 +349,7 @@ func (self *PersistJSON) GetProfileById(version entity.Version) (*entity.Profile
 	replyChan := make(chan getProfileByIdOpRx)
 	op := getProfileByIdOp{
 		ReplyChan: replyChan,
-		Id: version,
+		Id:        version,
 	}
 	self.opChan <- op
 	rx := <-replyChan
@@ -374,7 +373,7 @@ func (self *PersistJSON) AddProfile(profile *entity.Profile) error {
 	replyChan := make(chan addProfileOpRx)
 	op := addProfileOp{
 		ReplyChan: replyChan,
-		Profile: profile,
+		Profile:   profile,
 	}
 	self.opChan <- op
 	rx := <-replyChan
@@ -458,7 +457,7 @@ func (self *PersistJSON) GetReviewById(version entity.Version) (*entity.Review, 
 	replyChan := make(chan getReviewByIdOpRx)
 	op := getReviewByIdOp{
 		ReplyChan: replyChan,
-		Id: version,
+		Id:        version,
 	}
 	self.opChan <- op
 	rx := <-replyChan
@@ -482,7 +481,7 @@ func (self *PersistJSON) AddReview(review *entity.Review) error {
 	replyChan := make(chan addReviewOpRx)
 	op := addReviewOp{
 		ReplyChan: replyChan,
-		Review: review,
+		Review:    review,
 	}
 	self.opChan <- op
 	rx := <-replyChan

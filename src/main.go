@@ -117,7 +117,7 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 		for idx, q := range profile.Questions {
 			review.Responses[idx] = &entity.Response{
 				Question: q,
-				Answer: entity.NewAnswer(),
+				Answer:   entity.NewAnswer(),
 			}
 		}
 		log.Printf("HandleReviewSetPost(): created review: %v\n", review)
@@ -134,8 +134,8 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
 type vResponseList []*entity.Response
+
 func (s vResponseList) Len() int { return len(s) }
 func (s vResponseList) Less(i, j int) bool {
 	if s[i].SortKey == s[j].SortKey {
@@ -146,18 +146,19 @@ func (s vResponseList) Less(i, j int) bool {
 func (s vResponseList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 type vResponseGroup struct {
-	GroupKey string
+	GroupKey     string
 	ResponseList vResponseList
 }
 
 type vResponseGroupList []*vResponseGroup
-func (s vResponseGroupList) Len() int { return len(s) }
+
+func (s vResponseGroupList) Len() int           { return len(s) }
 func (s vResponseGroupList) Less(i, j int) bool { return s[i].GroupKey < s[j].GroupKey }
-func (s vResponseGroupList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s vResponseGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type vReview struct {
-	ReviewName string
-	ProfileName string
+	ReviewName     string
+	ProfileName    string
 	ResponseGroups vResponseGroupList
 }
 
@@ -191,7 +192,7 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	for groupKey, respList := range responseGroupsMap {
 		sort.Sort(respList)
 		responseGroup := &vResponseGroup{
-			GroupKey: groupKey,
+			GroupKey:     groupKey,
 			ResponseList: respList,
 		}
 		responseGroupsList[counter] = responseGroup
@@ -203,8 +204,8 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleReviewGet(): got final responseGroupsList", responseGroupsList)
 
 	view := vReview{
-		ReviewName: review.Version.String(),
-		ProfileName: review.Profile.Version.String(),
+		ReviewName:     review.Version.String(),
+		ProfileName:    review.Profile.Version.String(),
 		ResponseGroups: responseGroupsList,
 	}
 	log.Printf("HandleReviewGet(): view: %v\n", view)

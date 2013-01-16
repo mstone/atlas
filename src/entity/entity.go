@@ -28,8 +28,8 @@ type Version struct {
 
 type Profile struct {
 	Version      Version
-	Questions    map[Version] *Question
-	QuestionDeps map[Version] *QuestionDep
+	Questions    map[Version]*Question
+	QuestionDeps map[Version]*QuestionDep
 }
 
 type Question struct {
@@ -44,7 +44,7 @@ type Question struct {
 
 type QuestionDep struct {
 	From        *Question
-	To          map[Version] *Question
+	To          map[Version]*Question
 	Text        string
 	DisplayHint string
 }
@@ -64,7 +64,7 @@ type Response struct {
 type Review struct {
 	Version   Version
 	Profile   *Profile
-	Responses map[Version] *Response
+	Responses map[Version]*Response
 }
 
 type ProfileRepo interface {
@@ -111,7 +111,7 @@ func (self *Review) SetResponseAnswer(questionVer Version, answer *Answer) (*Rev
 	if question != nil {
 		self.Responses[questionVer] = &Response{
 			Question: question,
-			Answer: answer,
+			Answer:   answer,
 		}
 		err = nil
 	}
@@ -121,9 +121,9 @@ func (self *Review) SetResponseAnswer(questionVer Version, answer *Answer) (*Rev
 
 func NewAnswer() *Answer {
 	return &Answer{
-		Author: "",
+		Author:       "",
 		CreationTime: time.Unix(0, 0),
-		Datum: "",
+		Datum:        "",
 	}
 }
 

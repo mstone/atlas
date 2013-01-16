@@ -21,6 +21,7 @@
 .answer-datum {
       display: none;
 }
+
 .response {
       border: 1px solid black;
       margin: 1em;
@@ -55,3 +56,22 @@ body {
     font-size:  160%;
 }
 
+.answer-input {
+    margin: 1em 0 1em 0;
+    width: 80%;
+    display: inline-block;
+}
+
+.answer-submit {
+    margin: 1em;
+    float: right;
+}
+
+.question-text {
+    width: 30pc;
+}
+
+.clear {
+    clear: both;
+    height: 0;
+}

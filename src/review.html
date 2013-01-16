@@ -30,14 +30,12 @@
 			<p class="answer-empty">Answer: Not yet answered!</p>
 			{{end}}
 			<form class="answer-form" action="" method="POST">
-				<div>
-					<label class="answer-form-label" for="{{.Question.Version.String}}">{{.Question.Version.String}}</label>
-					<input class="answer-input" id="{{.Question.Version.String}}"
-						name="{{.Question.Version.String}}"
-						value="{{with .Answer}}{{.Datum}}{{end}}" type="text"></input>
-				</div>
+				<label class="answer-form-label" for="{{.Question.Version.String}}">{{.Question.Version.String}}</label>
+				<textarea class="answer-input" id="{{.Question.Version.String}}"
+					name="{{.Question.Version.String}}">{{with .Answer}}{{.Datum}}{{end}}</textarea>
 				<input name="question_name" value="{{.Question.Version.String}}" type="hidden"></input>
 				<input class="answer-submit" value="submit" type="submit"></input>
+				<div class="clear">&nbsp;</div>
 			</form>
 		</div>
 	</div>

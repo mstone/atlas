@@ -18,7 +18,7 @@
 		<label for="review-profile-label">Profile</label>
 		<select id="review-profile-select" class="profile-input" name="profile" accesskey="p" tabindex="2">
 			{{range .Profiles}}
-				<option class="profile-option" value="{{.Version.String}}">{{.Version.String}}</option>
+				<option class="profile-option" value="{{.Version.String}}" {{if .Selected}}selected {{end}}>{{.Version.String}}</option>
 			{{end}}
 		</select>
 	</div>

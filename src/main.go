@@ -66,7 +66,11 @@ func checkHTTP(err error) {
 }
 
 // BUG(mistone): vProfileList and vReviewList sorting should use version sorts, not string sorts
-type vProfileList []*entity.Profile
+type vProfile struct {
+	*entity.Profile
+	Selected bool
+}
+type vProfileList []vProfile
 
 func (s vProfileList) Len() int { return len(s) }
 func (s vProfileList) Less(i, j int) bool {
@@ -98,7 +102,14 @@ func HandleReviewSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	reviews, err := self.GetAllReviews()
 	checkHTTP(err)
 
-	profilesList := vProfileList(profiles)
+	profilesList := make(vProfileList, len(profiles))
+	for idx, prof := range profiles {
+		isPace := prof.Version.String() == "pace-1.0.0"
+		profilesList[idx] = vProfile{
+			Profile:  prof,
+			Selected: isPace,
+		}
+	}
 	sort.Sort(profilesList)
 
 	reviewsList := vReviewList(reviews)

@@ -30,7 +30,6 @@
 
 div.response-group-title {
     text-transform: capitalize;
-    text-decoration: underline;
     border-bottom: 1px solid black;
     display:  inline-block;
     margin:  1em 0 0 0em;
@@ -68,7 +67,7 @@ body {
 }
 
 .question-text {
-    width: 30pc;
+    width: 80%;
 }
 
 .clear {

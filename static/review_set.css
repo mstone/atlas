@@ -1,1 +1,45 @@
-@import url("reset.css")
+@import url("reset.css");
+
+body {
+	font-family: "Helvetica", sans-serif;
+	padding: 1em;
+}
+
+h1 {
+	font-size: 160%;
+}
+
+.review-list {
+	margin: 1em;
+}
+
+.form-review-create-title, 
+.review-list-title {
+	border-bottom: 1px solid black;
+	display: inline-block;
+	margin: 1em 0 0 0;
+}
+
+.form-review-create {
+	margin: 1em;
+	border: 1px solid black;
+}
+
+
+.review-name {
+	margin: 1em 0 0 1em;
+}
+
+.review-profile {
+	margin: 1em 0 0 1em;
+}
+
+.review-submit {
+	float: right;
+	margin: 1em;
+}
+
+.clear {
+    clear: both;
+    height: 0;
+}

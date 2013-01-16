@@ -65,16 +65,51 @@ func checkHTTP(err error) {
 	}
 }
 
+// BUG(mistone): vProfileList and vReviewList sorting should use version sorts, not string sorts
+type vProfileList []*entity.Profile
+
+func (s vProfileList) Len() int { return len(s) }
+func (s vProfileList) Less(i, j int) bool {
+	return s[i].Version.String() < s[j].Version.String()
+}
+func (s vProfileList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+type vReviewList []*entity.Review
+
+func (s vReviewList) Len() int { return len(s) }
+func (s vReviewList) Less(i, j int) bool {
+	return s[i].Version.String() < s[j].Version.String()
+}
+func (s vReviewList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+type vReviewSet struct {
+	Profiles vProfileList
+	Reviews  vReviewList
+}
+
 func HandleReviewSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleReviewSetGet()\n")
+
+	profiles, err := self.GetAllProfiles()
+	checkHTTP(err)
+
 	// ...
 	// list links to all (current?) reviews?
 	reviews, err := self.GetAllReviews()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	checkHTTP(err)
+
+	profilesList := vProfileList(profiles)
+	sort.Sort(profilesList)
+
+	reviewsList := vReviewList(reviews)
+	sort.Sort(reviewsList)
+
+	view := &vReviewSet{
+		Profiles: profilesList,
+		Reviews:  reviewsList,
 	}
-	renderTemplate(w, "review_set", reviews)
+
+	renderTemplate(w, "review_set", view)
 }
 
 // BUG(mistone): CSRF!

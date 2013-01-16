@@ -1,29 +1,40 @@
 <html>
 <head>
-	<title>List of Reviews</title>
+	<title>All Reviews</title>
 	<link rel="stylesheet" type="text/css" href="/static/review_set.css"></link>
+	<script src="/static/jquery-1.9.0.min.js" type="text/javascript"></script>
+	<script src="/static/jquery.autosize-1.15.3.js" type="text/javascript"></script>
+	<script src="/static/review_set.js" type="text/javascript"></script>
 </head>
 <body>
-<h1>List of Reviews</h1>
-
-<form action="" method="POST">  <!-- XXX: WAI-ARIA role -->
-	<div>
-		<label for="review">Review</label>
-		<input autofocus id="review" name="review" accesskey="r" tabindex="1" placeholder="acme-1.2.0" type="text"></input>
+<h1>All Reviews</h1>
+<div class="form-review-create-title">New Review</div>
+<form class="form-review-create" action="" method="POST">  <!-- XXX: WAI-ARIA role -->
+	<div class="review-name">
+		<label class="review-name-label" for="review">Review</label>
+		<input class="review-name-input" autofocus id="review" name="review" accesskey="r" tabindex="1" placeholder="acme-1.2.0" type="text"></input>
 	</div>
-	<div>
-		<label for="profile">Profile</label>
-		<input id="profile" name="profile" accesskey="p" tabindex="2" placeholder="pace-1.0.0" value="pace-1.0.0" type="text"></input>
+	<div class="review-profile">
+		<label for="review-profile-label">Profile</label>
+		<select id="review-profile-select" class="profile-input" name="profile" accesskey="p" tabindex="2">
+			{{range .Profiles}}
+				<option class="profile-option" value="{{.Version.String}}">{{.Version.String}}</option>
+			{{end}}
+		</select>
 	</div>
-	<input type="submit" value="submit"/>
+	<input class="review-submit" type="submit" value="submit"/>
+	<div class="clear">&nbsp;</div>
 </form>
 
-{{range .}}
-<div class="review">
-	<p><a href="./{{.Version.String}}">{{.Version.String}}</a></p>
+<div class="review-list-title">Existing Reviews</div>
+<div class="review-list">
+	{{range .Reviews}}
+	<div class="review">
+		<p><a class="review-link" href="./{{.Version.String}}">{{.Version.String}}</a></p>
+	</div>
+	{{else}}
+	<p class="review-list-empty">No reviews.</p>
+	{{end}}
 </div>
-{{else}}
-<p>No reviews.</p>
-{{end}}
 </body>
 </html>

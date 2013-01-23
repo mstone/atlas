@@ -137,10 +137,6 @@ func NewPersistJSON() *PersistJSON {
 	}
 }
 
-type profileSet struct {
-	Profiles []*entity.Profile
-}
-
 func persistVersionV1ToEntityVersion(v versionV1) entity.Version {
 	return entity.Version{
 		Name:  v.Name,
@@ -388,6 +384,57 @@ func (self *PersistJSON) jsonAddProfile(profile *entity.Profile) error {
 	return err
 }
 
+func entityQuestionToPersistQuestionV1(question *entity.Question) (questionV1, error) {
+	view := questionV1{
+		Version:     entityVersionToPersistVersionV1(question.Version),
+		Text:        question.Text,
+		Help:        question.Help,
+		AnswerType:  question.AnswerType,
+		DisplayHint: question.DisplayHint,
+		GroupKey:    question.GroupKey,
+		SortKey:     question.SortKey,
+	}
+	return view, nil
+}
+
+func entityProfileToPersistProfileV1(profile *entity.Profile) (profileV1, error) {
+	view := profileV1{
+		Version:      entityVersionToPersistVersionV1(profile.Version),
+		Questions:    make([]questionV1, len(profile.Questions)),
+		QuestionDeps: make([]questionDepV1, len(profile.QuestionDeps)),
+	}
+	idx := 0
+	for _, v := range profile.Questions {
+		vquest, err := entityQuestionToPersistQuestionV1(v)
+		if err != nil {
+			return view, err
+		} else {
+			view.Questions[idx] = vquest
+		}
+		idx++
+	}
+	// BUG(mistone): question dep persistence not implemented!
+	if len(profile.QuestionDeps) > 0 {
+		panic("question dep persistence not implemented!")
+	}
+	return view, nil
+}
+
+func entityProfilePtrSliceToPersistProfileSetV1(profiles []*entity.Profile) (profileSetV1, error) {
+	view := &profileSetV1{
+		Profiles: make([]profileV1, len(profiles)),
+	}
+	for idx, v := range profiles {
+		vprof, err := entityProfileToPersistProfileV1(v)
+		if err != nil {
+			return *view, err
+		} else {
+			view.Profiles[idx] = vprof
+		}
+	}
+	return *view, nil
+}
+
 func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 	allProfs, err := self.jsonGetAllProfiles()
 	log.Printf("jsonAddProfile(): profs: %v", allProfs)
@@ -418,14 +465,16 @@ func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 	encoder := json.NewEncoder(bufio.NewWriter(f))
 	log.Printf("jsonAddProfile(): made encoder")
 
-	ps := profileSet{
-		Profiles: allProfs,
-	}
-	err = encoder.Encode(&ps)
+	view, err := entityProfilePtrSliceToPersistProfileSetV1(allProfs)
 	if err != nil {
 		return err
 	}
-	log.Printf("jsonAddProfile(): encoded profileSet: %v", ps)
+
+	err = encoder.Encode(&view)
+	if err != nil {
+		return err
+	}
+	log.Printf("jsonAddProfile(): encoded profileSetV1: %v", view)
 
 	return nil
 }

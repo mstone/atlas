@@ -455,7 +455,7 @@ func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 
 	f, err := os.OpenFile("data/profiles.json.tmp",
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-		0)
+		0600)
 	if err != nil {
 		return err
 	}
@@ -573,7 +573,7 @@ func (self *PersistJSON) jsonAddReviewHelper(review *entity.Review) error {
 
 	f, err := os.OpenFile("data/reviews.json.tmp",
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-		0)
+		0600)
 	if err != nil {
 		return err
 	}

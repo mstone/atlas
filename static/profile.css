@@ -1,1 +1,84 @@
-@import url("reset.css")
+@import url("reset.css");
+
+.question-version {
+      font-style: italic;
+}
+.answer-form-label {
+      display: none;
+}
+.answer-author {
+      display: none;
+}
+.answer-creationtime {
+      display: none;
+}
+.question-help {
+      display: none;
+}
+.answer-title {
+      display: none;
+}
+.answer-datum {
+      display: none;
+}
+
+.question {
+      border: 1px solid black;
+      margin: 1em;
+      padding: 1em;
+}
+
+.question-group-title:before {
+    content: "Question Group: ";
+}
+
+div.question-group-title {
+    text-transform: capitalize;
+    border-bottom: 1px solid black;
+    display:  inline-block;
+    margin:  1em 0 0 0em;
+}
+.profile-name:before {
+    content: "Profile: ";
+}
+.profile-name {
+    font-size:  160%;
+}
+body {
+    max-width: 40pc;
+    padding:  1em;
+    font-family: "Helvetica", sans-serif;
+}
+
+.question-name-input {
+    display: inline-block;
+}
+
+.question-submit {
+    margin: 1em;
+    float: right;
+}
+
+.question-text {
+    width: 80%;
+    margin-top: 1em;
+}
+
+
+.form-question-create-title {
+	border-bottom: 1px solid black;
+	display: inline-block;
+	margin: 1em 0 0 0;
+}
+
+.form-question-create {
+	margin: 1em;
+  padding: 1em;
+	border: 1px solid black;
+}
+
+
+.clear {
+    clear: both;
+    height: 0;
+}

@@ -1,20 +1,34 @@
 <!doctype html>
 <html>
 <head>
-	<title>Profile: {{.Version.String}}</title>
+	<title>Profile: {{.ProfileName}}</title>
 	<link rel="stylesheet" type="text/css" href="/static/profile.css"></link>
 </head>
 <body>
-<h1>Profile: {{.Version.String}}</h1>
+<div class="profile-name">{{.ProfileName}}</div>
+<div class="profileset-link">(<a href="/profiles/">see other profiles...</a>)</div>
+
+<div class="form-question-create-title">New Question</div>
+<form class="form-question-create" action="" method="POST">
+	<div class="question-name">
+		<label class="question-name-label" for="question-name">Question Name</label>
+		<input class="question-name-input" autofocus id="question-name" name="question_name" type="text"></input>
+	</div>
+	<input class="question-submit" value="submit" type="submit"></input>
+	<div class="clear">&nbsp;</div>
+</form>
 
 <div class="profile">
-{{range .Questions}}
-	<div class="question">
-		<p>Question: {{or .Version.String ""}}</p>
-		<p>Text: {{or .Text ""}}</p>
-		<p>Help: {{or .Help ""}}</p>
+{{range .QuestionGroups}}
+<div class="question-group-title">{{.GroupKey}}</div>
+<div class="question-group" id="question-group-{{.GroupKey}}">
+	{{range .Questions}}
+	<div class="question" id="question-{{.Version.String}}">
+		<p class="question-version">{{or .Version.String ""}}</p>
+		<p class="question-text">{{or .Text ""}}</p>
+		<p class="question-help">{{or .Help ""}}</p>
 	</div>
-</div>
+	{{end}}
 {{else}}
 <p>No questions.</p>
 {{end}}

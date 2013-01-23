@@ -182,11 +182,10 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
 type vResponse struct {
 	*entity.Response
 	AnswerInput template.HTML
-	DatumList []string
+	DatumList   []string
 }
 
 type vResponseList []*vResponse
@@ -241,12 +240,13 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 		var templateName string
 		switch resp.Question.AnswerType {
-			default: panic(fmt.Sprintf("Unknown answer type for question: %s", resp.Question.Version))
-			case 0:
-				templateName = "textarea.html"
-			case 1:
-				templateName = "multiselect.html"
-				vresp.DatumList = strings.Split(resp.Answer.Datum, " ")
+		default:
+			panic(fmt.Sprintf("Unknown answer type for question: %s", resp.Question.Version))
+		case 0:
+			templateName = "textarea.html"
+		case 1:
+			templateName = "multiselect.html"
+			vresp.DatumList = strings.Split(resp.Answer.Datum, " ")
 		}
 
 		var buf bytes.Buffer
@@ -255,12 +255,7 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 		vresp.AnswerInput = template.HTML(buf.String())
 
-		if responseGroupsMap[resp.Question.GroupKey] == nil {
-			responseGroupsMap[resp.Question.GroupKey] = make(vResponseList, 1)
-			responseGroupsMap[resp.Question.GroupKey][0] = vresp
-		} else {
-			responseGroupsMap[resp.Question.GroupKey] = append(responseGroupsMap[vresp.Question.GroupKey], vresp)
-		}
+		responseGroupsMap[resp.Question.GroupKey] = append(responseGroupsMap[vresp.Question.GroupKey], vresp)
 	}
 	log.Printf("HandleReviewGet(): produced responseGroupsMap %v", responseGroupsMap)
 	responseGroupsList := make(vResponseGroupList, len(responseGroupsMap))
@@ -347,7 +342,54 @@ func HandleProfileSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 func HandleProfileSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleProfileSetPost()\n")
-	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+
+	// extract profile
+	profileName := r.FormValue("profile")
+	profileVer, err := entity.NewVersionFromString(profileName)
+	checkHTTP(err)
+
+	// check for old profile
+	oldProfile, err := self.GetProfileById(*profileVer)
+	if oldProfile != nil {
+		http.Error(w, "Profile already exists.", http.StatusConflict)
+	}
+
+	// make a new Profile
+	newProfile := &entity.Profile{
+		Version: *profileVer,
+	}
+
+	// persist the new review
+	err = self.ProfileRepo.AddProfile(newProfile)
+	checkHTTP(err)
+
+	url, err := self.Router.Get("profile").URL("profile_name", profileVer.String())
+	checkHTTP(err)
+
+	log.Printf("HandleProfileSetPost(): redirecting to: %v\n", url)
+	http.Redirect(w, r, url.String(), http.StatusSeeOther)
+}
+
+type vQuestionList []*entity.Question
+
+func (s vQuestionList) Len() int           { return len(s) }
+func (s vQuestionList) Less(i, j int) bool { return s[i].Version.String() < s[j].Version.String() }
+func (s vQuestionList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+type vQuestionGroup struct {
+	GroupKey  string
+	Questions vQuestionList
+}
+
+type vQuestionGroupList []*vQuestionGroup
+
+func (s vQuestionGroupList) Len() int           { return len(s) }
+func (s vQuestionGroupList) Less(i, j int) bool { return s[i].GroupKey < s[j].GroupKey }
+func (s vQuestionGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+type vProfile2 struct {
+	ProfileName    string
+	QuestionGroups vQuestionGroupList
 }
 
 func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
@@ -363,7 +405,36 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 	log.Printf("HandleProfileGet(): profile: %v\n", profile)
 
-	renderTemplate(w, "profile", profile)
+	// produce sorted groups of sorted questions
+	questionGroupMap := make(map[string]vQuestionList)
+	for _, quest := range profile.Questions {
+		log.Printf("HandleProfileGet(): considering question %v", quest)
+		questionGroupMap[quest.GroupKey] = append(questionGroupMap[quest.GroupKey], quest)
+	}
+	log.Printf("HandleProfileGet(): produced questionGroupMap %v", questionGroupMap)
+	questionGroupList := make(vQuestionGroupList, len(questionGroupMap))
+	counter := 0
+	for groupKey, questList := range questionGroupMap {
+		sort.Sort(questList)
+		questionGroup := &vQuestionGroup{
+			GroupKey:  groupKey,
+			Questions: questList,
+		}
+		questionGroupList[counter] = questionGroup
+		counter++
+	}
+	log.Printf("HandleProfileGet(): produced questionGroupList %v", questionGroupList)
+	log.Printf("HandleProfileGet(): sorting questionGroupList", questionGroupList)
+	sort.Sort(questionGroupList)
+	log.Printf("HandleProfileGet(): got final questionGroupList", questionGroupList)
+
+	view := vProfile2{
+		ProfileName:    profile.Version.String(),
+		QuestionGroups: questionGroupList,
+	}
+	log.Printf("HandleProfileGet(): view: %v\n", view)
+
+	renderTemplate(w, "profile", view)
 }
 
 func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {

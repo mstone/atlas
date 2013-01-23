@@ -6,21 +6,27 @@
 </head>
 <body>
 <h1>List of Question Profiles</h1>
+<div class="root-link">(<a href="/">root</a>)</div>
 
+<div class="form-profile-create-title">New Profile</div>
+<form class="form-profile-create" action="" method="POST">  <!-- XXX: WAI-ARIA role -->
+	<div class="profile-name">
+		<label class="profile-name-label" for="profile">Profile</label>
+		<input class="profile-name-input" autofocus id="profile" name="profile" accesskey="p" tabindex="1" placeholder="pace-1.0.0" type="text"></input>
+	</div>
+	<input class="profile-submit" type="submit" value="submit"/>
+	<div class="clear">&nbsp;</div>
+</form>
+
+<div class="profile-list-title">Existing Profiles</div>
+<div class="profile-list">
 {{range .}}
 <div class="profile">
-	<p><a href="./{{.Version.String}}">{{.Version.String}}</a></p>
-	{{range .Questions}}
-	<div class="question">
-		<p>Question: {{or .Version.String ""}}</p>
-		<p>Text: {{or .Text ""}}</p>
-	</div>
-	{{else}}
-	<p>No questions.</p>
-	{{end}}
+  <p><a class="profile-link" href="./{{.Version.String}}">{{.Version.String}}</a></p>
 </div>
 {{else}}
-<p>No profiles.</p>
+<p class="profile-list-empty">No profiles.</p>
 {{end}}
+</div>
 </body>
 </html>

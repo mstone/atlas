@@ -12,7 +12,7 @@
                 {
                     "DisplayHint": "",
                     "Help": "",
-                    "GroupKey": "",
+                    "GroupKey": "catechism",
                     "Text": "What are you trying to do? Articulate your objectives using absolutely no jargon.",
                     "SortKey": 0,
                     "Version": {
@@ -26,7 +26,7 @@
                 {
                     "DisplayHint": "",
                     "Help": "",
-                    "GroupKey": "",
+                    "GroupKey": "catechism",
                     "Text": "How is it done today, and what are the limits of current practice?",
                     "SortKey": 10,
                     "Version": {
@@ -40,7 +40,7 @@
                 {
                     "DisplayHint": "",
                     "Help": "",
-                    "GroupKey": "",
+                    "GroupKey": "catechism",
                     "Text": "What's new in your approach and why do you think it will be successful?",
                     "SortKey": 20,
                     "Version": {
@@ -54,7 +54,7 @@
                 {
                     "DisplayHint": "",
                     "Help": "",
-                    "GroupKey": "",
+                    "GroupKey": "catechism",
                     "Text": "Who cares? If you're successful, what difference will it make?",
                     "SortKey": 30,
                     "Version": {
@@ -68,7 +68,7 @@
                 {
                     "DisplayHint": "",
                     "Help": "",
-                    "GroupKey": "",
+                    "GroupKey": "catechism",
                     "Text": "What are the risks and the payoffs?",
                     "SortKey": 40,
                     "Version": {
@@ -82,7 +82,7 @@
                 {
                     "DisplayHint": "",
                     "Help": "",
-                    "GroupKey": "",
+                    "GroupKey": "catechism",
                     "Text": "How much will it cost? How long will it take?",
                     "SortKey": 50,
                     "Version": {
@@ -96,7 +96,7 @@
                 {
                     "DisplayHint": "",
                     "Help": "",
-                    "GroupKey": "",
+                    "GroupKey": "catechism",
                     "Text": "What are the midterm and final \"exams\" to check for success?",
                     "SortKey": 60,
                     "Version": {

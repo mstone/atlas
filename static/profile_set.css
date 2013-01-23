@@ -1,1 +1,46 @@
-@import url("reset.css")
+@import url("reset.css");
+
+body {
+	font-family: "Helvetica", sans-serif;
+	padding: 1em;
+	max-width: 40pc;
+}
+
+h1 {
+	font-size: 160%;
+}
+
+.profile-list {
+	margin: 1em;
+}
+
+.form-profile-create-title, 
+.profile-list-title {
+	border-bottom: 1px solid black;
+	display: inline-block;
+	margin: 1em 0 0 0;
+}
+
+.form-profile-create {
+	margin: 1em;
+	border: 1px solid black;
+}
+
+
+.profile-name {
+	margin: 1em 0 0 1em;
+}
+
+.profile-profile {
+	margin: 1em 0 0 1em;
+}
+
+.profile-submit {
+	float: right;
+	margin: 1em;
+}
+
+.clear {
+    clear: both;
+    height: 0;
+}

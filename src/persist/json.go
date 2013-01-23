@@ -381,6 +381,14 @@ func (self *PersistJSON) AddProfile(profile *entity.Profile) error {
 }
 
 func (self *PersistJSON) jsonAddProfile(profile *entity.Profile) error {
+	err := self.jsonAddProfileHelper(profile)
+	if err == nil {
+		err = os.Rename("data/profiles.json.tmp", "data/profiles.json")
+	}
+	return err
+}
+
+func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 	allProfs, err := self.jsonGetAllProfiles()
 	log.Printf("jsonAddProfile(): profs: %v", allProfs)
 	if err != nil {
@@ -398,14 +406,14 @@ func (self *PersistJSON) jsonAddProfile(profile *entity.Profile) error {
 		allProfs = append(allProfs, profile)
 	}
 
-	f, err := os.OpenFile("data/profiles.json",
+	f, err := os.OpenFile("data/profiles.json.tmp",
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
 		0)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	log.Printf("jsonAddProfile(): data/profiles.json opened for write")
+	log.Printf("jsonAddProfile(): data/profiles.json.tmp opened for write")
 
 	encoder := json.NewEncoder(bufio.NewWriter(f))
 	log.Printf("jsonAddProfile(): made encoder")
@@ -489,6 +497,14 @@ func (self *PersistJSON) AddReview(review *entity.Review) error {
 }
 
 func (self *PersistJSON) jsonAddReview(review *entity.Review) error {
+	err := self.jsonAddReviewHelper(review)
+	if err == nil {
+		err = os.Rename("data/reviews.json.tmp", "data/reviews.json")
+	}
+	return err
+}
+
+func (self *PersistJSON) jsonAddReviewHelper(review *entity.Review) error {
 	allRevs, err := self.jsonGetAllReviews()
 	log.Printf("PersistJSON.AddReview(): revs: %v", allRevs)
 	if err != nil {
@@ -506,8 +522,7 @@ func (self *PersistJSON) jsonAddReview(review *entity.Review) error {
 		allRevs = append(allRevs, review)
 	}
 
-	// BUG(mistone): how does the rename()-on-success idiom work with defer(), close(), and flush()?
-	f, err := os.OpenFile("data/reviews.json",
+	f, err := os.OpenFile("data/reviews.json.tmp",
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
 		0)
 	if err != nil {

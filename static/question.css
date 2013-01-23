@@ -3,9 +3,6 @@
 .question-version {
       display: none;
 }
-.answer-form-label {
-      display: none;
-}
 .answer-author {
       display: none;
 }
@@ -22,56 +19,42 @@
       display: none;
 }
 
-.response {
+.questionset-link {
+      margin: 1em 0 1em 0;
+}
+
+.form-question-edit {
       border: 1px solid black;
       margin: 1em;
       padding: 1em;
 }
 
-div.response-group-title {
-    text-transform: capitalize;
-    border-bottom: 1px solid black;
-    display:  inline-block;
-    margin:  1em 0 0 0em;
-}
-.profile-name:after {
-    content: "\")";
-}
-.profile-name:before {
-    content: "(using profile: \"";
-}
-.profile-name {
-    font-size:  120%;
-}
-.review-name:before {
-    content: "Review: ";
+.question-name:before {
+    content: "Question: ";
 }
 body {
     max-width: 40pc;
     padding:  1em;
     font-family: "Helvetica", sans-serif;
 }
-.review-name {
+.question-name {
     font-size:  160%;
 }
 
-textarea.answer-input {
+.question-text-label {
+    width: 80%;
+    display: inline-block;
+}
+
+textarea.question-text-input {
     margin: 1em 0 1em 0;
     width: 80%;
     display: inline-block;
 }
 
-select.answer-input {
-    width: 80%;
-}
-
-.answer-submit {
+.question-submit {
     margin: 1em;
     float: right;
-}
-
-.question-text {
-    width: 80%;
 }
 
 .clear {

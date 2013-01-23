@@ -333,10 +333,7 @@ func HandleProfileSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	// ...
 	// list links to all (current?) profiles?
 	profiles, err := self.GetAllProfiles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	checkHTTP(err)
 	renderTemplate(w, "profile_set", profiles)
 }
 
@@ -389,6 +386,7 @@ func (s vQuestionGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type vProfile2 struct {
 	ProfileName    string
+	QuestionNames  []string
 	QuestionGroups vQuestionGroupList
 }
 
@@ -428,8 +426,12 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 	sort.Sort(questionGroupList)
 	log.Printf("HandleProfileGet(): got final questionGroupList", questionGroupList)
 
+	questionNames, err := getAllQuestionNames(self)
+	checkHTTP(err)
+
 	view := vProfile2{
 		ProfileName:    profile.Version.String(),
+		QuestionNames:  questionNames,
 		QuestionGroups: questionGroupList,
 	}
 	log.Printf("HandleProfileGet(): view: %v\n", view)
@@ -439,6 +441,91 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleProfilePost()\n")
+	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+}
+
+type vQuestion struct {
+	QuestionName string
+}
+
+type vQuestionSet struct {
+	QuestionNames []string
+}
+
+func getAllQuestions(self *App) ([]*entity.Question, error) {
+	profiles, err := self.GetAllProfiles()
+	checkHTTP(err)
+
+	questionMap := map[string]*entity.Question{}
+	for _, prof := range profiles {
+		for k, v := range prof.Questions {
+			// BUG(mistone): check for duplicates?
+			questionMap[k.String()] = v
+		}
+	}
+
+	questions := make([]*entity.Question, len(questionMap))
+	idx := 0
+	for _, v := range questionMap {
+		questions[idx] = v
+		idx++
+	}
+	return questions, nil
+}
+
+func getAllQuestionNames(self *App) ([]string, error) {
+	questions, err := getAllQuestions(self)
+	if err != nil {
+		return nil, err
+	}
+
+	names := make([]string, len(questions))
+	for k, v := range questions {
+		names[k] = v.Version.String()
+	}
+
+	return names, nil
+}
+
+func HandleQuestionSetGet(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleQuestionSetGet()\n")
+
+	names, err := getAllQuestionNames(self)
+	checkHTTP(err)
+
+	view := vQuestionSet{
+		QuestionNames: names,
+	}
+	log.Printf("HandleQuestionSetGet(): view: %v", view)
+	sort.Strings(view.QuestionNames)
+
+	renderTemplate(w, "question_set", view)
+}
+
+func HandleQuestionSetPost(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleQuestionSetPost()\n")
+	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+}
+
+func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleQuestionGet()\n")
+
+	vars := mux.Vars(r)
+	questionName := vars["question_name"]
+	log.Printf("HandleQuestionGet(): questionName: %v\n", questionName)
+
+	questionVer, err := entity.NewVersionFromString(questionName)
+	checkHTTP(err)
+	log.Printf("HandleQuestionGet(): questionVer: %v\n", questionVer)
+
+	view := &vQuestion{
+		QuestionName: questionVer.String(),
+	}
+	renderTemplate(w, "question", view)
+}
+
+func HandleQuestionPost(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleQuestionPost()\n")
 	http.Error(w, "Not implemented.", http.StatusNotImplemented)
 }
 
@@ -452,6 +539,8 @@ var templates = template.Must(template.ParseFiles(
 	"src/review_set.html",
 	"src/profile.html",
 	"src/profile_set.html",
+	"src/question.html",
+	"src/question_set.html",
 	"src/textarea.html",
 	"src/multiselect.html"))
 
@@ -493,6 +582,12 @@ func doServe() {
 	s.HandleFunc("/", wrap(HandleProfileSetPost)).Methods("POST")
 	s.HandleFunc("/{profile_name}", wrap(HandleProfileGet)).Methods("GET").Name("profile")
 	s.HandleFunc("/{profile_name}", wrap(HandleProfilePost)).Methods("POST")
+
+	s = r.PathPrefix("/questions").Subrouter()
+	s.HandleFunc("/", wrap(HandleQuestionSetGet)).Methods("GET").Name("question_set")
+	s.HandleFunc("/", wrap(HandleQuestionSetPost)).Methods("POST")
+	s.HandleFunc("/{question_name}", wrap(HandleQuestionGet)).Methods("GET").Name("question")
+	s.HandleFunc("/{question_name}", wrap(HandleQuestionPost)).Methods("POST")
 
 	r.HandleFunc("/", wrap(HandleRootGet)).Methods("GET").Name("root")
 

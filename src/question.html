@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+	<title>Question: {{.QuestionName}}</title>
+	<link rel="stylesheet" type="text/css" href="/static/question.css"></link>
+	<link rel="stylesheet" type="text/css" href="/static/chosen-0.9.11-12-ga0ca7da.css"></link>
+	<script src="/static/jquery-1.9.0.min.js" type="text/javascript"></script>
+	<script src="/static/jquery.autosize-1.15.3.js" type="text/javascript"></script>
+	<script src="/static/jquery.chosen-0.9.11-12-ga0ca7da.min.js" type="text/javascript"></script>
+	<script src="/static/question.js" type="text/javascript"></script>
+</head>
+<body>
+<div class="question-name">{{.QuestionName}}</div>
+<div class="questionset-link">(<a href="/questions/">see other questions...</a>)</div>
+
+<div class="form-question-edit-title">Edit Question</div>
+<form class="form-question-edit" action="" method="POST">
+	<div class="question-text">
+		<label class="question-text-label" for="question-text">Text</label>
+		<textarea class="question-text-input" autofocus id="question-text" name="question_text" type="text"></textarea>
+	</div>
+	<input class="question-submit" value="submit" type="submit"></input>
+	<div class="clear">&nbsp;</div>
+</form>
+
+</body>
+</html>

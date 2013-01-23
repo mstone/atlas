@@ -9,10 +9,15 @@
 <div class="profileset-link">(<a href="/profiles/">see other profiles...</a>)</div>
 
 <div class="form-question-create-title">New Question</div>
-<form class="form-question-create" action="" method="POST">
+<form class="form-question-create" action="/questions/" method="POST">
 	<div class="question-name">
 		<label class="question-name-label" for="question-name">Question Name</label>
-		<input class="question-name-input" autofocus id="question-name" name="question_name" type="text"></input>
+		<input class="question-name-input" autofocus id="question-name" name="question_name" type="text" list="question-name-list"></input>
+		<datalist id="question-name-list">
+			{{range .QuestionNames}}
+				<option value="{{.}}"></option>
+			{{end}}
+		</datalist>
 	</div>
 	<input class="question-submit" value="submit" type="submit"></input>
 	<div class="clear">&nbsp;</div>

@@ -1,0 +1,75 @@
+@import url("reset.css");
+
+.question-version {
+      display: none;
+}
+.answer-author {
+      display: none;
+}
+.answer-creationtime {
+      display: none;
+}
+.question-help {
+      display: none;
+}
+.answer-title {
+      display: none;
+}
+.answer-datum {
+      display: none;
+}
+
+h1 {
+    font-size: 160%;
+}
+
+.question-list-title {
+	border-bottom: 1px solid black;
+	display: inline-block;
+	margin: 1em 0 0 0;
+}
+
+.question-list {
+      margin: 1em;
+      padding: 1em;
+}
+
+.form-question-create-title {
+	border-bottom: 1px solid black;
+	display: inline-block;
+	margin: 1em 0 0 0;
+}
+
+.form-question-create {
+	margin: 1em;
+	padding: 1em;
+	border: 1px solid black;
+}
+
+
+body {
+    max-width: 40pc;
+    padding:  1em;
+    font-family: "Helvetica", sans-serif;
+}
+
+.question-text-label {
+    width: 80%;
+    display: inline-block;
+}
+
+textarea.question-text-input {
+    margin: 1em 0 1em 0;
+    width: 80%;
+    display: inline-block;
+}
+
+.question-submit {
+    margin: 1em;
+    float: right;
+}
+
+.clear {
+    clear: both;
+    height: 0;
+}

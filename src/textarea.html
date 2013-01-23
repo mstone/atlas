@@ -1,1 +1,1 @@
-<textarea class="answer-input" id="{{.Question.Version.String}}" name="{{.Question.Version.String}}">{{with .Answer}}{{.Datum}}{{end}}</textarea>
+<textarea class="answer-input" id="{{.Question.Version.String}}" name="{{.Question.Version.String}}" placeholder="{{or .Question.Help ""}}">{{with .Answer}}{{.Datum}}{{end}}</textarea>

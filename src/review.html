@@ -14,6 +14,17 @@
 <div class="profile-name">{{.ProfileName}}</div>
 <div class="reviewset-link">(<a href="/reviews/">see other reviews...</a>)</div>
 
+<div class="overview-title">Questions (sorted alphabetically)</div>
+<div class="overview">
+<ol>
+{{range .ResponseNames}}
+<li><a href="#response-{{.}}">{{.}}</a></li>
+{{else}}
+<p>No responses.</p>
+{{end}}
+</ol>
+</div>
+
 <div class="review">
 {{range .ResponseGroups}}
 <div class="response-group-title">{{.GroupKey}}</div>

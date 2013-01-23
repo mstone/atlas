@@ -213,6 +213,7 @@ func (s vResponseGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 type vReview struct {
 	ReviewName     string
 	ProfileName    string
+	ResponseNames  []string
 	ResponseGroups vResponseGroupList
 }
 
@@ -274,9 +275,12 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	sort.Sort(responseGroupsList)
 	log.Printf("HandleReviewGet(): got final responseGroupsList", responseGroupsList)
 
+	responseNames := getProfileQuestionNames(review.Profile)
+
 	view := vReview{
 		ReviewName:     review.Version.String(),
 		ProfileName:    review.Profile.Version.String(),
+		ResponseNames:  responseNames,
 		ResponseGroups: responseGroupsList,
 	}
 	log.Printf("HandleReviewGet(): view: %v\n", view)
@@ -370,7 +374,7 @@ func HandleProfileSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 type vQuestionList []*entity.Question
 
 func (s vQuestionList) Len() int           { return len(s) }
-func (s vQuestionList) Less(i, j int) bool { return s[i].Version.String() < s[j].Version.String() }
+func (s vQuestionList) Less(i, j int) bool { return s[i].SortKey < s[j].SortKey }
 func (s vQuestionList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type vQuestionGroup struct {
@@ -388,6 +392,17 @@ type vProfile2 struct {
 	ProfileName    string
 	QuestionNames  []string
 	QuestionGroups vQuestionGroupList
+}
+
+func getProfileQuestionNames(profile *entity.Profile) []string {
+	questionNames := make([]string, len(profile.Questions))
+	idx := 0
+	for k := range profile.Questions {
+		questionNames[idx] = k.String()
+		idx++
+	}
+	sort.Strings(questionNames)
+	return questionNames
 }
 
 func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
@@ -426,8 +441,7 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 	sort.Sort(questionGroupList)
 	log.Printf("HandleProfileGet(): got final questionGroupList", questionGroupList)
 
-	questionNames, err := getAllQuestionNames(self)
-	checkHTTP(err)
+	questionNames := getProfileQuestionNames(profile)
 
 	view := vProfile2{
 		ProfileName:    profile.Version.String(),

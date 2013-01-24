@@ -42,6 +42,7 @@ import (
 
 type App struct {
 	*mux.Router
+	entity.QuestionRepo
 	entity.ProfileRepo
 	entity.ReviewRepo
 }
@@ -540,6 +541,21 @@ func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 func HandleQuestionPost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleQuestionPost()\n")
+
+	log.Printf("HandleQuestionPost(): req: %s", r)
+
+	vars := mux.Vars(r)
+	questionName := vars["question_name"]
+	log.Printf("HandleQuestionPost(): questionName: %v\n", questionName)
+
+	questionVer, err := entity.NewVersionFromString(questionName)
+	checkHTTP(err)
+	log.Printf("HandleQuestionPost(): questionVer: %v\n", questionVer)
+
+	question, err := self.QuestionRepo.GetQuestionById(*questionVer)
+	checkHTTP(err)
+	log.Printf("HandleQuestionPost(): question: %v\n", question)
+
 	http.Error(w, "Not implemented.", http.StatusNotImplemented)
 }
 
@@ -571,9 +587,10 @@ func doServe() {
 	r := mux.NewRouter()
 
 	app := &App{
-		ProfileRepo: entity.ProfileRepo(persist),
-		ReviewRepo:  entity.ReviewRepo(persist),
-		Router:      r,
+		QuestionRepo: entity.QuestionRepo(persist),
+		ProfileRepo:  entity.ProfileRepo(persist),
+		ReviewRepo:   entity.ReviewRepo(persist),
+		Router:       r,
 	}
 
 	wrap := func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {

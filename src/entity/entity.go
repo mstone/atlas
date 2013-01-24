@@ -67,6 +67,12 @@ type Review struct {
 	Responses map[Version]*Response
 }
 
+type QuestionRepo interface {
+	GetAllQuestions() ([]*Question, error)
+	GetQuestionById(version Version) (*Question, error)
+	AddQuestion(*Question) error
+}
+
 type ProfileRepo interface {
 	GetAllProfiles() ([]*Profile, error)
 	GetProfileById(version Version) (*Profile, error)

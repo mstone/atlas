@@ -33,6 +33,7 @@ import (
 	"persist"
 	"runtime/debug"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -456,7 +457,48 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleProfilePost()\n")
-	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+
+	vars := mux.Vars(r)
+	profileName := vars["profile_name"]
+	log.Printf("HandleProfilePost(): profileName: %v\n", profileName)
+
+	profileVer, err := entity.NewVersionFromString(profileName)
+	checkHTTP(err)
+	log.Printf("HandleProfilePost(): profileVer: %v\n", profileVer)
+
+	profile, err := self.ProfileRepo.GetProfileById(*profileVer)
+	checkHTTP(err)
+	log.Printf("HandleProfilePost(): profile: %v\n", profile)
+
+	questionName := r.FormValue("question_name")
+	log.Printf("HandleProfilePost(): questionName: %v\n", questionName)
+
+	questionVer, err := entity.NewVersionFromString(questionName)
+	checkHTTP(err)
+	log.Printf("HandleProfilePost(): questionVer: %v\n", questionVer)
+
+	question := &entity.Question{
+		Version: *questionVer,
+	}
+	oldQuestion, err := self.GetQuestionById(*questionVer)
+	if oldQuestion != nil {
+		question = oldQuestion
+	} else {
+		log.Printf("HandleProfilePost(): generating fresh question: %v\n", question)
+		err = self.QuestionRepo.AddQuestion(question)
+		checkHTTP(err)
+	}
+
+	profile.Questions[*questionVer] = question
+	err = self.AddProfile(profile)
+	checkHTTP(err)
+
+	url, err := self.Router.Get("profile").URL("profile_name", profileVer.String())
+	checkHTTP(err)
+	url.Fragment = "question-" + questionVer.String()
+
+	log.Printf("HandleProfilePost(): redirecting to: %v\n", url)
+	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
 type vQuestion struct {
@@ -499,7 +541,32 @@ func HandleQuestionSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 func HandleQuestionSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleQuestionSetPost()\n")
-	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+
+	questionName := r.FormValue("question_name")
+	log.Printf("HandleQuestionSetPost(): questionName: %v\n", questionName)
+
+	questionVer, err := entity.NewVersionFromString(questionName)
+	checkHTTP(err)
+	log.Printf("HandleQuestionSetPost(): questionVer: %v\n", questionVer)
+
+	oldQuestion, err := self.GetQuestionById(*questionVer)
+	if oldQuestion != nil {
+		http.Error(w, "Question already exists.", http.StatusConflict)
+	}
+
+	question := &entity.Question{
+		Version: *questionVer,
+	}
+	log.Printf("HandleQuestionSetPost(): question: %v\n", question)
+
+	err = self.QuestionRepo.AddQuestion(question)
+	checkHTTP(err)
+
+	url, err := self.Router.Get("question").URL("question_name", questionVer.String())
+	checkHTTP(err)
+
+	log.Printf("HandleQuestionSetPost(): redirecting to: %v\n", url)
+	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
 func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
@@ -527,8 +594,6 @@ func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
 func HandleQuestionPost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleQuestionPost()\n")
 
-	log.Printf("HandleQuestionPost(): req: %s", r)
-
 	vars := mux.Vars(r)
 	questionName := vars["question_name"]
 	log.Printf("HandleQuestionPost(): questionName: %v\n", questionName)
@@ -541,7 +606,22 @@ func HandleQuestionPost(self *App, w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 	log.Printf("HandleQuestionPost(): question: %v\n", question)
 
-	http.Error(w, "Not implemented.", http.StatusNotImplemented)
+	question.Text = r.FormValue("question_text")
+	question.Help = r.FormValue("question_help")
+	question.DisplayHint = r.FormValue("question_displayhint")
+	question.GroupKey = r.FormValue("question_groupkey")
+	sortkey, err := strconv.Atoi(r.FormValue("question_sortkey"))
+	checkHTTP(err)
+	question.SortKey = sortkey
+
+	err = self.QuestionRepo.AddQuestion(question)
+	checkHTTP(err)
+
+	url, err := self.Router.Get("question").URL("question_name", questionVer.String())
+	checkHTTP(err)
+
+	log.Printf("HandleQuestionPost(): redirecting to: %v\n", url)
+	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
 func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {

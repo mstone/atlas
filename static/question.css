@@ -29,6 +29,13 @@
 .question-name:before {
     content: "Question: ";
 }
+
+.form-question-edit-title {
+    margin: 1em 0 0 0;
+    display: inline-block;
+    border-bottom: 1px solid black;
+}
+
 body {
     max-width: 40pc;
     padding:  1em;

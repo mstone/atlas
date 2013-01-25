@@ -98,6 +98,21 @@ func persistQuestionSetV1ToEntityQuestionPtrSlice(qs questionSetV1) []*entity.Qu
 	return root
 }
 
+func entityQuestionPtrSliceToPersistQuestionSetV1(questions []*entity.Question) (questionSetV1, error) {
+	view := &questionSetV1{
+		Questions: make([]questionV1, len(questions)),
+	}
+	for idx, v := range questions {
+		vquest, err := entityQuestionToPersistQuestionV1(v)
+		if err != nil {
+			return *view, err
+		} else {
+			view.Questions[idx] = vquest
+		}
+	}
+	return *view, nil
+}
+
 func persistProfileSetV1ToEntityProfilePtrSlice(ps profileSetV1, questionsMap map[entity.Version]*entity.Question) []*entity.Profile {
 	root := make([]*entity.Profile, len(ps.Profiles))
 	for k, v := range ps.Profiles {

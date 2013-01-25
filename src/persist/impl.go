@@ -1,21 +1,20 @@
 package persist
 
 import (
+	"bufio"
 	"encoding/json"
 	"entity"
 	"errors"
 	"fmt"
-	"os"
 	"log"
-	"bufio"
+	"os"
 )
 
 const (
-	questionsPath =	"data/questions.json"
+	questionsPath = "data/questions.json"
 	profilesPath  = "data/profiles.json"
 	reviewsPath   = "data/reviews.json"
 )
-
 
 func (self *PersistJSON) jsonGetAllQuestions() ([]*entity.Question, error) {
 	f, err := self.jsonReadPath(questionsPath)
@@ -60,8 +59,49 @@ func (self *PersistJSON) jsonAddQuestion(question *entity.Question) error {
 	return err
 }
 
-func (self *PersistJSON) jsonAddQuestionHelper(*entity.Question) error {
-	return errors.New("jsonAddQuestionHelper() not implemented")
+func (self *PersistJSON) jsonAddQuestionHelper(question *entity.Question) error {
+	allQuestions, err := self.jsonGetAllQuestions()
+	log.Printf("jsonAddQuestionHelper(): questions: %v", allQuestions)
+	if err != nil {
+		return err
+	}
+
+	found := false
+	for idx, quest := range allQuestions {
+		if quest.Version == question.Version {
+			found = true
+			allQuestions[idx] = question
+		}
+	}
+	if !found {
+		allQuestions = append(allQuestions, question)
+	}
+
+	f, err := self.jsonWriteTmpPath(questionsPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	log.Printf("jsonAddQuestionHelper(): " + questionsPath + ".tmp opened for write")
+
+	writer := bufio.NewWriter(f)
+	defer writer.Flush()
+
+	encoder := json.NewEncoder(writer)
+	log.Printf("jsonAddQuestionHelper(): made encoder")
+
+	view, err := entityQuestionPtrSliceToPersistQuestionSetV1(allQuestions)
+	if err != nil {
+		return err
+	}
+
+	err = encoder.Encode(&view)
+	if err != nil {
+		return err
+	}
+	log.Printf("jsonAddProfile(): encoded questionSetV1: %v", view)
+
+	return nil
 }
 
 func (self *PersistJSON) jsonReadPath(path string) (*os.File, error) {
@@ -69,15 +109,14 @@ func (self *PersistJSON) jsonReadPath(path string) (*os.File, error) {
 }
 
 func (self *PersistJSON) jsonWriteTmpPath(path string) (*os.File, error) {
-	return os.OpenFile(path + ".tmp",
+	return os.OpenFile(path+".tmp",
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
 		0600)
 }
 
 func (self *PersistJSON) jsonRenameTmpPath(path string) error {
-	return os.Rename(path + ".tmp", path)
+	return os.Rename(path+".tmp", path)
 }
-
 
 func makeQuestionsMap(questions []*entity.Question) map[entity.Version]*entity.Question {
 	questionsMap := make(map[entity.Version]*entity.Question, len(questions))
@@ -137,6 +176,7 @@ func (self *PersistJSON) jsonAddProfile(profile *entity.Profile) error {
 }
 
 func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
+	log.Printf("jsonAddProfile(): adding new profile: %v", profile)
 	allProfs, err := self.jsonGetAllProfiles()
 	log.Printf("jsonAddProfile(): profs: %v", allProfs)
 	if err != nil {
@@ -147,7 +187,7 @@ func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 	for idx, prof := range allProfs {
 		if prof.Version == profile.Version {
 			found = true
-			allProfs[idx] = prof
+			allProfs[idx] = profile
 		}
 	}
 	if !found {
@@ -161,7 +201,10 @@ func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 	defer f.Close()
 	log.Printf("jsonAddProfile(): data/profiles.json.tmp opened for write")
 
-	encoder := json.NewEncoder(bufio.NewWriter(f))
+	writer := bufio.NewWriter(f)
+	defer writer.Flush()
+
+	encoder := json.NewEncoder(writer)
 	log.Printf("jsonAddProfile(): made encoder")
 
 	view, err := entityProfilePtrSliceToPersistProfileSetV1(allProfs)

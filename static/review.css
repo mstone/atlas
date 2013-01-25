@@ -79,6 +79,17 @@ select.answer-input {
     width: 80%;
 }
 
+.question-editlink:before {
+    content: "(";
+}
+.question-editlink:after {
+    content: ")";
+}
+.question-editlink {
+    float: right;
+    font-size: 80%;
+}
+
 .clear {
     clear: both;
     height: 0;

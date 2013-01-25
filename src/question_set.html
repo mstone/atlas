@@ -2,12 +2,15 @@
 <html>
 <head>
 	<title>All Questions </title>
-	<link rel="stylesheet" type="text/css" href="/static/question_set.css"></link>
+	{{template "head" "question_set"}}
 </head>
 <body>
+<header>
 <h1>All Questions</h1>
-<div class="root-link">(<a href="/">root</a>)</div>
+{{template "nav" .}}
+</header>
 
+<article>
 <div class="form-question-create-title">New Question</div>
 <form class="form-question-create" action="/questions/" method="POST">
 	<div class="question-name">
@@ -17,7 +20,9 @@
 	<input class="question-submit" value="submit" type="submit"></input>
 	<div class="clear">&nbsp;</div>
 </form>
+</article>
 
+<article>
 <div class="question-list-title">Existing Questions</div>
 <div class="question-list">
 {{range .QuestionNames}}
@@ -28,5 +33,6 @@
 <p class="question-list-empty">No questions.</p>
 {{end}}
 </div>
+</article>
 </body>
 </html>

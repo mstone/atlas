@@ -2,12 +2,15 @@
 <html>
 <head>
 	<title>All Profiles</title>
-	<link rel="stylesheet" type="text/css" href="/static/profile_set.css"></link>
+	{{template "head" "profile_set"}}
 </head>
 <body>
+<header>
 <h1>All Profiles</h1>
-<div class="root-link">(<a href="/">root</a>)</div>
+{{template "nav" .}}
+</header>
 
+<article>
 <div class="form-profile-create-title">New Profile</div>
 <form class="form-profile-create" action="" method="POST">  <!-- XXX: WAI-ARIA role -->
 	<div class="profile-name">
@@ -17,7 +20,9 @@
 	<input class="profile-submit" type="submit" value="submit"/>
 	<div class="clear">&nbsp;</div>
 </form>
+</article>
 
+<article>
 <div class="profile-list-title">Existing Profiles</div>
 <div class="profile-list">
 {{range .}}
@@ -28,5 +33,6 @@
 <p class="profile-list-empty">No profiles.</p>
 {{end}}
 </div>
+</article>
 </body>
 </html>

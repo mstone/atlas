@@ -544,6 +544,8 @@ func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 var templates = template.Must(template.ParseFiles(
 	"src/root.html",
+	"src/head.html",
+	"src/nav.html",
 	"src/review.html",
 	"src/review_set.html",
 	"src/profile.html",

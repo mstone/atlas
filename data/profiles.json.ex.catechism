@@ -2,403 +2,241 @@
     "Profiles": [
         {
             "QuestionDeps": null,
+            "QuestionIds": [
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "goal",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "how-today",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "whats-new",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "who-cares",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "risks",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "cost",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "final-exam",
+                        "Patch": 0
+                    }
+                }
+            ],
             "Version": {
                 "Major": 1,
-                "Name": "catechism",
                 "Minor": 0,
+                "Name": "catechism",
                 "Patch": 0
-            },
-            "Questions": [
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "catechism",
-                    "Text": "What are you trying to do? Articulate your objectives using absolutely no jargon.",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "goal",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "catechism",
-                    "Text": "How is it done today, and what are the limits of current practice?",
-                    "SortKey": 10,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "how-today",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "catechism",
-                    "Text": "What's new in your approach and why do you think it will be successful?",
-                    "SortKey": 20,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "whats-new",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "catechism",
-                    "Text": "Who cares? If you're successful, what difference will it make?",
-                    "SortKey": 30,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "who-cares",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "catechism",
-                    "Text": "What are the risks and the payoffs?",
-                    "SortKey": 40,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "risks",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "catechism",
-                    "Text": "How much will it cost? How long will it take?",
-                    "SortKey": 50,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "cost",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "catechism",
-                    "Text": "What are the midterm and final \"exams\" to check for success?",
-                    "SortKey": 60,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "final-exam",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                }
-            ]
+            }
         },
         {
             "QuestionDeps": null,
+            "QuestionIds": [
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "deployed-networks",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "bart-releases",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "component-names",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "code-lines",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "bugzilla-tickets",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "billing-method",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "agora-pages",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "etherpad-links",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "secarch-review-link",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "module-design-link",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "features",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "olympus-tickets",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "jira-tickets",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "product-contacts",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "implementation-contact",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "technical-design-contact",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "engineering-schedule-contact",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "program-manager",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "secarch-advisor",
+                        "Patch": 0
+                    }
+                },
+                {
+                    "Version": {
+                        "Major": 1,
+                        "Minor": 0,
+                        "Name": "secarch-reviewer",
+                        "Patch": 0
+                    }
+                }
+            ],
             "Version": {
                 "Major": 1,
-                "Name": "pace",
                 "Minor": 0,
+                "Name": "pace",
                 "Patch": 0
-            },
-            "Questions": [
-                {
-                    "DisplayHint": "essl, ff, ...",
-                    "Help": "",
-                    "GroupKey": "build",
-                    "Text": "What networks will you be deploying to?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "deployed-networks",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "build",
-                    "Text": "Which BART releases are you using?",
-                    "SortKey": 5,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "bart-releases",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "build",
-                    "Text": "What are your components called?",
-                    "SortKey": 10,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "component-names",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "build",
-                    "Text": "What are your code lines?",
-                    "SortKey": 20,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "code-lines",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "build",
-                    "Text": "What CRs does your launch close?",
-                    "SortKey": 30,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "bugzilla-tickets",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "compliance",
-                    "Text": "What's your billing method?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "billing-method",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "docs",
-                    "Text": "Which agora pages describe your product?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "agora-pages",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "docs",
-                    "Text": "Which etherpad should we use to collaborate on writing up your review?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "etherpad-links",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "docs",
-                    "Text": "Which SecArch review covers your product?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "secarch-review-link",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "docs",
-                    "Text": "Where is your module design document?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "module-design-link",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "product",
-                    "Text": "What features does your product build on?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "features",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "product",
-                    "Text": "Which Olympus KFs does your product address?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "olympus-tickets",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "product",
-                    "Text": "What Jira tickets does this launch or commit address?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "jira-tickets",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "team",
-                    "Text": "Who can speak authoritatively about your product's strategy, packaging, etc.",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "product-contacts",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "team",
-                    "Text": "Who can speak authoritatively about your product's technical implementation details?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "implementation-contact",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "team",
-                    "Text": "Who can speak authoritatively about your product's technical architecture and design?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "technical-design-contact",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "team",
-                    "Text": "Who can speak authoritatively about your engineering schedule?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "engineering-schedule-contact",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "team",
-                    "Text": "Who is program-managing your product?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "program-manager",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "team",
-                    "Text": "Who from SecArch is advising you?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "secarch-advisor",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                },
-                {
-                    "DisplayHint": "",
-                    "Help": "",
-                    "GroupKey": "team",
-                    "Text": "Who from SecArch is reviewing your product's security considerations?",
-                    "SortKey": 0,
-                    "Version": {
-                        "Major": 1,
-                        "Name": "secarch-reviewer",
-                        "Minor": 0,
-                        "Patch": 0
-                    },
-                    "AnswerType": 0
-                }
-            ]
+            }
         }
     ]
 }

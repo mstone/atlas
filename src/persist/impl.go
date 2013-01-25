@@ -10,24 +10,91 @@ import (
 	"bufio"
 )
 
+const (
+	questionsPath =	"data/questions.json"
+	profilesPath  = "data/profiles.json"
+	reviewsPath   = "data/reviews.json"
+)
+
+
 func (self *PersistJSON) jsonGetAllQuestions() ([]*entity.Question, error) {
-	return nil, errors.New("jsonGetAllQuestions() not implemented")
+	f, err := self.jsonReadPath(questionsPath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	log.Printf("PersistJSON.GetAllQuestions(): data/questions.json opened")
+
+	decoder := json.NewDecoder(bufio.NewReader(f))
+	log.Printf("PersistJSON.GetAllQuestions(): made decoder")
+
+	qs := questionSetV1{}
+	err = decoder.Decode(&qs)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("PersistJSON.GetAllQuestions(): decoded questionSet: %v", qs)
+
+	root := persistQuestionSetV1ToEntityQuestionPtrSlice(qs)
+	return root, nil
 }
 
 func (self *PersistJSON) jsonGetQuestionById(id entity.Version) (*entity.Question, error) {
-	return nil, errors.New("jsonGetQuestionById() not implemented")
+	questions, err := self.jsonGetAllQuestions()
+	if err != nil {
+		return nil, err
+	}
+	for _, quest := range questions {
+		if quest.Version == id {
+			return quest, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("PersistJSON.GetQuestionById(): question version '%v' not found", id))
 }
 
-func (self *PersistJSON) jsonAddQuestion(*entity.Question) error {
-	return errors.New("jsonAddQuestion() not implemented")
+func (self *PersistJSON) jsonAddQuestion(question *entity.Question) error {
+	err := self.jsonAddQuestionHelper(question)
+	if err == nil {
+		err = self.jsonRenameTmpPath(questionsPath)
+	}
+	return err
 }
 
-func (self *PersistJSON) jsonOpenProfilesFile() (*os.File, error) {
-	return os.Open("data/profiles.json")
+func (self *PersistJSON) jsonAddQuestionHelper(*entity.Question) error {
+	return errors.New("jsonAddQuestionHelper() not implemented")
+}
+
+func (self *PersistJSON) jsonReadPath(path string) (*os.File, error) {
+	return os.Open(path)
+}
+
+func (self *PersistJSON) jsonWriteTmpPath(path string) (*os.File, error) {
+	return os.OpenFile(path + ".tmp",
+		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
+		0600)
+}
+
+func (self *PersistJSON) jsonRenameTmpPath(path string) error {
+	return os.Rename(path + ".tmp", path)
+}
+
+
+func makeQuestionsMap(questions []*entity.Question) map[entity.Version]*entity.Question {
+	questionsMap := make(map[entity.Version]*entity.Question, len(questions))
+	for _, v := range questions {
+		questionsMap[v.Version] = v
+	}
+	return questionsMap
 }
 
 func (self *PersistJSON) jsonGetAllProfiles() ([]*entity.Profile, error) {
-	f, err := self.jsonOpenProfilesFile()
+	questions, err := self.jsonGetAllQuestions()
+	if err != nil {
+		return nil, err
+	}
+	questionsMap := makeQuestionsMap(questions)
+
+	f, err := self.jsonReadPath(profilesPath)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +111,7 @@ func (self *PersistJSON) jsonGetAllProfiles() ([]*entity.Profile, error) {
 	}
 	log.Printf("PersistJSON.GetAllProfiles(): decoded profileSet: %v", ps)
 
-	root := persistProfileSetV1ToEntityProfilePtrSlice(ps)
+	root := persistProfileSetV1ToEntityProfilePtrSlice(ps, questionsMap)
 	return root, nil
 }
 
@@ -64,7 +131,7 @@ func (self *PersistJSON) jsonGetProfileById(id entity.Version) (*entity.Profile,
 func (self *PersistJSON) jsonAddProfile(profile *entity.Profile) error {
 	err := self.jsonAddProfileHelper(profile)
 	if err == nil {
-		err = os.Rename("data/profiles.json.tmp", "data/profiles.json")
+		err = self.jsonRenameTmpPath(profilesPath)
 	}
 	return err
 }
@@ -87,9 +154,7 @@ func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 		allProfs = append(allProfs, profile)
 	}
 
-	f, err := os.OpenFile("data/profiles.json.tmp",
-		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-		0600)
+	f, err := self.jsonWriteTmpPath(profilesPath)
 	if err != nil {
 		return err
 	}
@@ -114,7 +179,7 @@ func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 }
 
 func (self *PersistJSON) jsonGetAllReviews() ([]*entity.Review, error) {
-	f, err := os.Open("data/reviews.json")
+	f, err := self.jsonReadPath(reviewsPath)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +215,7 @@ func (self *PersistJSON) jsonGetReviewById(id entity.Version) (*entity.Review, e
 func (self *PersistJSON) jsonAddReview(review *entity.Review) error {
 	err := self.jsonAddReviewHelper(review)
 	if err == nil {
-		err = os.Rename("data/reviews.json.tmp", "data/reviews.json")
+		err = self.jsonRenameTmpPath(reviewsPath)
 	}
 	return err
 }
@@ -173,9 +238,7 @@ func (self *PersistJSON) jsonAddReviewHelper(review *entity.Review) error {
 		allRevs = append(allRevs, review)
 	}
 
-	f, err := os.OpenFile("data/reviews.json.tmp",
-		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-		0600)
+	f, err := self.jsonWriteTmpPath(reviewsPath)
 	if err != nil {
 		return err
 	}

@@ -13,6 +13,10 @@ type versionV1 struct {
 	Patch int
 }
 
+type questionIdV1 struct {
+	Version versionV1
+}
+
 type questionV1 struct {
 	Version     versionV1
 	Text        string
@@ -25,9 +29,13 @@ type questionV1 struct {
 
 type questionDepV1 struct{}
 
+type questionSetV1 struct {
+	Questions []questionV1
+}
+
 type profileV1 struct {
 	Version      versionV1
-	Questions    []questionV1
+	QuestionIds  []questionIdV1
 	QuestionDeps []questionDepV1
 }
 
@@ -70,8 +78,8 @@ func entityVersionToPersistVersionV1(v entity.Version) versionV1 {
 	}
 }
 
-func persistQuestionV1ToEntityQuestion(q questionV1) entity.Question {
-	return entity.Question{
+func persistQuestionV1ToEntityQuestion(q questionV1) *entity.Question {
+	return &entity.Question{
 		Version:     persistVersionV1ToEntityVersion(q.Version),
 		Text:        q.Text,
 		Help:        q.Help,
@@ -82,7 +90,15 @@ func persistQuestionV1ToEntityQuestion(q questionV1) entity.Question {
 	}
 }
 
-func persistProfileSetV1ToEntityProfilePtrSlice(ps profileSetV1) []*entity.Profile {
+func persistQuestionSetV1ToEntityQuestionPtrSlice(qs questionSetV1) []*entity.Question {
+	root := make([]*entity.Question, len(qs.Questions))
+	for k, v := range qs.Questions {
+		root[k] = persistQuestionV1ToEntityQuestion(v)
+	}
+	return root
+}
+
+func persistProfileSetV1ToEntityProfilePtrSlice(ps profileSetV1, questionsMap map[entity.Version]*entity.Question) []*entity.Profile {
 	root := make([]*entity.Profile, len(ps.Profiles))
 	for k, v := range ps.Profiles {
 		root[k] = &entity.Profile{
@@ -90,10 +106,9 @@ func persistProfileSetV1ToEntityProfilePtrSlice(ps profileSetV1) []*entity.Profi
 			Questions:    make(map[entity.Version]*entity.Question),
 			QuestionDeps: make(map[entity.Version]*entity.QuestionDep),
 		}
-		for _, v2 := range v.Questions {
+		for _, v2 := range v.QuestionIds {
 			questionVer := persistVersionV1ToEntityVersion(v2.Version)
-			question := persistQuestionV1ToEntityQuestion(v2)
-			root[k].Questions[questionVer] = &question
+			root[k].Questions[questionVer] = questionsMap[questionVer]
 		}
 		// BUG(mistone): QuestionDeps not propagated
 	}
@@ -204,16 +219,14 @@ func entityQuestionToPersistQuestionV1(question *entity.Question) (questionV1, e
 func entityProfileToPersistProfileV1(profile *entity.Profile) (profileV1, error) {
 	view := profileV1{
 		Version:      entityVersionToPersistVersionV1(profile.Version),
-		Questions:    make([]questionV1, len(profile.Questions)),
+		QuestionIds:  make([]questionIdV1, len(profile.Questions)),
 		QuestionDeps: make([]questionDepV1, len(profile.QuestionDeps)),
 	}
 	idx := 0
-	for _, v := range profile.Questions {
-		vquest, err := entityQuestionToPersistQuestionV1(v)
-		if err != nil {
-			return view, err
-		} else {
-			view.Questions[idx] = vquest
+	for _, question := range profile.Questions {
+		ver := entityVersionToPersistVersionV1(question.Version)
+		view.QuestionIds[idx] = questionIdV1{
+			Version: ver,
 		}
 		idx++
 	}

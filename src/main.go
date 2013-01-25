@@ -467,29 +467,8 @@ type vQuestionSet struct {
 	QuestionNames []string
 }
 
-func getAllQuestions(self *App) ([]*entity.Question, error) {
-	profiles, err := self.GetAllProfiles()
-	checkHTTP(err)
-
-	questionMap := map[string]*entity.Question{}
-	for _, prof := range profiles {
-		for k, v := range prof.Questions {
-			// BUG(mistone): check for duplicates?
-			questionMap[k.String()] = v
-		}
-	}
-
-	questions := make([]*entity.Question, len(questionMap))
-	idx := 0
-	for _, v := range questionMap {
-		questions[idx] = v
-		idx++
-	}
-	return questions, nil
-}
-
 func getAllQuestionNames(self *App) ([]string, error) {
-	questions, err := getAllQuestions(self)
+	questions, err := self.GetAllQuestions()
 	if err != nil {
 		return nil, err
 	}

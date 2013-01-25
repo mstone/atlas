@@ -1,7 +1,7 @@
 @import url("reset.css");
 
 .question-version {
-      display: none;
+      font-style: italic;
 }
 .answer-author {
       display: none;

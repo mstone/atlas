@@ -12,14 +12,7 @@
 
 <article>
 <div class="form-question-edit-title">Edit Question</div>
-<form class="form-question-edit" action="" method="POST">
-	<div class="question-text">
-		<label class="question-text-label" for="question-text">Text</label>
-		<textarea class="question-text-input" autofocus id="question-text" name="question_text" type="text"></textarea>
-	</div>
-	<input class="question-submit" value="submit" type="submit"></input>
-	<div class="clear">&nbsp;</div>
-</form>
+{{template "edit_question" .}}
 </article>
 
 </body>

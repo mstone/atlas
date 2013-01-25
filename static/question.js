@@ -1,4 +1,4 @@
 $(function(){
-	$('.question-text-input').autosize();
+	$('textarea').autosize();
 	$('.chzn-select').chosen({width: "80%"})
 });

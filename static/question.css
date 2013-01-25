@@ -9,9 +9,6 @@
 .answer-creationtime {
       display: none;
 }
-.question-help {
-      display: none;
-}
 .answer-title {
       display: none;
 }
@@ -52,9 +49,26 @@ textarea.question-text-input {
     display: inline-block;
 }
 
+label {
+    width: 80%;
+    display: inline-block;
+    margin: 1em 0 0 0;
+}
+
+textarea {
+    width: 80%;
+    display: inline-block;
+}
+
 .question-submit {
     margin: 1em;
     float: right;
+}
+
+.question {
+      border: 1px solid black;
+      margin: 1em;
+      padding: 1em;
 }
 
 .clear {

@@ -461,6 +461,7 @@ func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
 
 type vQuestion struct {
 	QuestionName string
+	*entity.Question
 }
 
 type vQuestionSet struct {
@@ -512,8 +513,13 @@ func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 	log.Printf("HandleQuestionGet(): questionVer: %v\n", questionVer)
 
+	question, err := self.GetQuestionById(*questionVer)
+	checkHTTP(err)
+	log.Printf("HandleQuestionGet(): question: %v\n", question)
+
 	view := &vQuestion{
 		QuestionName: questionVer.String(),
+		Question:     question,
 	}
 	renderTemplate(w, "question", view)
 }
@@ -552,6 +558,7 @@ var templates = template.Must(template.ParseFiles(
 	"src/profile_set.html",
 	"src/question.html",
 	"src/question_set.html",
+	"src/edit_question.html",
 	"src/textarea.html",
 	"src/multiselect.html"))
 

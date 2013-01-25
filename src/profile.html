@@ -55,6 +55,10 @@
 				<label class="question-help-label" for="question-help-input">Help</label>
 				<textarea class="question-help-input" name="question_help">{{or .Help ""}}</textarea>
 			</div>
+			<div class="question-displayhint">
+				<label class="question-displayhint-label" for="question-displayhint-input">Placeholder Text</label>
+				<textarea class="question-displayhint-input" name="question_displayhint">{{or .DisplayHint ""}}</textarea>
+			</div>
 			<div class="question-groupkey">
 				<label class="question-groupkey-label" for="question-groupkey-input">GroupKey</label>
 				<input class="question-groupkey-input" name="question_groupkey" value="{{or .GroupKey ""}}" type="text"></input>

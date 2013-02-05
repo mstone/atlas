@@ -649,10 +649,24 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
+var bindAddr = flag.String("http", "127.0.0.1:3001", "address:port")
+var appRoot = flag.String("approot", "", "approot prefix")
+
 func doServe() {
 	persist := persist.NewPersistJSON()
 
-	r := mux.NewRouter()
+	rr := mux.NewRouter()
+	var r *mux.Router
+	var staticUrl string
+	if *appRoot != "" {
+		r = rr.PathPrefix("/" + *appRoot).Subrouter()
+		staticUrl = "/" + *appRoot + "/static/"
+	} else {
+		r = rr
+		staticUrl = "/static/"
+	}
+	fmt.Printf("Using appRoot: /%s\n", *appRoot)
+	fmt.Printf("Using staticUrl: %s\n", staticUrl)
 
 	app := &App{
 		QuestionRepo: entity.QuestionRepo(persist),
@@ -690,9 +704,9 @@ func doServe() {
 
 	r.HandleFunc("/", wrap(HandleRootGet)).Methods("GET").Name("root")
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe("127.0.0.1:3001", nil))
+	http.Handle(staticUrl, http.StripPrefix(staticUrl, http.FileServer(http.Dir("static"))))
+	http.Handle("/", rr)
+	log.Fatal(http.ListenAndServe(*bindAddr, nil))
 }
 
 func main() {

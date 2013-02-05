@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title>All Reviews</title>
-	{{template "head" "review_set"}}
+	{{template "head" .}}
 </head>
 <body>
 <header>
@@ -35,7 +35,7 @@
 <div class="review-list">
 	{{range .Reviews}}
 	<div class="review">
-		<p><a class="review-link" href="./{{.Version.String}}">{{.Version.String}}</a></p>
+		<p><a class="review-link" href="{{.Url}}">{{.Version.String}}</a></p>
 	</div>
 	{{else}}
 	<p class="review-list-empty">No reviews.</p>

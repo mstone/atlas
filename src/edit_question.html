@@ -1,6 +1,6 @@
 {{define "edit_question"}}
 <div class="question" id="question-{{.Version.String}}">
-	<form class="question-form" action="/questions/{{.Version.String}}" method="POST">
+	<form class="question-form" action="{{.Url}}" method="POST">
 		<p class="question-version">{{or .Version.String ""}}</p>
 		<div class="question-text">
 			<label class="question-text-label" for="question-text-input">Text</label>

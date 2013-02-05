@@ -26,7 +26,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
-	"html"
 	"html/template"
 	"log"
 	"net/http"
@@ -46,6 +45,8 @@ type App struct {
 	entity.QuestionRepo
 	entity.ProfileRepo
 	entity.ReviewRepo
+	StaticUrl string
+	AppRoot string
 }
 
 func recoverHTTP(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +83,13 @@ func (s vProfileList) Less(i, j int) bool {
 }
 func (s vProfileList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
-type vReviewList []*entity.Review
+
+type vReview2 struct {
+	Url string
+	*entity.Review
+}
+
+type vReviewList []vReview2
 
 func (s vReviewList) Len() int { return len(s) }
 func (s vReviewList) Less(i, j int) bool {
@@ -91,6 +98,7 @@ func (s vReviewList) Less(i, j int) bool {
 func (s vReviewList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 type vReviewSet struct {
+	*vRoot
 	Profiles vProfileList
 	Reviews  vReviewList
 }
@@ -116,12 +124,22 @@ func HandleReviewSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Sort(profilesList)
 
-	reviewsList := vReviewList(reviews)
+	reviewsList := make(vReviewList, len(reviews))
+	for idx, review := range reviews {
+		reviewUrl, err := self.Router.Get("review").URL("review_name", review.Version.String())
+		checkHTTP(err)
+
+		reviewsList[idx] = vReview2{
+			Url: reviewUrl.String(),
+			Review: review,
+		}
+	}
 	sort.Sort(reviewsList)
 
 	view := &vReviewSet{
 		Profiles: profilesList,
 		Reviews:  reviewsList,
+		vRoot: newVRoot(self, "review_set"),
 	}
 
 	renderTemplate(w, "review_set", view)
@@ -129,65 +147,58 @@ func HandleReviewSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 // BUG(mistone): CSRF!
 func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/reviews/" {
-		http.Error(w,
-			fmt.Sprintf("Bad Path %q %q\n",
-				html.EscapeString(r.Method),
-				html.EscapeString(r.URL.Path)),
-			http.StatusBadRequest)
-	} else {
-		// parse body
-		reviewName := r.FormValue("review")
+	// parse body
+	reviewName := r.FormValue("review")
 
-		reviewVer, err := entity.NewVersionFromString(reviewName)
-		checkHTTP(err)
+	reviewVer, err := entity.NewVersionFromString(reviewName)
+	checkHTTP(err)
 
-		log.Printf("HandleReviewSetPost(): reviewVer: %v\n", reviewVer)
+	log.Printf("HandleReviewSetPost(): reviewVer: %v\n", reviewVer)
 
-		// extract profile
-		profileName := r.FormValue("profile")
+	// extract profile
+	profileName := r.FormValue("profile")
 
-		profileVer, err := entity.NewVersionFromString(profileName)
-		checkHTTP(err)
+	profileVer, err := entity.NewVersionFromString(profileName)
+	checkHTTP(err)
 
-		profile, err := self.GetProfileById(*profileVer)
-		checkHTTP(err)
+	profile, err := self.GetProfileById(*profileVer)
+	checkHTTP(err)
 
-		log.Printf("HandleReviewSetPost(): profile: %v\n", profile)
+	log.Printf("HandleReviewSetPost(): profile: %v\n", profile)
 
-		// make a new Review
-		review := &entity.Review{
-			Version:   *reviewVer,
-			Profile:   profile,
-			Responses: make(map[entity.Version]*entity.Response, len(profile.Questions)),
-		}
-
-		// make appropriate Responses based on the Questions
-		//   contained in the indicated Profile
-		for idx, q := range profile.Questions {
-			review.Responses[idx] = &entity.Response{
-				Question: q,
-				Answer:   entity.NewAnswer(),
-			}
-		}
-		log.Printf("HandleReviewSetPost(): created review: %v\n", review)
-
-		// persist the new review
-		err = self.ReviewRepo.AddReview(review)
-		checkHTTP(err)
-
-		url, err := self.Router.Get("review").URL("review_name", reviewVer.String())
-		checkHTTP(err)
-
-		log.Printf("HandleReviewSetPost(): redirecting to: %v\n", url)
-		http.Redirect(w, r, url.String(), http.StatusSeeOther)
+	// make a new Review
+	review := &entity.Review{
+		Version:   *reviewVer,
+		Profile:   profile,
+		Responses: make(map[entity.Version]*entity.Response, len(profile.Questions)),
 	}
+
+	// make appropriate Responses based on the Questions
+	//   contained in the indicated Profile
+	for idx, q := range profile.Questions {
+		review.Responses[idx] = &entity.Response{
+			Question: q,
+			Answer:   entity.NewAnswer(),
+		}
+	}
+	log.Printf("HandleReviewSetPost(): created review: %v\n", review)
+
+	// persist the new review
+	err = self.ReviewRepo.AddReview(review)
+	checkHTTP(err)
+
+	url, err := self.Router.Get("review").URL("review_name", reviewVer.String())
+	checkHTTP(err)
+
+	log.Printf("HandleReviewSetPost(): redirecting to: %v\n", url)
+	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
 type vResponse struct {
 	*entity.Response
 	AnswerInput template.HTML
 	DatumList   []string
+	QuestionUrl string
 }
 
 type vResponseList []*vResponse
@@ -213,6 +224,7 @@ func (s vResponseGroupList) Less(i, j int) bool { return s[i].GroupKey < s[j].Gr
 func (s vResponseGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type vReview struct {
+	*vRoot
 	ReviewName     string
 	ProfileName    string
 	ResponseNames  []string
@@ -237,8 +249,11 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	for _, resp := range review.Responses {
 		log.Printf("HandleReviewGet(): considering resp %v", resp)
 
+		questionUrl, err := self.Router.Get("question").URL("question_name", resp.Question.Version.String())
+		checkHTTP(err)
 		vresp := &vResponse{
 			Response: resp,
+			QuestionUrl: questionUrl.String(),
 		}
 
 		var templateName string
@@ -280,6 +295,7 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	responseNames := getProfileQuestionNames(review.Profile)
 
 	view := vReview{
+		vRoot:		newVRoot(self, "review"),
 		ReviewName:     review.Version.String(),
 		ProfileName:    review.Profile.Version.String(),
 		ResponseNames:  responseNames,
@@ -334,13 +350,23 @@ func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
+type vProfileSet struct {
+	*vRoot
+	Profiles []*entity.Profile
+}
+
 func HandleProfileSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleProfileSetGet()\n")
 	// ...
 	// list links to all (current?) profiles?
 	profiles, err := self.GetAllProfiles()
 	checkHTTP(err)
-	renderTemplate(w, "profile_set", profiles)
+
+	view := &vProfileSet{
+		vRoot: newVRoot(self, "profile_set"),
+		Profiles: profiles,
+	}
+	renderTemplate(w, "profile_set", view)
 }
 
 func HandleProfileSetPost(self *App, w http.ResponseWriter, r *http.Request) {
@@ -373,8 +399,7 @@ func HandleProfileSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
-type vQuestionList []*entity.Question
-
+type vQuestionList []vQuestion
 func (s vQuestionList) Len() int           { return len(s) }
 func (s vQuestionList) Less(i, j int) bool { return s[i].SortKey < s[j].SortKey }
 func (s vQuestionList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
@@ -391,6 +416,7 @@ func (s vQuestionGroupList) Less(i, j int) bool { return s[i].GroupKey < s[j].Gr
 func (s vQuestionGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type vProfile2 struct {
+	*vRoot
 	ProfileName    string
 	QuestionNames  []string
 	QuestionGroups vQuestionGroupList
@@ -424,7 +450,19 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 	questionGroupMap := make(map[string]vQuestionList)
 	for _, quest := range profile.Questions {
 		log.Printf("HandleProfileGet(): considering question %v", quest)
-		questionGroupMap[quest.GroupKey] = append(questionGroupMap[quest.GroupKey], quest)
+
+		questionUrl, err := self.Router.Get("question").URL("question_name", quest.Version.String())
+		checkHTTP(err)
+		log.Printf("HandleProfileGet(): questionUrl: %v\n", questionUrl)
+
+		vQuest := vQuestion{
+			vRoot:        newVRoot(self, "question"),
+			Url:          questionUrl.String(),
+			QuestionName: quest.Version.String(),
+			Question:     quest,
+		}
+
+		questionGroupMap[quest.GroupKey] = append(questionGroupMap[quest.GroupKey], vQuest)
 	}
 	log.Printf("HandleProfileGet(): produced questionGroupMap %v", questionGroupMap)
 	questionGroupList := make(vQuestionGroupList, len(questionGroupMap))
@@ -446,6 +484,7 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 	questionNames := getProfileQuestionNames(profile)
 
 	view := vProfile2{
+		vRoot:		newVRoot(self, "profile"),
 		ProfileName:    profile.Version.String(),
 		QuestionNames:  questionNames,
 		QuestionGroups: questionGroupList,
@@ -502,11 +541,14 @@ func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
 }
 
 type vQuestion struct {
+	*vRoot
 	QuestionName string
+	Url string
 	*entity.Question
 }
 
 type vQuestionSet struct {
+	*vRoot
 	QuestionNames []string
 }
 
@@ -531,6 +573,7 @@ func HandleQuestionSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 
 	view := vQuestionSet{
+		vRoot:	       newVRoot(self, "question_set"),
 		QuestionNames: names,
 	}
 	log.Printf("HandleQuestionSetGet(): view: %v", view)
@@ -584,7 +627,13 @@ func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 	log.Printf("HandleQuestionGet(): question: %v\n", question)
 
+	questionUrl, err := self.Router.Get("question").URL("question_name", questionVer.String())
+	checkHTTP(err)
+	log.Printf("HandleQuestionGet(): questionUrl: %v\n", questionUrl)
+
 	view := &vQuestion{
+		vRoot:        newVRoot(self, "question"),
+		Url:          questionUrl.String(),
 		QuestionName: questionVer.String(),
 		Question:     question,
 	}
@@ -624,8 +673,34 @@ func HandleQuestionPost(self *App, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
+
+type vRoot struct {
+	PageName string
+	StaticUrl string
+	AppRoot string
+	QuestionSetUrl string
+	ProfileSetUrl string
+	ReviewSetUrl string
+}
+
+func newVRoot(self *App, pageName string) *vRoot {
+	questionSetUrl, _ := self.Router.Get("question_set").URL()
+	profileSetUrl, _ := self.Router.Get("profile_set").URL()
+	reviewSetUrl, _ := self.Router.Get("review_set").URL()
+
+	return &vRoot{
+		PageName: pageName,
+		StaticUrl: self.StaticUrl,
+		AppRoot: self.AppRoot,
+		QuestionSetUrl: questionSetUrl.String(),
+		ProfileSetUrl: profileSetUrl.String(),
+		ReviewSetUrl: reviewSetUrl.String(),
+	}
+}
+
 func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, "root", nil)
+	view := newVRoot(self, "root")
+	renderTemplate(w, "root", view)
 }
 
 var templates = template.Must(template.ParseFiles(
@@ -673,6 +748,8 @@ func doServe() {
 		ProfileRepo:  entity.ProfileRepo(persist),
 		ReviewRepo:   entity.ReviewRepo(persist),
 		Router:       r,
+		StaticUrl:    staticUrl,
+		AppRoot:      *appRoot,
 	}
 
 	wrap := func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {

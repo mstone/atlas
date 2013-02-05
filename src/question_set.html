@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title>All Questions </title>
-	{{template "head" "question_set"}}
+	{{template "head" .}}
 </head>
 <body>
 <header>
@@ -12,7 +12,7 @@
 
 <article>
 <div class="form-question-create-title">New Question</div>
-<form class="form-question-create" action="/questions/" method="POST">
+<form class="form-question-create" action="{{.QuestionSetUrl}}" method="POST">
 	<div class="question-name">
 		<label class="question-name-label" for="question-name">Question Name</label>
 		<input class="question-name-input" autofocus id="question-name" name="question_name" type="text"></input>

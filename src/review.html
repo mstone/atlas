@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title>Review: {{.ReviewName}}</title>
-	{{template "head" "review"}}
+	{{template "head" .}}
 </head>
 <body>
 <header>
@@ -32,8 +32,8 @@
 	{{range .ResponseList}}
 	<div class="response" id="response-{{.Question.Version.String}}">
 		<div class="question">
+			<p class="question-editlink"><a href="{{.QuestionUrl}}">edit question</a></p>
 			{{with .Question}}
-			<p class="question-editlink"><a href="/questions/{{.Version.String}}">edit question</a></p>
 			<p class="question-version">{{or .Version.String ""}}</p>
 			<p class="question-text">{{or .Text ""}}</p>
 			<p class="question-help">{{or .Help ""}}</p>

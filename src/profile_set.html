@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title>All Profiles</title>
-	{{template "head" "profile_set"}}
+	{{template "head" .}}
 </head>
 <body>
 <header>
@@ -25,7 +25,7 @@
 <article>
 <div class="profile-list-title">Existing Profiles</div>
 <div class="profile-list">
-{{range .}}
+{{range .Profiles}}
 <div class="profile">
   <p><a class="profile-link" href="./{{.Version.String}}">{{.Version.String}}</a></p>
 </div>

@@ -1,23 +1,30 @@
-// Package main implements a (prototype-quality) review wizard.
+// Package web implements the review wizard's controllers
+// and views.
 //
-// The code is organized into three packages:
+// Presently, there are controllers for these resources:
 //
-//    entity
-//      ^   ^
-//      |    \
-//      |    persist
-//      |     ^
-//      |    /
-//      main
+//     Root
+//       QuestionSet
+//         Question
+//       ProfileSet
+//         Profile
+//       ReviewSet
+//         Review
 //
-// The entity package contains domain syntax: Reviews, (Question) Profiles, Responses, etc.
-// The persist package implements the *Repo interfaces defined in the entity model.
-// The main package defines the web UI and calls the entity and persist code.
+// Controllers are App struct methods named Handle*{Get|Post}.
 //
-// For more information on this architecture, see
+// Controllers largely work by
 //
-//     http://manuel.kiessling.net/2012/09/28/applying-the-clean-architecture-to-go-applications/
+//   1. looking up an entity to be modified or represented in the requested
+//      response
 //
+//   2. constructing a private "view struct" with the data to be displayed
+//
+//   3. handing the view struct and the http.ResponseWriter to an appropriate
+//      template for rendering.
+//
+// All *Set resources load and save their contained entities through
+// corresponding *Repo interfaces on the App struct.
 package web
 
 import (
@@ -708,6 +715,9 @@ func (self *App) renderTemplate(w http.ResponseWriter, tmpl string, p interface{
 	}
 }
 
+// Serve loads HTML templates from self.HtmlPath, connects wrapped controllers
+// to a gorilla/mux request router, and then uses net/http to receive and to act
+// on incoming HTTP requests.
 func (self *App) Serve() {
 	rr := mux.NewRouter()
 	var r *mux.Router

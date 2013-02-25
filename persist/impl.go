@@ -1,9 +1,9 @@
 package persist
 
 import (
+	"akamai/atlas/forms/entity"
 	"bufio"
 	"encoding/json"
-	"entity"
 	"errors"
 	"fmt"
 	"log"

@@ -18,18 +18,17 @@
 //
 //     http://manuel.kiessling.net/2012/09/28/applying-the-clean-architecture-to-go-applications/
 //
-package main
+package web
 
 import (
+	"akamai/atlas/forms/entity"
+	"akamai/atlas/forms/persist"
 	"bytes"
-	"entity"
-	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
 	"html/template"
 	"log"
 	"net/http"
-	"persist"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -704,18 +703,18 @@ func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
 }
 
 var templates = template.Must(template.ParseFiles(
-	"src/root.html",
-	"src/head.html",
-	"src/nav.html",
-	"src/review.html",
-	"src/review_set.html",
-	"src/profile.html",
-	"src/profile_set.html",
-	"src/question.html",
-	"src/question_set.html",
-	"src/edit_question.html",
-	"src/textarea.html",
-	"src/multiselect.html"))
+	"html/root.html",
+	"html/head.html",
+	"html/nav.html",
+	"html/review.html",
+	"html/review_set.html",
+	"html/profile.html",
+	"html/profile_set.html",
+	"html/question.html",
+	"html/question_set.html",
+	"html/edit_question.html",
+	"html/textarea.html",
+	"html/multiselect.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
@@ -727,7 +726,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 var bindAddr = flag.String("http", "127.0.0.1:3001", "address:port")
 var appRoot = flag.String("approot", "", "approot prefix")
 
-func doServe() {
+func Serve() {
 	persist := persist.NewPersistJSON()
 
 	rr := mux.NewRouter()
@@ -784,10 +783,4 @@ func doServe() {
 	http.Handle(staticUrl, http.StripPrefix(staticUrl, http.FileServer(http.Dir("static"))))
 	http.Handle("/", rr)
 	log.Fatal(http.ListenAndServe(*bindAddr, nil))
-}
-
-func main() {
-	flag.Parse()
-
-	doServe()
 }

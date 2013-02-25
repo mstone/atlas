@@ -4,7 +4,7 @@
 package persist
 
 import (
-	"entity"
+	"akamai/atlas/forms/entity"
 )
 
 type PersistJSON struct {

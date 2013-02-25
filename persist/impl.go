@@ -10,14 +10,10 @@ import (
 	"os"
 )
 
-const (
-	questionsPath = "data/questions.json"
-	profilesPath  = "data/profiles.json"
-	reviewsPath   = "data/reviews.json"
-)
-
 func (self *PersistJSON) jsonGetAllQuestions() ([]*entity.Question, error) {
-	f, err := self.jsonReadPath(questionsPath)
+	log.Printf("PersistJSON.GetAllQuestions()...")
+	log.Printf("PersistJSON.GetAllQuestions(): reading questionsPath: %s", self.questionsPath)
+	f, err := self.jsonReadPath(self.questionsPath)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +50,7 @@ func (self *PersistJSON) jsonGetQuestionById(id entity.Version) (*entity.Questio
 func (self *PersistJSON) jsonAddQuestion(question *entity.Question) error {
 	err := self.jsonAddQuestionHelper(question)
 	if err == nil {
-		err = self.jsonRenameTmpPath(questionsPath)
+		err = self.jsonRenameTmpPath(self.questionsPath)
 	}
 	return err
 }
@@ -77,12 +73,12 @@ func (self *PersistJSON) jsonAddQuestionHelper(question *entity.Question) error 
 		allQuestions = append(allQuestions, question)
 	}
 
-	f, err := self.jsonWriteTmpPath(questionsPath)
+	f, err := self.jsonWriteTmpPath(self.questionsPath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	log.Printf("jsonAddQuestionHelper(): " + questionsPath + ".tmp opened for write")
+	log.Printf("jsonAddQuestionHelper(): " + self.questionsPath + ".tmp opened for write")
 
 	writer := bufio.NewWriter(f)
 	defer writer.Flush()
@@ -105,16 +101,19 @@ func (self *PersistJSON) jsonAddQuestionHelper(question *entity.Question) error 
 }
 
 func (self *PersistJSON) jsonReadPath(path string) (*os.File, error) {
+	log.Printf("PersistJSON.ReadPath(): reading %s", path)
 	return os.Open(path)
 }
 
 func (self *PersistJSON) jsonWriteTmpPath(path string) (*os.File, error) {
+	log.Printf("PersistJSON.WriteTmpPath(): writing %s.tmp", path)
 	return os.OpenFile(path+".tmp",
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
 		0600)
 }
 
 func (self *PersistJSON) jsonRenameTmpPath(path string) error {
+	log.Printf("PersistJSON.RenameTmpPath(): renaming %s{.tmp,}", path)
 	return os.Rename(path+".tmp", path)
 }
 
@@ -127,13 +126,14 @@ func makeQuestionsMap(questions []*entity.Question) map[entity.Version]*entity.Q
 }
 
 func (self *PersistJSON) jsonGetAllProfiles() ([]*entity.Profile, error) {
+	log.Printf("PersistJSON.GetAllProfiles(): getting all questions...")
 	questions, err := self.jsonGetAllQuestions()
 	if err != nil {
 		return nil, err
 	}
 	questionsMap := makeQuestionsMap(questions)
 
-	f, err := self.jsonReadPath(profilesPath)
+	f, err := self.jsonReadPath(self.profilesPath)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (self *PersistJSON) jsonGetProfileById(id entity.Version) (*entity.Profile,
 func (self *PersistJSON) jsonAddProfile(profile *entity.Profile) error {
 	err := self.jsonAddProfileHelper(profile)
 	if err == nil {
-		err = self.jsonRenameTmpPath(profilesPath)
+		err = self.jsonRenameTmpPath(self.profilesPath)
 	}
 	return err
 }
@@ -194,7 +194,7 @@ func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 		allProfs = append(allProfs, profile)
 	}
 
-	f, err := self.jsonWriteTmpPath(profilesPath)
+	f, err := self.jsonWriteTmpPath(self.profilesPath)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 }
 
 func (self *PersistJSON) jsonGetAllReviews() ([]*entity.Review, error) {
-	f, err := self.jsonReadPath(reviewsPath)
+	f, err := self.jsonReadPath(self.reviewsPath)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +258,7 @@ func (self *PersistJSON) jsonGetReviewById(id entity.Version) (*entity.Review, e
 func (self *PersistJSON) jsonAddReview(review *entity.Review) error {
 	err := self.jsonAddReviewHelper(review)
 	if err == nil {
-		err = self.jsonRenameTmpPath(reviewsPath)
+		err = self.jsonRenameTmpPath(self.reviewsPath)
 	}
 	return err
 }
@@ -281,7 +281,7 @@ func (self *PersistJSON) jsonAddReviewHelper(review *entity.Review) error {
 		allRevs = append(allRevs, review)
 	}
 
-	f, err := self.jsonWriteTmpPath(reviewsPath)
+	f, err := self.jsonWriteTmpPath(self.reviewsPath)
 	if err != nil {
 		return err
 	}

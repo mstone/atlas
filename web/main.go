@@ -738,7 +738,7 @@ func (self *App) Serve() {
 		template.ParseGlob(
 			path.Join(self.HtmlPath, "*.html")))
 
-	self.StaticUrl = staticUrl
+	self.StaticUrl = path.Clean(staticUrl)
 
 	wrap := func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 		return (func(w http.ResponseWriter, r *http.Request) {

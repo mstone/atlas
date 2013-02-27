@@ -47,12 +47,13 @@ type App struct {
 	entity.QuestionRepo
 	entity.ProfileRepo
 	entity.ReviewRepo
-	StaticUrl string
-	AppRoot   string
-	HtmlPath  string
-	HttpAddr  string
-	router    *mux.Router
-	templates *template.Template
+	StaticUrl  string
+	AppRoot    string
+	HtmlPath   string
+	StaticPath string
+	HttpAddr   string
+	router     *mux.Router
+	templates  *template.Template
 }
 
 func recoverHTTP(w http.ResponseWriter, r *http.Request) {
@@ -768,7 +769,7 @@ func (self *App) Serve() {
 
 	r.HandleFunc("/", wrap(HandleRootGet)).Methods("GET").Name("root")
 
-	http.Handle(staticUrl, http.StripPrefix(staticUrl, http.FileServer(http.Dir("static"))))
+	http.Handle(staticUrl, http.StripPrefix(staticUrl, http.FileServer(http.Dir(self.StaticPath))))
 	http.Handle("/", rr)
 	log.Fatal(http.ListenAndServe(self.HttpAddr, nil))
 }

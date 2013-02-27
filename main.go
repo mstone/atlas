@@ -48,10 +48,16 @@ var dataPath = flag.String("data", "data/", "path to atlas-forms database")
 // HTML templates to render.
 var htmlPath = flag.String("html", "html/", "path to atlas-forms html templates")
 
+// staticPath tells the web controller where to look for non-template static
+// assets
+var staticPath = flag.String("static", "static/", "path to atlas-forms static assets")
+
 // httpAddr tells the web controller on what address to
 // listen for requests.
 var httpAddr = flag.String("http", "127.0.0.1:3001", "addr:port")
-var appRoot  = flag.String("approot", "", "approot prefix")
+
+// appRoot tells the web controller what URL prefix to discard
+var appRoot = flag.String("approot", "", "approot prefix")
 
 func main() {
 	flag.Parse()
@@ -63,6 +69,7 @@ func main() {
 		ProfileRepo:  entity.ProfileRepo(persist),
 		ReviewRepo:   entity.ReviewRepo(persist),
 		HtmlPath:     *htmlPath,
+		StaticPath:   *staticPath,
 		HttpAddr:     *httpAddr,
 		AppRoot:      *appRoot,
 	}

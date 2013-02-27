@@ -196,10 +196,9 @@ func persistResponseMapV1ToEntityResponseMap(profile *entity.Profile, r map[stri
 	return root
 }
 
-func persistReviewV1ToEntityReview(r reviewV1) *entity.Review {
-	var persist *PersistJSON = nil
+func (self *PersistJSON) persistReviewV1ToEntityReview(r reviewV1) *entity.Review {
 	profileVer := persistVersionV1ToEntityVersion(r.ProfileId)
-	profile, err := persist.jsonGetProfileById(profileVer)
+	profile, err := self.jsonGetProfileById(profileVer)
 	if err != nil {
 		panic(err)
 	}
@@ -210,10 +209,10 @@ func persistReviewV1ToEntityReview(r reviewV1) *entity.Review {
 	}
 }
 
-func persistReviewSetV1ToEntityReviewPtrSlice(rs reviewSetV1) []*entity.Review {
+func (self *PersistJSON) persistReviewSetV1ToEntityReviewPtrSlice(rs reviewSetV1) []*entity.Review {
 	root := make([]*entity.Review, len(rs.Reviews))
 	for k, v := range rs.Reviews {
-		root[k] = persistReviewV1ToEntityReview(v)
+		root[k] = self.persistReviewV1ToEntityReview(v)
 	}
 	return root
 }

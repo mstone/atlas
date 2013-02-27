@@ -239,7 +239,7 @@ func (self *PersistJSON) jsonGetAllReviews() ([]*entity.Review, error) {
 	}
 	log.Printf("PersistJSON.GetAllReviews(): decoded reviewSet: %v", rs)
 
-	return persistReviewSetV1ToEntityReviewPtrSlice(rs), nil
+	return self.persistReviewSetV1ToEntityReviewPtrSlice(rs), nil
 }
 
 func (self *PersistJSON) jsonGetReviewById(id entity.Version) (*entity.Review, error) {

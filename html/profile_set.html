@@ -27,7 +27,7 @@
 <div class="profile-list">
 {{range .Profiles}}
 <div class="profile">
-  <p><a class="profile-link" href="./{{.Version.String}}">{{.Version.String}}</a></p>
+  <p><a class="profile-link" href="{{.Url.String}}">{{.Version.String}}</a></p>
 </div>
 {{else}}
 <p class="profile-list-empty">No profiles.</p>

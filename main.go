@@ -52,12 +52,21 @@ var htmlPath = flag.String("html", "html/", "path to atlas-forms html templates"
 // assets
 var staticPath = flag.String("static", "static/", "path to atlas-forms static assets")
 
+// chartsPath tells us where to look for charts to render
+var chartsPath = flag.String("charts", "charts/", "path to atlas charts")
+
 // httpAddr tells the web controller on what address to
 // listen for requests.
 var httpAddr = flag.String("http", "127.0.0.1:3001", "addr:port")
 
-// appRoot tells the web controller what URL prefix to discard
-var appRoot = flag.String("approot", "", "approot prefix")
+// staticRoot tells the web controller what URL prefix to discard
+var staticRoot = flag.String("staticroot", "static", "static app url prefix")
+
+// formsRoot tells the web controller what URL prefix to discard
+var formsRoot = flag.String("formsroot", "", "forms app url prefix")
+
+// chartsRoot tells the web controller what URL prefix to discard
+var chartsRoot = flag.String("chartsroot", "charts", "charts app url prefix")
 
 func main() {
 	flag.Parse()
@@ -65,13 +74,16 @@ func main() {
 	persist := persist.NewPersistJSON(*dataPath)
 
 	web := &web.App{
+		HttpAddr:     *httpAddr,
 		QuestionRepo: entity.QuestionRepo(persist),
 		ProfileRepo:  entity.ProfileRepo(persist),
 		ReviewRepo:   entity.ReviewRepo(persist),
 		HtmlPath:     *htmlPath,
 		StaticPath:   *staticPath,
-		HttpAddr:     *httpAddr,
-		AppRoot:      *appRoot,
+		StaticRoot:   *staticRoot,
+		ChartsPath:   *chartsPath,
+		ChartsRoot:   *chartsRoot,
+		FormsRoot:    *formsRoot,
 	}
 
 	web.Serve()

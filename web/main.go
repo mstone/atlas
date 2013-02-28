@@ -31,10 +31,12 @@ import (
 	"akamai/atlas/forms/entity"
 	"bytes"
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/russross/blackfriday"
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
 	"path"
 	"runtime/debug"
 	"sort"
@@ -47,13 +49,16 @@ type App struct {
 	entity.QuestionRepo
 	entity.ProfileRepo
 	entity.ReviewRepo
-	StaticUrl  string
-	AppRoot    string
+	StaticPath  string
+	StaticRoot string
+	FormsRoot  string
+	ChartsRoot string
 	HtmlPath   string
-	StaticPath string
+	ChartsPath string
 	HttpAddr   string
-	router     *mux.Router
+	//router     *mux.Router
 	templates  *template.Template
+	//wrap       func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request)
 }
 
 func recoverHTTP(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +114,13 @@ type vReviewSet struct {
 	Reviews  vReviewList
 }
 
+func (self *App) GetReviewUrl(version *entity.Version) (url.URL, error) {
+	url := url.URL{
+		Path: path.Clean(path.Join(self.FormsRoot, "reviews", version.String())),
+	}
+	return url, nil
+}
+
 func HandleReviewSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleReviewSetGet()\n")
 
@@ -132,7 +144,7 @@ func HandleReviewSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 	reviewsList := make(vReviewList, len(reviews))
 	for idx, review := range reviews {
-		reviewUrl, err := self.router.Get("review").URL("review_name", review.Version.String())
+		reviewUrl, err := self.GetReviewUrl(&review.Version)
 		checkHTTP(err)
 
 		reviewsList[idx] = vReview2{
@@ -145,7 +157,7 @@ func HandleReviewSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	view := &vReviewSet{
 		Profiles: profilesList,
 		Reviews:  reviewsList,
-		vRoot:    newVRoot(self, "review_set"),
+		vRoot:    newVRoot(self, "review_set", "", "", ""),
 	}
 
 	self.renderTemplate(w, "review_set", view)
@@ -193,7 +205,7 @@ func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	err = self.ReviewRepo.AddReview(review)
 	checkHTTP(err)
 
-	url, err := self.router.Get("review").URL("review_name", reviewVer.String())
+	url, err := self.GetReviewUrl(reviewVer)
 	checkHTTP(err)
 
 	log.Printf("HandleReviewSetPost(): redirecting to: %v\n", url)
@@ -237,12 +249,19 @@ type vReview struct {
 	ResponseGroups vResponseGroupList
 }
 
-func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	reviewName := vars["review_name"]
-	log.Printf("HandleReviewGet(): reviewName: %v\n", reviewName)
+func (self *App) ParseUrlReviewVersion(r *http.Request) (*entity.Version, error) {
+	reviewName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "reviews")) + "/"):]
+	log.Printf("ParseUrlReviewVersion(): reviewName: %v\n", reviewName)
 
 	reviewVer, err := entity.NewVersionFromString(reviewName)
+	checkHTTP(err)
+	log.Printf("ParseUrlReviewVersion(): reviewVer: %v\n", reviewVer)
+
+	return reviewVer, err
+}
+
+func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
+	reviewVer, err := self.ParseUrlReviewVersion(r)
 	checkHTTP(err)
 	log.Printf("HandleReviewGet(): reviewVer: %v\n", reviewVer)
 
@@ -255,7 +274,7 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	for _, resp := range review.Responses {
 		log.Printf("HandleReviewGet(): considering resp %v", resp)
 
-		questionUrl, err := self.router.Get("question").URL("question_name", resp.Question.Version.String())
+		questionUrl, err := self.GetQuestionUrl(&resp.Question.Version)
 		checkHTTP(err)
 		vresp := &vResponse{
 			Response:    resp,
@@ -301,7 +320,7 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 	responseNames := getProfileQuestionNames(review.Profile)
 
 	view := vReview{
-		vRoot:          newVRoot(self, "review"),
+		vRoot:          newVRoot(self, "review", "", "", ""),
 		ReviewName:     review.Version.String(),
 		ProfileName:    review.Profile.Version.String(),
 		ResponseNames:  responseNames,
@@ -314,11 +333,7 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	reviewName := vars["review_name"]
-	log.Printf("HandleReviewPost(): reviewName: %v\n", reviewName)
-
-	reviewVer, err := entity.NewVersionFromString(reviewName)
+	reviewVer, err := self.ParseUrlReviewVersion(r)
 	checkHTTP(err)
 	log.Printf("HandleReviewPost(): reviewVer: %v\n", reviewVer)
 
@@ -348,7 +363,8 @@ func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 
 	log.Printf("HandleReviewPost(): done\n")
-	url, err := self.router.Get("review").URL("review_name", reviewVer.String())
+
+	url, err := self.GetReviewUrl(reviewVer)
 	checkHTTP(err)
 	url.Fragment = "response-" + questionVer.String()
 
@@ -356,9 +372,14 @@ func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
+type vProfile3 struct {
+	*entity.Profile
+	Url url.URL
+}
+
 type vProfileSet struct {
 	*vRoot
-	Profiles []*entity.Profile
+	Profiles []*vProfile3
 }
 
 func HandleProfileSetGet(self *App, w http.ResponseWriter, r *http.Request) {
@@ -368,9 +389,19 @@ func HandleProfileSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	profiles, err := self.GetAllProfiles()
 	checkHTTP(err)
 
+	vProfiles := make([]*vProfile3, len(profiles))
+	for idx, profile := range profiles {
+		url, err := self.GetProfileUrl(&profile.Version)
+		checkHTTP(err)
+		vProfiles[idx] = &vProfile3{
+			Profile: profile,
+			Url: url,
+		}
+	}
+
 	view := &vProfileSet{
-		vRoot:    newVRoot(self, "profile_set"),
-		Profiles: profiles,
+		vRoot:    newVRoot(self, "profile_set", "", "", ""),
+		Profiles: vProfiles,
 	}
 	self.renderTemplate(w, "profile_set", view)
 }
@@ -398,7 +429,7 @@ func HandleProfileSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	err = self.ProfileRepo.AddProfile(newProfile)
 	checkHTTP(err)
 
-	url, err := self.router.Get("profile").URL("profile_name", profileVer.String())
+	url, err := self.GetProfileUrl(profileVer)
 	checkHTTP(err)
 
 	log.Printf("HandleProfileSetPost(): redirecting to: %v\n", url)
@@ -440,12 +471,15 @@ func getProfileQuestionNames(profile *entity.Profile) []string {
 	return questionNames
 }
 
-func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	profileName := vars["profile_name"]
-	log.Printf("HandleProfileGet(): profileName: %v\n", profileName)
+func (self *App) GetQuestionUrl(version *entity.Version) (url.URL, error) {
+	url := url.URL{
+		Path: path.Clean(path.Join(self.FormsRoot, "questions", version.String())),
+	}
+	return url, nil
+}
 
-	profileVer, err := entity.NewVersionFromString(profileName)
+func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
+	profileVer, err := self.ParseUrlProfileVersion(r)
 	checkHTTP(err)
 	log.Printf("HandleProfileGet(): profileVer: %v\n", profileVer)
 
@@ -458,13 +492,13 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 	for _, quest := range profile.Questions {
 		log.Printf("HandleProfileGet(): considering question %v", quest)
 
-		questionUrl, err := self.router.Get("question").URL("question_name", quest.Version.String())
+		questionUrl, err := self.GetQuestionUrl(&quest.Version)
 		checkHTTP(err)
 		log.Printf("HandleProfileGet(): questionUrl: %v\n", questionUrl)
 
 		vQuest := vQuestion{
-			vRoot:        newVRoot(self, "question"),
-			Url:          questionUrl.String(),
+			vRoot:        newVRoot(self, "question", "", "", ""),
+			Url:          questionUrl,
 			QuestionName: quest.Version.String(),
 			Question:     quest,
 		}
@@ -491,7 +525,7 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 	questionNames := getProfileQuestionNames(profile)
 
 	view := vProfile2{
-		vRoot:          newVRoot(self, "profile"),
+		vRoot:          newVRoot(self, "profile", "", "", ""),
 		ProfileName:    profile.Version.String(),
 		QuestionNames:  questionNames,
 		QuestionGroups: questionGroupList,
@@ -501,14 +535,28 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 	self.renderTemplate(w, "profile", view)
 }
 
+func (self *App) GetProfileUrl(version *entity.Version) (url.URL, error) {
+	url := url.URL{
+		Path: path.Clean(path.Join(self.FormsRoot, "profiles", version.String())),
+	}
+	return url, nil
+}
+
+func (self *App) ParseUrlProfileVersion(r *http.Request) (*entity.Version, error) {
+	profileName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "profiles")) + "/"):]
+	log.Printf("ParseUrlProfileVersion(): profileName: %v\n", profileName)
+
+	profileVer, err := entity.NewVersionFromString(profileName)
+	checkHTTP(err)
+	log.Printf("ParseUrlProfileVersion(): profileVer: %v\n", profileVer)
+
+	return profileVer, err
+}
+
 func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleProfilePost()\n")
 
-	vars := mux.Vars(r)
-	profileName := vars["profile_name"]
-	log.Printf("HandleProfilePost(): profileName: %v\n", profileName)
-
-	profileVer, err := entity.NewVersionFromString(profileName)
+	profileVer, err := self.ParseUrlProfileVersion(r)
 	checkHTTP(err)
 	log.Printf("HandleProfilePost(): profileVer: %v\n", profileVer)
 
@@ -539,7 +587,7 @@ func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
 	err = self.AddProfile(profile)
 	checkHTTP(err)
 
-	url, err := self.router.Get("profile").URL("profile_name", profileVer.String())
+	url, err := self.GetProfileUrl(profileVer)
 	checkHTTP(err)
 	url.Fragment = "question-" + questionVer.String()
 
@@ -550,41 +598,60 @@ func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
 type vQuestion struct {
 	*vRoot
 	QuestionName string
-	Url          string
+	Url          url.URL
 	*entity.Question
 }
 
 type vQuestionSet struct {
 	*vRoot
-	QuestionNames []string
+	Questions vQuestion2List
 }
 
-func getAllQuestionNames(self *App) ([]string, error) {
+type vQuestion2 struct {
+	Name string
+	Url url.URL
+}
+
+type vQuestion2List []*vQuestion2
+
+func (s vQuestion2List) Len() int { return len(s) }
+func (s vQuestion2List) Less(i, j int) bool {
+	return s[i].Name < s[j].Name
+}
+func (s vQuestion2List) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+
+func getAllQuestionLinks(self *App) ([]*vQuestion2, error) {
 	questions, err := self.GetAllQuestions()
 	if err != nil {
 		return nil, err
 	}
 
-	names := make([]string, len(questions))
-	for k, v := range questions {
-		names[k] = v.Version.String()
+	view := make([]*vQuestion2, len(questions))
+	for idx, question := range questions {
+		url, err := self.GetQuestionUrl(&question.Version)
+		checkHTTP(err)
+		view[idx] = &vQuestion2{
+			Name: question.Version.String(),
+			Url: url,
+		}
 	}
 
-	return names, nil
+	return view, nil
 }
 
 func HandleQuestionSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleQuestionSetGet()\n")
 
-	names, err := getAllQuestionNames(self)
+	links, err := getAllQuestionLinks(self)
 	checkHTTP(err)
 
 	view := vQuestionSet{
-		vRoot:         newVRoot(self, "question_set"),
-		QuestionNames: names,
+		vRoot:     newVRoot(self, "question_set", "", "", ""),
+		Questions: links,
 	}
 	log.Printf("HandleQuestionSetGet(): view: %v", view)
-	sort.Strings(view.QuestionNames)
+	sort.Sort(view.Questions)
 
 	self.renderTemplate(w, "question_set", view)
 }
@@ -612,21 +679,26 @@ func HandleQuestionSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	err = self.QuestionRepo.AddQuestion(question)
 	checkHTTP(err)
 
-	url, err := self.router.Get("question").URL("question_name", questionVer.String())
+	url, err := self.GetQuestionUrl(questionVer)
 	checkHTTP(err)
 
 	log.Printf("HandleQuestionSetPost(): redirecting to: %v\n", url)
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
-func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleQuestionGet()\n")
-
-	vars := mux.Vars(r)
-	questionName := vars["question_name"]
-	log.Printf("HandleQuestionGet(): questionName: %v\n", questionName)
+func (self *App) ParseUrlQuestionVersion(r *http.Request) (*entity.Version, error) {
+	questionName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "questions")) + "/"):]
+	log.Printf("ParseUrlQuestionVersion(): questionName: %v\n", questionName)
 
 	questionVer, err := entity.NewVersionFromString(questionName)
+	checkHTTP(err)
+	log.Printf("ParseUrlQuestionVersion(): questionVer: %v\n", questionVer)
+
+	return questionVer, err
+}
+
+func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
+	questionVer, err := self.ParseUrlQuestionVersion(r)
 	checkHTTP(err)
 	log.Printf("HandleQuestionGet(): questionVer: %v\n", questionVer)
 
@@ -634,13 +706,13 @@ func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 	log.Printf("HandleQuestionGet(): question: %v\n", question)
 
-	questionUrl, err := self.router.Get("question").URL("question_name", questionVer.String())
+	questionUrl, err := self.GetQuestionUrl(questionVer)
 	checkHTTP(err)
 	log.Printf("HandleQuestionGet(): questionUrl: %v\n", questionUrl)
 
 	view := &vQuestion{
-		vRoot:        newVRoot(self, "question"),
-		Url:          questionUrl.String(),
+		vRoot:        newVRoot(self, "question", "", "", ""),
+		Url:          questionUrl,
 		QuestionName: questionVer.String(),
 		Question:     question,
 	}
@@ -650,11 +722,7 @@ func HandleQuestionGet(self *App, w http.ResponseWriter, r *http.Request) {
 func HandleQuestionPost(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleQuestionPost()\n")
 
-	vars := mux.Vars(r)
-	questionName := vars["question_name"]
-	log.Printf("HandleQuestionPost(): questionName: %v\n", questionName)
-
-	questionVer, err := entity.NewVersionFromString(questionName)
+	questionVer, err := self.ParseUrlQuestionVersion(r)
 	checkHTTP(err)
 	log.Printf("HandleQuestionPost(): questionVer: %v\n", questionVer)
 
@@ -673,31 +741,134 @@ func HandleQuestionPost(self *App, w http.ResponseWriter, r *http.Request) {
 	err = self.QuestionRepo.AddQuestion(question)
 	checkHTTP(err)
 
-	url, err := self.router.Get("question").URL("question_name", questionVer.String())
+	url, err := self.GetQuestionUrl(questionVer)
 	checkHTTP(err)
 
 	log.Printf("HandleQuestionPost(): redirecting to: %v\n", url)
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
+type vChart struct {
+	*vRoot
+	FullPath string
+	Url string
+	Html template.HTML
+}
+
+func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
+	chartUrl := path.Clean(r.URL.Path)
+	log.Printf("HandleChartGet(): chartUrl: %v\n", chartUrl)
+
+	fullPath := path.Join(self.ChartsPath, chartUrl)
+
+	buf := make([]byte, 1000000)
+
+	// anyway, assuming it's a chart, find the index.txt
+
+	fi, err := os.Stat(fullPath)
+	checkHTTP(err)
+
+	if ! fi.IsDir() {
+		fp3 := fullPath
+		// BUG(mistone): don't set Content-Type blindly; also need to check Accept header
+		// BUG(mistone): do we really want to sniff mime-types here?
+		http.ServeFile(w, r, fp3)
+		return
+	} else {
+		fp1 := path.Join(fullPath, "index.txt")
+		f, err := os.Open(fp1)
+		if err != nil {
+			if os.IsNotExist(err) {
+				fp2 := path.Join(fullPath, "index.text")
+				f2, err := os.Open(fp2)
+				checkHTTP(err)
+				defer f2.Close()
+
+				n, err := f2.Read(buf)
+				checkHTTP(err)
+				buf = buf[0:n]
+			} else {
+				panic(err)
+			}
+		} else {
+			defer f.Close()
+			n, err := f.Read(buf)
+			checkHTTP(err)
+			buf = buf[0:n]
+		}
+
+		// attempt to parse header lines
+		title := ""
+		authors := ""
+		date := ""
+		sbuf := string(buf)
+		lines := strings.Split(sbuf, "\n")
+		log.Printf("HandleChartGet: found %d lines", len(lines))
+		if len(lines) > 3 {
+			title = strings.TrimLeft(lines[0], "% ")
+			authors = strings.TrimLeft(lines[1], "% ")
+			date = strings.TrimLeft(lines[2], "% ")
+			rest := strings.SplitAfterN(sbuf, "\n", 4)
+			buf = []byte(rest[3])
+		}
+		log.Printf("HandleChartGet: found title: %s", title)
+		log.Printf("HandleChartGet: found authors: %s", authors)
+		log.Printf("HandleChartGet: found date: %s", date)
+
+		htmlFlags := 0
+		//htmlFlags |= blackfriday.HTML_USE_XHTML
+		htmlFlags |= blackfriday.HTML_TOC
+
+		renderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
+
+		extFlags := 0
+		extFlags |= blackfriday.EXTENSION_NO_INTRA_EMPHASIS
+		extFlags |= blackfriday.EXTENSION_TABLES
+		extFlags |= blackfriday.EXTENSION_FENCED_CODE
+		extFlags |= blackfriday.EXTENSION_AUTOLINK
+		extFlags |= blackfriday.EXTENSION_STRIKETHROUGH
+		extFlags |= blackfriday.EXTENSION_SPACE_HEADERS
+
+		html := blackfriday.Markdown(buf, renderer, extFlags)
+
+		view := &vChart{
+			vRoot:        newVRoot(self, "chart", title, authors, date),
+			//Url:          chartUrl.String(),
+			FullPath:     fullPath,
+			Url:          chartUrl,
+			Html:         template.HTML(html),
+		}
+
+		self.renderTemplate(w, "chart", view)
+	}
+}
+
 type vRoot struct {
 	PageName       string
+	Title          string
+	Authors        string
+	Date           string
 	StaticUrl      string
-	AppRoot        string
+	FormsRoot      string
+	ChartsRoot     string
 	QuestionSetUrl string
 	ProfileSetUrl  string
 	ReviewSetUrl   string
 }
 
-func newVRoot(self *App, pageName string) *vRoot {
-	questionSetUrl, _ := self.router.Get("question_set").URL()
-	profileSetUrl, _ := self.router.Get("profile_set").URL()
-	reviewSetUrl, _ := self.router.Get("review_set").URL()
+func newVRoot(self *App, pageName string, title string, authors string, date string) *vRoot {
+	questionSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "questions")),}
+	profileSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "profiles")),}
+	reviewSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "reviews")),}
 
 	return &vRoot{
 		PageName:       pageName,
-		StaticUrl:      self.StaticUrl,
-		AppRoot:        self.AppRoot,
+		Title:          title,
+		Authors:        authors,
+		Date:           date,
+		StaticUrl:      self.StaticRoot,
+		FormsRoot:      self.FormsRoot,
+		ChartsRoot:     self.ChartsRoot,
 		QuestionSetUrl: questionSetUrl.String(),
 		ProfileSetUrl:  profileSetUrl.String(),
 		ReviewSetUrl:   reviewSetUrl.String(),
@@ -705,7 +876,7 @@ func newVRoot(self *App, pageName string) *vRoot {
 }
 
 func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
-	view := newVRoot(self, "root")
+	view := newVRoot(self, "root", "", "", "")
 	self.renderTemplate(w, "root", view)
 }
 
@@ -716,60 +887,144 @@ func (self *App) renderTemplate(w http.ResponseWriter, tmpl string, p interface{
 	}
 }
 
-// Serve loads HTML templates from self.HtmlPath, connects wrapped controllers
-// to a gorilla/mux request router, and then uses net/http to receive and to act
-// on incoming HTTP requests.
-func (self *App) Serve() {
-	rr := mux.NewRouter()
-	var r *mux.Router
-	var staticUrl string
-	if self.AppRoot != "" {
-		r = rr.PathPrefix("/" + self.AppRoot).Subrouter()
-		staticUrl = "/" + self.AppRoot + "/static/"
-	} else {
-		r = rr
-		staticUrl = "/static/"
-	}
-	fmt.Printf("Using appRoot: /%s\n", self.AppRoot)
-	fmt.Printf("Using staticUrl: %s\n", staticUrl)
-	self.router = r
+func (self *App) HandleStatic(w http.ResponseWriter, r *http.Request) {
+	// BUG(mistone): directory traversal?
+	up := path.Clean(r.URL.Path)
+	sp := path.Clean("/" + self.StaticRoot) + "/"
+	fp := up[len(sp):]
+	log.Printf("HandleStatic: file path: %v", fp)
+	http.ServeFile(w, r, path.Join(self.StaticPath, fp))
+}
 
+func (self *App) HandleForms(w http.ResponseWriter, r *http.Request) {
+	up := path.Clean(r.URL.Path)
+	sp := path.Clean("/" + self.FormsRoot)
+	fp := up[len(sp):]
+
+	log.Printf("HandleForms: file path: %v", fp)
+
+	if fp == "" {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			HandleRootGet(self, w, r)
+		}
+		return
+	}
+
+	if fp == "/reviews" {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			HandleReviewSetGet(self, w, r)
+		case "POST":
+			HandleReviewSetPost(self, w, r)
+		}
+		return
+	}
+
+	if fp == "/questions" {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			HandleQuestionSetGet(self, w, r)
+		case "POST":
+			HandleQuestionSetPost(self, w, r)
+		}
+		return
+	}
+
+	if fp == "/profiles" {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			HandleProfileSetGet(self, w, r)
+		case "POST":
+			HandleProfileSetPost(self, w, r)
+		}
+		return
+	}
+
+	if strings.HasPrefix(fp, "/reviews/") {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			HandleReviewGet(self, w, r)
+		case "POST":
+			HandleReviewPost(self, w, r)
+		}
+		return
+	}
+
+	if strings.HasPrefix(fp, "/questions/") {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			HandleQuestionGet(self, w, r)
+		case "POST":
+			HandleQuestionPost(self, w, r)
+		}
+		return
+	}
+
+	if strings.HasPrefix(fp, "/profiles/") {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			HandleProfileGet(self, w, r)
+		case "POST":
+			HandleProfilePost(self, w, r)
+		}
+		return
+	}
+
+	panic("unknown form resource")
+}
+
+func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer recoverHTTP(w, r)
+	log.Printf("HandleRootApp: path: %v", r.URL.Path)
+	isStatic := strings.HasPrefix(r.URL.Path, path.Clean("/" + self.StaticRoot))
+	if isStatic {
+		log.Printf("HandleRootApp: dispatching to static...")
+		self.HandleStatic(w, r)
+	} else {
+		isForm := strings.HasPrefix(r.URL.Path, path.Clean("/" + self.FormsRoot))
+		if isForm {
+			log.Printf("HandleRootApp: dispatching to forms...")
+			self.HandleForms(w, r)
+			return
+		} else {
+			isChart := strings.HasPrefix(r.URL.Path, path.Clean("/" + self.ChartsRoot))
+			if isChart {
+				log.Printf("HandleRootApp: dispatching to charts...")
+				HandleChartGet(self, w, r)
+			} else {
+				panic(fmt.Sprintf("Can't route path: %v", r.URL.Path))
+			}
+		}
+	}
+}
+
+// Serve initializes some variables on self and then delegates to net/http to
+// to receive incoming HTTP requests. Requests are handled by self.ServeHTTP()
+func (self *App) Serve() {
 	self.templates = template.Must(
 		template.ParseGlob(
 			path.Join(self.HtmlPath, "*.html")))
 
-	self.StaticUrl = path.Clean(staticUrl)
+	self.StaticRoot = path.Clean("/" + self.StaticRoot)
+	self.FormsRoot = path.Clean("/" + self.FormsRoot)
 
-	wrap := func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-		return (func(w http.ResponseWriter, r *http.Request) {
-			defer recoverHTTP(w, r)
-			fn(self, w, r)
-		})
-	}
+	fmt.Printf("App: %v\n", self)
 
-	fmt.Printf("Hi.\n")
-
-	s := r.PathPrefix("/reviews").Subrouter()
-	s.HandleFunc("/", wrap(HandleReviewSetGet)).Methods("GET").Name("review_set")
-	s.HandleFunc("/", wrap(HandleReviewSetPost)).Methods("POST")
-	s.HandleFunc("/{review_name}", wrap(HandleReviewGet)).Methods("GET").Name("review")
-	s.HandleFunc("/{review_name}", wrap(HandleReviewPost)).Methods("POST")
-
-	s = r.PathPrefix("/profiles").Subrouter()
-	s.HandleFunc("/", wrap(HandleProfileSetGet)).Methods("GET").Name("profile_set")
-	s.HandleFunc("/", wrap(HandleProfileSetPost)).Methods("POST")
-	s.HandleFunc("/{profile_name}", wrap(HandleProfileGet)).Methods("GET").Name("profile")
-	s.HandleFunc("/{profile_name}", wrap(HandleProfilePost)).Methods("POST")
-
-	s = r.PathPrefix("/questions").Subrouter()
-	s.HandleFunc("/", wrap(HandleQuestionSetGet)).Methods("GET").Name("question_set")
-	s.HandleFunc("/", wrap(HandleQuestionSetPost)).Methods("POST")
-	s.HandleFunc("/{question_name}", wrap(HandleQuestionGet)).Methods("GET").Name("question")
-	s.HandleFunc("/{question_name}", wrap(HandleQuestionPost)).Methods("POST")
-
-	r.HandleFunc("/", wrap(HandleRootGet)).Methods("GET").Name("root")
-
-	http.Handle(staticUrl, http.StripPrefix(staticUrl, http.FileServer(http.Dir(self.StaticPath))))
-	http.Handle("/", rr)
+	http.Handle("/", self)
 	log.Fatal(http.ListenAndServe(self.HttpAddr, nil))
 }

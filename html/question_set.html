@@ -25,9 +25,9 @@
 <article>
 <div class="question-list-title">Existing Questions</div>
 <div class="question-list">
-{{range .QuestionNames}}
+{{range .Questions}}
 <div class="question">
-  <p><a class="question-link" href="./{{.}}">{{.}}</a></p>
+  <p><a class="question-link" href="{{.Url.String}}">{{.Name}}</a></p>
 </div>
 {{else}}
 <p class="question-list-empty">No questions.</p>

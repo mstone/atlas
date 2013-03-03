@@ -3,7 +3,10 @@ each response as a ticket (w/ next_action, owner, points, ...)
 example text?
 nicer question names?
 display question titles?
-floating navigation
+
+navigation
+  floating?
+
 profile instructions
 general help
 overview indicators for which questions require more work
@@ -16,3 +19,9 @@ promises
 ad-hoc questions
 question visibility controls
 question genealogy
+
+atom
+pages
+site.min.js, site.min.css
+
+index/suffixarray

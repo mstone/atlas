@@ -1,8 +1,8 @@
 #!/bin/sh
 
-git clean -dfx
+set -xe
 
-(cd src && go get)
+git clean -dfx
 
 if ! [ -f data/reviews.json ]; then
   cp data/questions.json.ex data/questions.json
@@ -16,4 +16,11 @@ if ! [ -f data/reviews.json ]; then
   cp data/reviews.json.ex data/reviews.json
 fi
 
-go run src/main.go
+go build -o ./atlas-forms akamai/atlas/forms
+
+./atlas-forms \
+  -http       'localhost:3001' \
+  -formsroot  'forms' \
+  -charts     "${HOME}/p4/docs/security/arch/" \
+  -chartsroot ''
+

@@ -29,7 +29,10 @@ package web
 
 import (
 	"akamai/atlas/forms/entity"
+	"bufio"
 	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/russross/blackfriday"
 	"html/template"
@@ -38,6 +41,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -45,11 +49,13 @@ import (
 	"time"
 )
 
+const MAX_CHART_SIZE = 1000000
+
 type App struct {
 	entity.QuestionRepo
 	entity.ProfileRepo
 	entity.ReviewRepo
-	StaticPath  string
+	StaticPath string
 	StaticRoot string
 	FormsRoot  string
 	ChartsRoot string
@@ -57,7 +63,7 @@ type App struct {
 	ChartsPath string
 	HttpAddr   string
 	//router     *mux.Router
-	templates  *template.Template
+	templates *template.Template
 	//wrap       func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request)
 }
 
@@ -250,7 +256,7 @@ type vReview struct {
 }
 
 func (self *App) ParseUrlReviewVersion(r *http.Request) (*entity.Version, error) {
-	reviewName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "reviews")) + "/"):]
+	reviewName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "reviews"))+"/"):]
 	log.Printf("ParseUrlReviewVersion(): reviewName: %v\n", reviewName)
 
 	reviewVer, err := entity.NewVersionFromString(reviewName)
@@ -395,7 +401,7 @@ func HandleProfileSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 		checkHTTP(err)
 		vProfiles[idx] = &vProfile3{
 			Profile: profile,
-			Url: url,
+			Url:     url,
 		}
 	}
 
@@ -543,7 +549,7 @@ func (self *App) GetProfileUrl(version *entity.Version) (url.URL, error) {
 }
 
 func (self *App) ParseUrlProfileVersion(r *http.Request) (*entity.Version, error) {
-	profileName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "profiles")) + "/"):]
+	profileName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "profiles"))+"/"):]
 	log.Printf("ParseUrlProfileVersion(): profileName: %v\n", profileName)
 
 	profileVer, err := entity.NewVersionFromString(profileName)
@@ -609,7 +615,7 @@ type vQuestionSet struct {
 
 type vQuestion2 struct {
 	Name string
-	Url url.URL
+	Url  url.URL
 }
 
 type vQuestion2List []*vQuestion2
@@ -619,7 +625,6 @@ func (s vQuestion2List) Less(i, j int) bool {
 	return s[i].Name < s[j].Name
 }
 func (s vQuestion2List) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-
 
 func getAllQuestionLinks(self *App) ([]*vQuestion2, error) {
 	questions, err := self.GetAllQuestions()
@@ -633,7 +638,7 @@ func getAllQuestionLinks(self *App) ([]*vQuestion2, error) {
 		checkHTTP(err)
 		view[idx] = &vQuestion2{
 			Name: question.Version.String(),
-			Url: url,
+			Url:  url,
 		}
 	}
 
@@ -687,7 +692,7 @@ func HandleQuestionSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 }
 
 func (self *App) ParseUrlQuestionVersion(r *http.Request) (*entity.Version, error) {
-	questionName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "questions")) + "/"):]
+	questionName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "questions"))+"/"):]
 	log.Printf("ParseUrlQuestionVersion(): questionName: %v\n", questionName)
 
 	questionVer, err := entity.NewVersionFromString(questionName)
@@ -751,8 +756,36 @@ func HandleQuestionPost(self *App, w http.ResponseWriter, r *http.Request) {
 type vChart struct {
 	*vRoot
 	FullPath string
-	Url string
-	Html template.HTML
+	Url      string
+	Html     template.HTML
+}
+
+func (self *App) ReadChart(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	size := fi.Size()
+	if size > MAX_CHART_SIZE {
+		return nil, errors.New(fmt.Sprintf("Chart too big: %s", path))
+	}
+
+	buf := make([]byte, size)
+
+	n, err := f.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+	buf = buf[0:n]
+
+	return buf, nil
 }
 
 func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
@@ -761,6 +794,16 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 	fullPath := path.Join(self.ChartsPath, chartUrl)
 
+	if chartUrl == "/site.json" {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			HandleSiteJsonGet(self, w, r)
+		}
+		return
+	}
+
 	buf := make([]byte, 1000000)
 
 	// anyway, assuming it's a chart, find the index.txt
@@ -768,7 +811,7 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 	fi, err := os.Stat(fullPath)
 	checkHTTP(err)
 
-	if ! fi.IsDir() {
+	if !fi.IsDir() {
 		fp3 := fullPath
 		// BUG(mistone): don't set Content-Type blindly; also need to check Accept header
 		// BUG(mistone): do we really want to sniff mime-types here?
@@ -832,11 +875,11 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		html := blackfriday.Markdown(buf, renderer, extFlags)
 
 		view := &vChart{
-			vRoot:        newVRoot(self, "chart", title, authors, date),
+			vRoot: newVRoot(self, "chart", title, authors, date),
 			//Url:          chartUrl.String(),
-			FullPath:     fullPath,
-			Url:          chartUrl,
-			Html:         template.HTML(html),
+			FullPath: fullPath,
+			Url:      chartUrl,
+			Html:     template.HTML(html),
 		}
 
 		self.renderTemplate(w, "chart", view)
@@ -857,9 +900,9 @@ type vRoot struct {
 }
 
 func newVRoot(self *App, pageName string, title string, authors string, date string) *vRoot {
-	questionSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "questions")),}
-	profileSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "profiles")),}
-	reviewSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "reviews")),}
+	questionSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "questions"))}
+	profileSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "profiles"))}
+	reviewSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "reviews"))}
 
 	return &vRoot{
 		PageName:       pageName,
@@ -880,6 +923,59 @@ func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
 	self.renderTemplate(w, "root", view)
 }
 
+func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleSiteJsonGet(): start")
+
+	view := map[string]string{}
+	filepath.Walk(self.ChartsPath, func(name string, fi os.FileInfo, err error) error {
+		log.Printf("HandleSiteJsonGet(): visiting path %s", name)
+		if err != nil {
+			return err
+		}
+
+		dir := filepath.Dir(name)
+		base := filepath.Base(name)
+		pfx := path.Clean(self.ChartsPath)
+
+		var sfx string
+		if len(dir) > len(pfx) {
+			sfx = dir[len(pfx)+1:] + "/"
+		} else {
+			sfx = ""
+		}
+		key := sfx
+
+		log.Printf("HandleSiteJsonGet(): pfx %s", pfx)
+		log.Printf("HandleSiteJsonGet(): dir %s", dir)
+		log.Printf("HandleSiteJsonGet(): base %s", base)
+		log.Printf("HandleSiteJsonGet(): sfx %s", sfx)
+
+		switch base {
+		default:
+			return nil
+		case "index.text":
+			fallthrough
+		case "index.txt":
+			text, err := self.ReadChart(name)
+			if err != nil {
+				log.Printf("HandleSiteJsonGet(): warning %s", err)
+			} else {
+				view[key] = string(text)
+			}
+		}
+		return nil
+	})
+
+	writer := bufio.NewWriter(w)
+	defer writer.Flush()
+
+	encoder := json.NewEncoder(writer)
+	err := encoder.Encode(&view)
+	checkHTTP(err)
+
+	//log.Printf("SiteJsonGet(): encoded view: %v", view)
+}
+
 func (self *App) renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	err := self.templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
@@ -890,7 +986,7 @@ func (self *App) renderTemplate(w http.ResponseWriter, tmpl string, p interface{
 func (self *App) HandleStatic(w http.ResponseWriter, r *http.Request) {
 	// BUG(mistone): directory traversal?
 	up := path.Clean(r.URL.Path)
-	sp := path.Clean("/" + self.StaticRoot) + "/"
+	sp := path.Clean("/"+self.StaticRoot) + "/"
 	fp := up[len(sp):]
 	log.Printf("HandleStatic: file path: %v", fp)
 	http.ServeFile(w, r, path.Join(self.StaticPath, fp))
@@ -991,18 +1087,18 @@ func (self *App) HandleForms(w http.ResponseWriter, r *http.Request) {
 func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer recoverHTTP(w, r)
 	log.Printf("HandleRootApp: path: %v", r.URL.Path)
-	isStatic := strings.HasPrefix(r.URL.Path, path.Clean("/" + self.StaticRoot))
+	isStatic := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.StaticRoot))
 	if isStatic {
 		log.Printf("HandleRootApp: dispatching to static...")
 		self.HandleStatic(w, r)
 	} else {
-		isForm := strings.HasPrefix(r.URL.Path, path.Clean("/" + self.FormsRoot))
+		isForm := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.FormsRoot))
 		if isForm {
 			log.Printf("HandleRootApp: dispatching to forms...")
 			self.HandleForms(w, r)
 			return
 		} else {
-			isChart := strings.HasPrefix(r.URL.Path, path.Clean("/" + self.ChartsRoot))
+			isChart := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.ChartsRoot))
 			if isChart {
 				log.Printf("HandleRootApp: dispatching to charts...")
 				HandleChartGet(self, w, r)

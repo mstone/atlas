@@ -6,26 +6,31 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path"
 	"strings"
 	"testing"
-)
-
-const (
-	httpAddr   = "localhost:3001"
-	dataPath   = "../test/data/"
-	htmlPath   = "../html/"
-	chartsPath = "../test/charts/"
-	staticPath = "../static/"
-	formsRoot  = "forms/"
-	chartsRoot = ""
-	staticRoot = "static/"
 )
 
 var normalPersist *persist.PersistJSON
 var normalApp *App
 
 func init() {
+	testPath := os.Getenv("ATLAS_TEST_PATH")
+
+	if testPath == "" {
+		testPath = "../"
+	}
+
+	httpAddr := "localhost:3001"
+	dataPath := path.Join(testPath, "test/data/")
+	htmlPath := path.Join(testPath, "html/")
+	chartsPath := path.Join(testPath, "test/charts/")
+	staticPath := path.Join(testPath, "static/")
+	formsRoot := "forms/"
+	chartsRoot := ""
+	staticRoot := "static/"
+
 	normalPersist = persist.NewPersistJSON(dataPath)
 
 	normalApp = &App{

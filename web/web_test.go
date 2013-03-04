@@ -101,3 +101,18 @@ func TestChartsGet(t *testing.T) {
 		t.Fatalf("TestChartsGet() failed: body does not mention 'Demo Atlas':\n %s", w.Body)
 	}
 }
+
+func TestSiteJsonGet(t *testing.T) {
+	t.Parallel()
+	t.Log("TestSiteJsonGet(): starting.")
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "http://localhost:3001/site.json", nil)
+	normalApp.ServeHTTP(w, r)
+	if w.Code != 200 {
+		t.Fatalf("TestSiteJsonGet() failed: response code %d != 200", w.Code)
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "Demo Atlas") {
+		t.Fatalf("TestSiteJsonGet() failed: body does not mention 'Demo Atlas':\n %s", w.Body)
+	}
+}

@@ -911,7 +911,7 @@ func newVRoot(self *App, pageName string, title string, authors string, date str
 		Date:           date,
 		StaticUrl:      self.StaticRoot,
 		FormsRoot:      self.FormsRoot,
-		ChartsRoot:     self.ChartsRoot,
+		ChartsRoot:     path.Clean(self.ChartsRoot + "/"),
 		QuestionSetUrl: questionSetUrl.String(),
 		ProfileSetUrl:  profileSetUrl.String(),
 		ReviewSetUrl:   reviewSetUrl.String(),

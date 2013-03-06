@@ -1,5 +1,5 @@
 {
-    "Profiles": [
+    "Forms": [
         {
             "QuestionDeps": null, 
             "Version": {
@@ -111,7 +111,7 @@
                     "DisplayHint": "", 
                     "Help": "", 
                     "GroupKey": "docs", 
-                    "Text": "Which etherpad should we use to collaborate on writing up your review?", 
+                    "Text": "Which etherpad should we use to collaborate on writing up your record?", 
                     "SortKey": 0, 
                     "Version": {
                         "Major": 1, 
@@ -125,11 +125,11 @@
                     "DisplayHint": "", 
                     "Help": "", 
                     "GroupKey": "docs", 
-                    "Text": "Which SecArch review covers your product?", 
+                    "Text": "Which SecArch record covers your product?", 
                     "SortKey": 0, 
                     "Version": {
                         "Major": 1, 
-                        "Name": "secarch-review-link", 
+                        "Name": "secarch-record-link", 
                         "Minor": 0, 
                         "Patch": 0
                     }, 
@@ -279,11 +279,11 @@
                     "DisplayHint": "", 
                     "Help": "", 
                     "GroupKey": "team", 
-                    "Text": "Who from SecArch is reviewing your product's security considerations?", 
+                    "Text": "Who from SecArch is recording your product's security considerations?", 
                     "SortKey": 0, 
                     "Version": {
                         "Major": 1, 
-                        "Name": "secarch-reviewer", 
+                        "Name": "secarch-recorder", 
                         "Minor": 0, 
                         "Patch": 0
                     }, 

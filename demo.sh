@@ -9,17 +9,17 @@ doit() {
 }
 
 APP=http://localhost:3001
-doit curl -i -X POST -d '{}' $APP/reviews/foo
+doit curl -i -X POST -d '{}' $APP/records/foo
 
 doit curl -i $APP/
 
-doit curl -i $APP/profiles/
+doit curl -i $APP/forms/
 
-doit curl -i -X POST -d 'profile=pace-1.0.0' $APP/reviews/
+doit curl -i -X POST -d 'form=pace-1.0.0' $APP/records/
 
-doit curl -i $APP/reviews/
+doit curl -i $APP/records/
 
-# doit curl -i -X POST -d '{}' $APP/reviews/
-doit curl -i -X POST -d 'profile=pace-1.0.0&review=acme-1.0.0' $APP/reviews/
+# doit curl -i -X POST -d '{}' $APP/records/
+doit curl -i -X POST -d 'form=pace-1.0.0&record=acme-1.0.0' $APP/records/
 
-doit curl -i $APP/reviews/
+doit curl -i $APP/records/

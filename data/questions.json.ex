@@ -202,7 +202,7 @@
             "GroupKey": "docs",
             "Help": "",
             "SortKey": 0,
-            "Text": "Which etherpad should we use to collaborate on writing up your review?",
+            "Text": "Which etherpad should we use to collaborate on writing up your record?",
             "Version": {
                 "Major": 1,
                 "Minor": 0,
@@ -216,11 +216,11 @@
             "GroupKey": "docs",
             "Help": "",
             "SortKey": 0,
-            "Text": "Which SecArch review covers your product?",
+            "Text": "Which SecArch record covers your product?",
             "Version": {
                 "Major": 1,
                 "Minor": 0,
-                "Name": "secarch-review-link",
+                "Name": "secarch-record-link",
                 "Patch": 0
             }
         },
@@ -370,11 +370,11 @@
             "GroupKey": "team",
             "Help": "",
             "SortKey": 0,
-            "Text": "Who from SecArch is reviewing your product's security considerations?",
+            "Text": "Who from SecArch is recording your product's security considerations?",
             "Version": {
                 "Major": 1,
                 "Minor": 0,
-                "Name": "secarch-reviewer",
+                "Name": "secarch-recorder",
                 "Patch": 0
             }
         }

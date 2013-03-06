@@ -15,7 +15,7 @@ def main():
 
     root = json.load(infile)
 
-    for p in root["Profiles"]:
+    for p in root["Forms"]:
         p["Questions"].sort(cmp=question_cmp)
 
     json.dump(root, outfile, indent=4)

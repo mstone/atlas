@@ -37,10 +37,10 @@
 .question-group-title {
     text-transform: capitalize;
 }
-.profile-name:before {
-    content: "Profile: ";
+.form-name:before {
+    content: "Form: ";
 }
-.profile-name {
+.form-name {
     font-size:  160%;
 }
 .overview {

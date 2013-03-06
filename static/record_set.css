@@ -10,32 +10,32 @@ h1 {
 	font-size: 160%;
 }
 
-.profile-list {
+.record-list {
 	margin: 1em;
 }
 
-.form-profile-create-title, 
-.profile-list-title {
+.form-record-create-title, 
+.record-list-title {
 	border-bottom: 1px solid black;
 	display: inline-block;
 	margin: 1em 0 0 0;
 }
 
-.form-profile-create {
+.form-record-create {
 	margin: 1em;
 	border: 1px solid black;
 }
 
 
-.profile-name {
+.record-name {
 	margin: 1em 0 0 1em;
 }
 
-.profile-profile {
+.record-form {
 	margin: 1em 0 0 1em;
 }
 
-.profile-submit {
+.record-submit {
 	float: right;
 	margin: 1em;
 }

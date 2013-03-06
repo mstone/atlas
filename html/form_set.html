@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+	<title>All Forms</title>
+	{{template "head" .}}
+</head>
+<body>
+<header>
+<h1>All Forms</h1>
+{{template "nav" .}}
+</header>
+
+<article>
+<div class="form-form-create-title">New Form</div>
+<form class="form-form-create" action="" method="POST">  <!-- XXX: WAI-ARIA role -->
+	<div class="form-name">
+		<label class="form-name-label" for="form">Form</label>
+		<input class="form-name-input" autofocus id="form" name="form" accesskey="p" tabindex="1" placeholder="pace-1.0.0" type="text"></input>
+	</div>
+	<input class="form-submit" type="submit" value="submit"/>
+	<div class="clear">&nbsp;</div>
+</form>
+</article>
+
+<article>
+<div class="form-list-title">Existing Forms</div>
+<div class="form-list">
+{{range .Forms}}
+<div class="form">
+  <p><a class="form-link" href="{{.Url.String}}">{{.Version.String}}</a></p>
+</div>
+{{else}}
+<p class="form-list-empty">No forms.</p>
+{{end}}
+</div>
+</article>
+</body>
+</html>

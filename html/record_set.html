@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+	<title>All Records</title>
+	{{template "head" .}}
+</head>
+<body>
+<header>
+<h1>All Records</h1>
+{{template "nav" .}}
+</header>
+
+<article>
+<div class="form-record-create-title">New Record</div>
+<form class="form-record-create" action="" method="POST">  <!-- XXX: WAI-ARIA role -->
+	<div class="record-name">
+		<label class="record-name-label" for="record">Record</label>
+		<input class="record-name-input" autofocus id="record" name="record" accesskey="r" tabindex="1" placeholder="acme-1.2.0" type="text"></input>
+	</div>
+	<div class="record-form">
+		<label for="record-form-label">Form</label>
+		<select id="record-form-select" class="form-input" name="form" accesskey="p" tabindex="2">
+			{{range .Forms}}
+				<option class="form-option" value="{{.Version.String}}" {{if .Selected}}selected {{end}}>{{.Version.String}}</option>
+			{{end}}
+		</select>
+	</div>
+	<input class="record-submit" type="submit" value="submit"/>
+	<div class="clear">&nbsp;</div>
+</form>
+</article>
+
+<article>
+<div class="record-list-title">Existing Records</div>
+<div class="record-list">
+	{{range .Records}}
+	<div class="record">
+		<p><a class="record-link" href="{{.Url}}">{{.Version.String}}</a></p>
+	</div>
+	{{else}}
+	<p class="record-list-empty">No records.</p>
+	{{end}}
+</div>
+</article>
+</body>
+</html>

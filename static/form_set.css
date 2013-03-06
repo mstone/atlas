@@ -10,32 +10,32 @@ h1 {
 	font-size: 160%;
 }
 
-.review-list {
+.form-list {
 	margin: 1em;
 }
 
-.form-review-create-title, 
-.review-list-title {
+.form-form-create-title, 
+.form-list-title {
 	border-bottom: 1px solid black;
 	display: inline-block;
 	margin: 1em 0 0 0;
 }
 
-.form-review-create {
+.form-form-create {
 	margin: 1em;
 	border: 1px solid black;
 }
 
 
-.review-name {
+.form-name {
 	margin: 1em 0 0 1em;
 }
 
-.review-profile {
+.form-form {
 	margin: 1em 0 0 1em;
 }
 
-.review-submit {
+.form-submit {
 	float: right;
 	margin: 1em;
 }

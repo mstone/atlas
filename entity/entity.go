@@ -1,9 +1,9 @@
-// Package entity provides the domain syntax for the review wizard.
+// Package entity provides the domain syntax for the record wizard.
 // The key ideas are:
 //
-// 1. A profile is a set of (grouped, versioned) questions.
+// 1. A form is a set of (grouped, versioned) questions.
 //
-// 2. Reviews collect responses to questions in a profile.
+// 2. Records collect responses to questions in a form.
 //
 // 3. A dependency graph connects questions. The graph is used to render UI warnings.
 package entity
@@ -26,7 +26,7 @@ type Version struct {
 	Patch int
 }
 
-type Profile struct {
+type Form struct {
 	Version      Version
 	Questions    map[Version]*Question
 	QuestionDeps map[Version]*QuestionDep
@@ -61,9 +61,9 @@ type Response struct {
 	*Answer
 }
 
-type Review struct {
+type Record struct {
 	Version   Version
-	Profile   *Profile
+	Form   *Form
 	Responses map[Version]*Response
 }
 
@@ -73,16 +73,16 @@ type QuestionRepo interface {
 	AddQuestion(*Question) error
 }
 
-type ProfileRepo interface {
-	GetAllProfiles() ([]*Profile, error)
-	GetProfileById(version Version) (*Profile, error)
-	AddProfile(*Profile) error
+type FormRepo interface {
+	GetAllForms() ([]*Form, error)
+	GetFormById(version Version) (*Form, error)
+	AddForm(*Form) error
 }
 
-type ReviewRepo interface {
-	GetAllReviews() ([]*Review, error)
-	GetReviewById(version Version) (*Review, error)
-	AddReview(*Review) error
+type RecordRepo interface {
+	GetAllRecords() ([]*Record, error)
+	GetRecordById(version Version) (*Record, error)
+	AddRecord(*Record) error
 }
 
 func (self *Version) String() string {
@@ -107,12 +107,12 @@ func NewVersionFromString(str string) (*Version, error) {
 	return ver, nil
 }
 
-func (self *Review) SetResponseAnswer(questionVer Version, answer *Answer) (*Review, error) {
-	err := errors.New(fmt.Sprintf("Review.SetResponseAnswer(): "+
+func (self *Record) SetResponseAnswer(questionVer Version, answer *Answer) (*Record, error) {
+	err := errors.New(fmt.Sprintf("Record.SetResponseAnswer(): "+
 		"question not found; questionVer: %v, "+
 		"answer: %v", questionVer, answer))
 
-	question := self.Profile.Questions[questionVer]
+	question := self.Form.Questions[questionVer]
 
 	if question != nil {
 		self.Responses[questionVer] = &Response{
@@ -141,4 +141,4 @@ func NewAnswer() *Answer {
 //
 //   are there also "repo" interfaces here?
 //
-//   do the "root" profile and reviews live here?
+//   do the "root" form and records live here?

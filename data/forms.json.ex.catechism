@@ -1,5 +1,5 @@
 {
-    "Profiles": [
+    "Forms": [
         {
             "QuestionDeps": null,
             "QuestionIds": [
@@ -138,7 +138,7 @@
                     "Version": {
                         "Major": 1,
                         "Minor": 0,
-                        "Name": "secarch-review-link",
+                        "Name": "secarch-record-link",
                         "Patch": 0
                     }
                 },
@@ -226,7 +226,7 @@
                     "Version": {
                         "Major": 1,
                         "Minor": 0,
-                        "Name": "secarch-reviewer",
+                        "Name": "secarch-recorder",
                         "Patch": 0
                     }
                 }

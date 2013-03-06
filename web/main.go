@@ -1,4 +1,4 @@
-// Package web implements the review wizard's controllers
+// Package web implements the record wizard's controllers
 // and views.
 //
 // Presently, there are controllers for these resources:
@@ -6,10 +6,10 @@
 //     Root
 //       QuestionSet
 //         Question
-//       ProfileSet
-//         Profile
-//       ReviewSet
-//         Review
+//       FormSet
+//         Form
+//       RecordSet
+//         Record
 //
 // Controllers are App struct methods named Handle*{Get|Post}.
 //
@@ -53,8 +53,8 @@ const MAX_CHART_SIZE = 1000000
 
 type App struct {
 	entity.QuestionRepo
-	entity.ProfileRepo
-	entity.ReviewRepo
+	entity.FormRepo
+	entity.RecordRepo
 	StaticPath string
 	StaticRoot string
 	FormsRoot  string
@@ -88,133 +88,133 @@ func checkHTTP(err error) {
 	}
 }
 
-// BUG(mistone): vProfileList and vReviewList sorting should use version sorts, not string sorts
-type vProfile struct {
-	*entity.Profile
+// BUG(mistone): vFormList and vRecordList sorting should use version sorts, not string sorts
+type vForm struct {
+	*entity.Form
 	Selected bool
 }
-type vProfileList []vProfile
+type vFormList []vForm
 
-func (s vProfileList) Len() int { return len(s) }
-func (s vProfileList) Less(i, j int) bool {
+func (s vFormList) Len() int { return len(s) }
+func (s vFormList) Less(i, j int) bool {
 	return s[i].Version.String() < s[j].Version.String()
 }
-func (s vProfileList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s vFormList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
-type vReview2 struct {
+type vRecord2 struct {
 	Url string
-	*entity.Review
+	*entity.Record
 }
 
-type vReviewList []vReview2
+type vRecordList []vRecord2
 
-func (s vReviewList) Len() int { return len(s) }
-func (s vReviewList) Less(i, j int) bool {
+func (s vRecordList) Len() int { return len(s) }
+func (s vRecordList) Less(i, j int) bool {
 	return s[i].Version.String() < s[j].Version.String()
 }
-func (s vReviewList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s vRecordList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
-type vReviewSet struct {
+type vRecordSet struct {
 	*vRoot
-	Profiles vProfileList
-	Reviews  vReviewList
+	Forms vFormList
+	Records  vRecordList
 }
 
-func (self *App) GetReviewUrl(version *entity.Version) (url.URL, error) {
+func (self *App) GetRecordUrl(version *entity.Version) (url.URL, error) {
 	url := url.URL{
-		Path: path.Clean(path.Join(self.FormsRoot, "reviews", version.String())),
+		Path: path.Clean(path.Join(self.FormsRoot, "records", version.String())),
 	}
 	return url, nil
 }
 
-func HandleReviewSetGet(self *App, w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleReviewSetGet()\n")
+func HandleRecordSetGet(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleRecordSetGet()\n")
 
-	profiles, err := self.GetAllProfiles()
+	forms, err := self.GetAllForms()
 	checkHTTP(err)
 
 	// ...
-	// list links to all (current?) reviews?
-	reviews, err := self.GetAllReviews()
+	// list links to all (current?) records?
+	records, err := self.GetAllRecords()
 	checkHTTP(err)
 
-	profilesList := make(vProfileList, len(profiles))
-	for idx, prof := range profiles {
+	formsList := make(vFormList, len(forms))
+	for idx, prof := range forms {
 		isPace := prof.Version.String() == "pace-1.0.0"
-		profilesList[idx] = vProfile{
-			Profile:  prof,
+		formsList[idx] = vForm{
+			Form:  prof,
 			Selected: isPace,
 		}
 	}
-	sort.Sort(profilesList)
+	sort.Sort(formsList)
 
-	reviewsList := make(vReviewList, len(reviews))
-	for idx, review := range reviews {
-		reviewUrl, err := self.GetReviewUrl(&review.Version)
+	recordsList := make(vRecordList, len(records))
+	for idx, record := range records {
+		recordUrl, err := self.GetRecordUrl(&record.Version)
 		checkHTTP(err)
 
-		reviewsList[idx] = vReview2{
-			Url:    reviewUrl.String(),
-			Review: review,
+		recordsList[idx] = vRecord2{
+			Url:    recordUrl.String(),
+			Record: record,
 		}
 	}
-	sort.Sort(reviewsList)
+	sort.Sort(recordsList)
 
-	view := &vReviewSet{
-		Profiles: profilesList,
-		Reviews:  reviewsList,
-		vRoot:    newVRoot(self, "review_set", "", "", ""),
+	view := &vRecordSet{
+		Forms: formsList,
+		Records:  recordsList,
+		vRoot:    newVRoot(self, "record_set", "", "", ""),
 	}
 
-	self.renderTemplate(w, "review_set", view)
+	self.renderTemplate(w, "record_set", view)
 }
 
 // BUG(mistone): CSRF!
-func HandleReviewSetPost(self *App, w http.ResponseWriter, r *http.Request) {
+func HandleRecordSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	// parse body
-	reviewName := r.FormValue("review")
+	recordName := r.FormValue("record")
 
-	reviewVer, err := entity.NewVersionFromString(reviewName)
+	recordVer, err := entity.NewVersionFromString(recordName)
 	checkHTTP(err)
 
-	log.Printf("HandleReviewSetPost(): reviewVer: %v\n", reviewVer)
+	log.Printf("HandleRecordSetPost(): recordVer: %v\n", recordVer)
 
-	// extract profile
-	profileName := r.FormValue("profile")
+	// extract form
+	formName := r.FormValue("form")
 
-	profileVer, err := entity.NewVersionFromString(profileName)
+	formVer, err := entity.NewVersionFromString(formName)
 	checkHTTP(err)
 
-	profile, err := self.GetProfileById(*profileVer)
+	form, err := self.GetFormById(*formVer)
 	checkHTTP(err)
 
-	log.Printf("HandleReviewSetPost(): profile: %v\n", profile)
+	log.Printf("HandleRecordSetPost(): form: %v\n", form)
 
-	// make a new Review
-	review := &entity.Review{
-		Version:   *reviewVer,
-		Profile:   profile,
-		Responses: make(map[entity.Version]*entity.Response, len(profile.Questions)),
+	// make a new Record
+	record := &entity.Record{
+		Version:   *recordVer,
+		Form:   form,
+		Responses: make(map[entity.Version]*entity.Response, len(form.Questions)),
 	}
 
 	// make appropriate Responses based on the Questions
-	//   contained in the indicated Profile
-	for idx, q := range profile.Questions {
-		review.Responses[idx] = &entity.Response{
+	//   contained in the indicated Form
+	for idx, q := range form.Questions {
+		record.Responses[idx] = &entity.Response{
 			Question: q,
 			Answer:   entity.NewAnswer(),
 		}
 	}
-	log.Printf("HandleReviewSetPost(): created review: %v\n", review)
+	log.Printf("HandleRecordSetPost(): created record: %v\n", record)
 
-	// persist the new review
-	err = self.ReviewRepo.AddReview(review)
+	// persist the new record
+	err = self.RecordRepo.AddRecord(record)
 	checkHTTP(err)
 
-	url, err := self.GetReviewUrl(reviewVer)
+	url, err := self.GetRecordUrl(recordVer)
 	checkHTTP(err)
 
-	log.Printf("HandleReviewSetPost(): redirecting to: %v\n", url)
+	log.Printf("HandleRecordSetPost(): redirecting to: %v\n", url)
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
@@ -247,38 +247,38 @@ func (s vResponseGroupList) Len() int           { return len(s) }
 func (s vResponseGroupList) Less(i, j int) bool { return s[i].GroupKey < s[j].GroupKey }
 func (s vResponseGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
-type vReview struct {
+type vRecord struct {
 	*vRoot
-	ReviewName     string
-	ProfileName    string
+	RecordName     string
+	FormName    string
 	ResponseNames  []string
 	ResponseGroups vResponseGroupList
 }
 
-func (self *App) ParseUrlReviewVersion(r *http.Request) (*entity.Version, error) {
-	reviewName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "reviews"))+"/"):]
-	log.Printf("ParseUrlReviewVersion(): reviewName: %v\n", reviewName)
+func (self *App) ParseUrlRecordVersion(r *http.Request) (*entity.Version, error) {
+	recordName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "records"))+"/"):]
+	log.Printf("ParseUrlRecordVersion(): recordName: %v\n", recordName)
 
-	reviewVer, err := entity.NewVersionFromString(reviewName)
+	recordVer, err := entity.NewVersionFromString(recordName)
 	checkHTTP(err)
-	log.Printf("ParseUrlReviewVersion(): reviewVer: %v\n", reviewVer)
+	log.Printf("ParseUrlRecordVersion(): recordVer: %v\n", recordVer)
 
-	return reviewVer, err
+	return recordVer, err
 }
 
-func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
-	reviewVer, err := self.ParseUrlReviewVersion(r)
+func HandleRecordGet(self *App, w http.ResponseWriter, r *http.Request) {
+	recordVer, err := self.ParseUrlRecordVersion(r)
 	checkHTTP(err)
-	log.Printf("HandleReviewGet(): reviewVer: %v\n", reviewVer)
+	log.Printf("HandleRecordGet(): recordVer: %v\n", recordVer)
 
-	review, err := self.ReviewRepo.GetReviewById(*reviewVer)
+	record, err := self.RecordRepo.GetRecordById(*recordVer)
 	checkHTTP(err)
-	log.Printf("HandleReviewGet(): review: %v\n", review)
+	log.Printf("HandleRecordGet(): record: %v\n", record)
 
 	// produce sorted groups of sorted responses
 	responseGroupsMap := make(map[string]vResponseList)
-	for _, resp := range review.Responses {
-		log.Printf("HandleReviewGet(): considering resp %v", resp)
+	for _, resp := range record.Responses {
+		log.Printf("HandleRecordGet(): considering resp %v", resp)
 
 		questionUrl, err := self.GetQuestionUrl(&resp.Question.Version)
 		checkHTTP(err)
@@ -306,7 +306,7 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 		responseGroupsMap[resp.Question.GroupKey] = append(responseGroupsMap[vresp.Question.GroupKey], vresp)
 	}
-	log.Printf("HandleReviewGet(): produced responseGroupsMap %v", responseGroupsMap)
+	log.Printf("HandleRecordGet(): produced responseGroupsMap %v", responseGroupsMap)
 	responseGroupsList := make(vResponseGroupList, len(responseGroupsMap))
 	counter := 0
 	for groupKey, respList := range responseGroupsMap {
@@ -318,127 +318,127 @@ func HandleReviewGet(self *App, w http.ResponseWriter, r *http.Request) {
 		responseGroupsList[counter] = responseGroup
 		counter++
 	}
-	log.Printf("HandleReviewGet(): produced responseGroupsList %v", responseGroupsList)
-	log.Printf("HandleReviewGet(): sorting responseGroupsList", responseGroupsList)
+	log.Printf("HandleRecordGet(): produced responseGroupsList %v", responseGroupsList)
+	log.Printf("HandleRecordGet(): sorting responseGroupsList", responseGroupsList)
 	sort.Sort(responseGroupsList)
-	log.Printf("HandleReviewGet(): got final responseGroupsList", responseGroupsList)
+	log.Printf("HandleRecordGet(): got final responseGroupsList", responseGroupsList)
 
-	responseNames := getProfileQuestionNames(review.Profile)
+	responseNames := getFormQuestionNames(record.Form)
 
-	view := vReview{
-		vRoot:          newVRoot(self, "review", "", "", ""),
-		ReviewName:     review.Version.String(),
-		ProfileName:    review.Profile.Version.String(),
+	view := vRecord{
+		vRoot:          newVRoot(self, "record", "", "", ""),
+		RecordName:     record.Version.String(),
+		FormName:    record.Form.Version.String(),
 		ResponseNames:  responseNames,
 		ResponseGroups: responseGroupsList,
 	}
-	log.Printf("HandleReviewGet(): view: %v\n", view)
+	log.Printf("HandleRecordGet(): view: %v\n", view)
 
 	// render view
-	self.renderTemplate(w, "review", view)
+	self.renderTemplate(w, "record", view)
 }
 
-func HandleReviewPost(self *App, w http.ResponseWriter, r *http.Request) {
-	reviewVer, err := self.ParseUrlReviewVersion(r)
+func HandleRecordPost(self *App, w http.ResponseWriter, r *http.Request) {
+	recordVer, err := self.ParseUrlRecordVersion(r)
 	checkHTTP(err)
-	log.Printf("HandleReviewPost(): reviewVer: %v\n", reviewVer)
+	log.Printf("HandleRecordPost(): recordVer: %v\n", recordVer)
 
-	review, err := self.ReviewRepo.GetReviewById(*reviewVer)
+	record, err := self.RecordRepo.GetRecordById(*recordVer)
 	checkHTTP(err)
-	log.Printf("HandleReviewPost(): review: %v\n", review)
+	log.Printf("HandleRecordPost(): record: %v\n", record)
 
 	questionName := r.FormValue("question_name")
-	log.Printf("HandleReviewPost(): questionName: %v\n", questionName)
+	log.Printf("HandleRecordPost(): questionName: %v\n", questionName)
 
 	questionVer, err := entity.NewVersionFromString(questionName)
 	checkHTTP(err)
-	log.Printf("HandleReviewPost(): questionVer: %v\n", questionVer)
+	log.Printf("HandleRecordPost(): questionVer: %v\n", questionVer)
 
 	datum := r.FormValue(questionVer.String())
-	log.Printf("HandleReviewPost(): datum: %v\n", datum)
+	log.Printf("HandleRecordPost(): datum: %v\n", datum)
 
 	answer := &entity.Answer{
 		Author:       "", // BUG(mistone): need to set author!
 		CreationTime: time.Now(),
 		Datum:        datum,
 	}
-	review, err = review.SetResponseAnswer(*questionVer, answer)
+	record, err = record.SetResponseAnswer(*questionVer, answer)
 	checkHTTP(err)
 
-	err = self.AddReview(review)
+	err = self.AddRecord(record)
 	checkHTTP(err)
 
-	log.Printf("HandleReviewPost(): done\n")
+	log.Printf("HandleRecordPost(): done\n")
 
-	url, err := self.GetReviewUrl(reviewVer)
+	url, err := self.GetRecordUrl(recordVer)
 	checkHTTP(err)
 	url.Fragment = "response-" + questionVer.String()
 
-	log.Printf("HandleReviewPost(): redirecting to: %v\n", url)
+	log.Printf("HandleRecordPost(): redirecting to: %v\n", url)
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
-type vProfile3 struct {
-	*entity.Profile
+type vForm3 struct {
+	*entity.Form
 	Url url.URL
 }
 
-type vProfileSet struct {
+type vFormSet struct {
 	*vRoot
-	Profiles []*vProfile3
+	Forms []*vForm3
 }
 
-func HandleProfileSetGet(self *App, w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleProfileSetGet()\n")
+func HandleFormSetGet(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleFormSetGet()\n")
 	// ...
-	// list links to all (current?) profiles?
-	profiles, err := self.GetAllProfiles()
+	// list links to all (current?) forms?
+	forms, err := self.GetAllForms()
 	checkHTTP(err)
 
-	vProfiles := make([]*vProfile3, len(profiles))
-	for idx, profile := range profiles {
-		url, err := self.GetProfileUrl(&profile.Version)
+	vForms := make([]*vForm3, len(forms))
+	for idx, form := range forms {
+		url, err := self.GetFormUrl(&form.Version)
 		checkHTTP(err)
-		vProfiles[idx] = &vProfile3{
-			Profile: profile,
+		vForms[idx] = &vForm3{
+			Form: form,
 			Url:     url,
 		}
 	}
 
-	view := &vProfileSet{
-		vRoot:    newVRoot(self, "profile_set", "", "", ""),
-		Profiles: vProfiles,
+	view := &vFormSet{
+		vRoot:    newVRoot(self, "form_set", "", "", ""),
+		Forms: vForms,
 	}
-	self.renderTemplate(w, "profile_set", view)
+	self.renderTemplate(w, "form_set", view)
 }
 
-func HandleProfileSetPost(self *App, w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleProfileSetPost()\n")
+func HandleFormSetPost(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleFormSetPost()\n")
 
-	// extract profile
-	profileName := r.FormValue("profile")
-	profileVer, err := entity.NewVersionFromString(profileName)
+	// extract form
+	formName := r.FormValue("form")
+	formVer, err := entity.NewVersionFromString(formName)
 	checkHTTP(err)
 
-	// check for old profile
-	oldProfile, err := self.GetProfileById(*profileVer)
-	if oldProfile != nil {
-		http.Error(w, "Profile already exists.", http.StatusConflict)
+	// check for old form
+	oldForm, err := self.GetFormById(*formVer)
+	if oldForm != nil {
+		http.Error(w, "Form already exists.", http.StatusConflict)
 	}
 
-	// make a new Profile
-	newProfile := &entity.Profile{
-		Version: *profileVer,
+	// make a new Form
+	newForm := &entity.Form{
+		Version: *formVer,
 	}
 
-	// persist the new review
-	err = self.ProfileRepo.AddProfile(newProfile)
+	// persist the new record
+	err = self.FormRepo.AddForm(newForm)
 	checkHTTP(err)
 
-	url, err := self.GetProfileUrl(profileVer)
+	url, err := self.GetFormUrl(formVer)
 	checkHTTP(err)
 
-	log.Printf("HandleProfileSetPost(): redirecting to: %v\n", url)
+	log.Printf("HandleFormSetPost(): redirecting to: %v\n", url)
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
@@ -459,17 +459,17 @@ func (s vQuestionGroupList) Len() int           { return len(s) }
 func (s vQuestionGroupList) Less(i, j int) bool { return s[i].GroupKey < s[j].GroupKey }
 func (s vQuestionGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
-type vProfile2 struct {
+type vForm2 struct {
 	*vRoot
-	ProfileName    string
+	FormName    string
 	QuestionNames  []string
 	QuestionGroups vQuestionGroupList
 }
 
-func getProfileQuestionNames(profile *entity.Profile) []string {
-	questionNames := make([]string, len(profile.Questions))
+func getFormQuestionNames(form *entity.Form) []string {
+	questionNames := make([]string, len(form.Questions))
 	idx := 0
-	for k := range profile.Questions {
+	for k := range form.Questions {
 		questionNames[idx] = k.String()
 		idx++
 	}
@@ -484,23 +484,23 @@ func (self *App) GetQuestionUrl(version *entity.Version) (url.URL, error) {
 	return url, nil
 }
 
-func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
-	profileVer, err := self.ParseUrlProfileVersion(r)
+func HandleFormGet(self *App, w http.ResponseWriter, r *http.Request) {
+	formVer, err := self.ParseUrlFormVersion(r)
 	checkHTTP(err)
-	log.Printf("HandleProfileGet(): profileVer: %v\n", profileVer)
+	log.Printf("HandleFormGet(): formVer: %v\n", formVer)
 
-	profile, err := self.ProfileRepo.GetProfileById(*profileVer)
+	form, err := self.FormRepo.GetFormById(*formVer)
 	checkHTTP(err)
-	log.Printf("HandleProfileGet(): profile: %v\n", profile)
+	log.Printf("HandleFormGet(): form: %v\n", form)
 
 	// produce sorted groups of sorted questions
 	questionGroupMap := make(map[string]vQuestionList)
-	for _, quest := range profile.Questions {
-		log.Printf("HandleProfileGet(): considering question %v", quest)
+	for _, quest := range form.Questions {
+		log.Printf("HandleFormGet(): considering question %v", quest)
 
 		questionUrl, err := self.GetQuestionUrl(&quest.Version)
 		checkHTTP(err)
-		log.Printf("HandleProfileGet(): questionUrl: %v\n", questionUrl)
+		log.Printf("HandleFormGet(): questionUrl: %v\n", questionUrl)
 
 		vQuest := vQuestion{
 			vRoot:        newVRoot(self, "question", "", "", ""),
@@ -511,7 +511,7 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 		questionGroupMap[quest.GroupKey] = append(questionGroupMap[quest.GroupKey], vQuest)
 	}
-	log.Printf("HandleProfileGet(): produced questionGroupMap %v", questionGroupMap)
+	log.Printf("HandleFormGet(): produced questionGroupMap %v", questionGroupMap)
 	questionGroupList := make(vQuestionGroupList, len(questionGroupMap))
 	counter := 0
 	for groupKey, questList := range questionGroupMap {
@@ -523,59 +523,59 @@ func HandleProfileGet(self *App, w http.ResponseWriter, r *http.Request) {
 		questionGroupList[counter] = questionGroup
 		counter++
 	}
-	log.Printf("HandleProfileGet(): produced questionGroupList %v", questionGroupList)
-	log.Printf("HandleProfileGet(): sorting questionGroupList", questionGroupList)
+	log.Printf("HandleFormGet(): produced questionGroupList %v", questionGroupList)
+	log.Printf("HandleFormGet(): sorting questionGroupList", questionGroupList)
 	sort.Sort(questionGroupList)
-	log.Printf("HandleProfileGet(): got final questionGroupList", questionGroupList)
+	log.Printf("HandleFormGet(): got final questionGroupList", questionGroupList)
 
-	questionNames := getProfileQuestionNames(profile)
+	questionNames := getFormQuestionNames(form)
 
-	view := vProfile2{
-		vRoot:          newVRoot(self, "profile", "", "", ""),
-		ProfileName:    profile.Version.String(),
+	view := vForm2{
+		vRoot:          newVRoot(self, "form", "", "", ""),
+		FormName:    form.Version.String(),
 		QuestionNames:  questionNames,
 		QuestionGroups: questionGroupList,
 	}
-	log.Printf("HandleProfileGet(): view: %v\n", view)
+	log.Printf("HandleFormGet(): view: %v\n", view)
 
-	self.renderTemplate(w, "profile", view)
+	self.renderTemplate(w, "form", view)
 }
 
-func (self *App) GetProfileUrl(version *entity.Version) (url.URL, error) {
+func (self *App) GetFormUrl(version *entity.Version) (url.URL, error) {
 	url := url.URL{
-		Path: path.Clean(path.Join(self.FormsRoot, "profiles", version.String())),
+		Path: path.Clean(path.Join(self.FormsRoot, "forms", version.String())),
 	}
 	return url, nil
 }
 
-func (self *App) ParseUrlProfileVersion(r *http.Request) (*entity.Version, error) {
-	profileName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "profiles"))+"/"):]
-	log.Printf("ParseUrlProfileVersion(): profileName: %v\n", profileName)
+func (self *App) ParseUrlFormVersion(r *http.Request) (*entity.Version, error) {
+	formName := r.URL.Path[len(path.Clean(path.Join(self.FormsRoot, "forms"))+"/"):]
+	log.Printf("ParseUrlFormVersion(): formName: %v\n", formName)
 
-	profileVer, err := entity.NewVersionFromString(profileName)
+	formVer, err := entity.NewVersionFromString(formName)
 	checkHTTP(err)
-	log.Printf("ParseUrlProfileVersion(): profileVer: %v\n", profileVer)
+	log.Printf("ParseUrlFormVersion(): formVer: %v\n", formVer)
 
-	return profileVer, err
+	return formVer, err
 }
 
-func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleProfilePost()\n")
+func HandleFormPost(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleFormPost()\n")
 
-	profileVer, err := self.ParseUrlProfileVersion(r)
+	formVer, err := self.ParseUrlFormVersion(r)
 	checkHTTP(err)
-	log.Printf("HandleProfilePost(): profileVer: %v\n", profileVer)
+	log.Printf("HandleFormPost(): formVer: %v\n", formVer)
 
-	profile, err := self.ProfileRepo.GetProfileById(*profileVer)
+	form, err := self.FormRepo.GetFormById(*formVer)
 	checkHTTP(err)
-	log.Printf("HandleProfilePost(): profile: %v\n", profile)
+	log.Printf("HandleFormPost(): form: %v\n", form)
 
 	questionName := r.FormValue("question_name")
-	log.Printf("HandleProfilePost(): questionName: %v\n", questionName)
+	log.Printf("HandleFormPost(): questionName: %v\n", questionName)
 
 	questionVer, err := entity.NewVersionFromString(questionName)
 	checkHTTP(err)
-	log.Printf("HandleProfilePost(): questionVer: %v\n", questionVer)
+	log.Printf("HandleFormPost(): questionVer: %v\n", questionVer)
 
 	question := &entity.Question{
 		Version: *questionVer,
@@ -584,20 +584,20 @@ func HandleProfilePost(self *App, w http.ResponseWriter, r *http.Request) {
 	if oldQuestion != nil {
 		question = oldQuestion
 	} else {
-		log.Printf("HandleProfilePost(): generating fresh question: %v\n", question)
+		log.Printf("HandleFormPost(): generating fresh question: %v\n", question)
 		err = self.QuestionRepo.AddQuestion(question)
 		checkHTTP(err)
 	}
 
-	profile.Questions[*questionVer] = question
-	err = self.AddProfile(profile)
+	form.Questions[*questionVer] = question
+	err = self.AddForm(form)
 	checkHTTP(err)
 
-	url, err := self.GetProfileUrl(profileVer)
+	url, err := self.GetFormUrl(formVer)
 	checkHTTP(err)
 	url.Fragment = "question-" + questionVer.String()
 
-	log.Printf("HandleProfilePost(): redirecting to: %v\n", url)
+	log.Printf("HandleFormPost(): redirecting to: %v\n", url)
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
@@ -895,14 +895,14 @@ type vRoot struct {
 	FormsRoot      string
 	ChartsRoot     string
 	QuestionSetUrl string
-	ProfileSetUrl  string
-	ReviewSetUrl   string
+	FormSetUrl  string
+	RecordSetUrl   string
 }
 
 func newVRoot(self *App, pageName string, title string, authors string, date string) *vRoot {
 	questionSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "questions"))}
-	profileSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "profiles"))}
-	reviewSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "reviews"))}
+	formSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "forms"))}
+	recordSetUrl := url.URL{Path: path.Clean(path.Join(self.FormsRoot, "records"))}
 
 	return &vRoot{
 		PageName:       pageName,
@@ -913,8 +913,8 @@ func newVRoot(self *App, pageName string, title string, authors string, date str
 		FormsRoot:      self.FormsRoot,
 		ChartsRoot:     path.Clean(self.ChartsRoot + "/"),
 		QuestionSetUrl: questionSetUrl.String(),
-		ProfileSetUrl:  profileSetUrl.String(),
-		ReviewSetUrl:   reviewSetUrl.String(),
+		FormSetUrl:  formSetUrl.String(),
+		RecordSetUrl:   recordSetUrl.String(),
 	}
 }
 
@@ -1009,14 +1009,14 @@ func (self *App) HandleForms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if fp == "/reviews" {
+	if fp == "/records" {
 		switch r.Method {
 		default:
 			panic("method")
 		case "GET":
-			HandleReviewSetGet(self, w, r)
+			HandleRecordSetGet(self, w, r)
 		case "POST":
-			HandleReviewSetPost(self, w, r)
+			HandleRecordSetPost(self, w, r)
 		}
 		return
 	}
@@ -1033,26 +1033,26 @@ func (self *App) HandleForms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if fp == "/profiles" {
+	if fp == "/forms" {
 		switch r.Method {
 		default:
 			panic("method")
 		case "GET":
-			HandleProfileSetGet(self, w, r)
+			HandleFormSetGet(self, w, r)
 		case "POST":
-			HandleProfileSetPost(self, w, r)
+			HandleFormSetPost(self, w, r)
 		}
 		return
 	}
 
-	if strings.HasPrefix(fp, "/reviews/") {
+	if strings.HasPrefix(fp, "/records/") {
 		switch r.Method {
 		default:
 			panic("method")
 		case "GET":
-			HandleReviewGet(self, w, r)
+			HandleRecordGet(self, w, r)
 		case "POST":
-			HandleReviewPost(self, w, r)
+			HandleRecordPost(self, w, r)
 		}
 		return
 	}
@@ -1069,14 +1069,14 @@ func (self *App) HandleForms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.HasPrefix(fp, "/profiles/") {
+	if strings.HasPrefix(fp, "/forms/") {
 		switch r.Method {
 		default:
 			panic("method")
 		case "GET":
-			HandleProfileGet(self, w, r)
+			HandleFormGet(self, w, r)
 		case "POST":
-			HandleProfilePost(self, w, r)
+			HandleFormPost(self, w, r)
 		}
 		return
 	}

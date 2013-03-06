@@ -1,4 +1,4 @@
-// Package main implements the atlas review wizard.
+// Package main implements the atlas record wizard.
 //
 // The code is organized into four packages:
 //
@@ -16,7 +16,7 @@
 //
 //
 // The entity package contains domain syntax: Questions,
-// Reviews, (Question) Profiles, Responses, etc. and their
+// Records, (Question) Forms, Responses, etc. and their
 // persistence interfaces.
 //
 // The persist package implements the *Repo interfaces
@@ -76,8 +76,8 @@ func main() {
 	web := &web.App{
 		HttpAddr:     *httpAddr,
 		QuestionRepo: entity.QuestionRepo(persist),
-		ProfileRepo:  entity.ProfileRepo(persist),
-		ReviewRepo:   entity.ReviewRepo(persist),
+		FormRepo:  entity.FormRepo(persist),
+		RecordRepo:   entity.RecordRepo(persist),
 		HtmlPath:     *htmlPath,
 		StaticPath:   *staticPath,
 		StaticRoot:   *staticRoot,

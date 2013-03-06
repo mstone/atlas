@@ -1,13 +1,13 @@
 <!doctype html>
 <html>
 <head>
-	<title>Review: {{.ReviewName}}</title>
+	<title>Record: {{.RecordName}}</title>
 	{{template "head" .}}
 </head>
 <body>
 <header>
-<div class="review-name">{{.ReviewName}}</div>
-<div class="profile-name">{{.ProfileName}}</div>
+<div class="record-name">{{.RecordName}}</div>
+<div class="form-name">{{.FormName}}</div>
 {{template "nav" .}}
 </header>
 
@@ -25,7 +25,7 @@
 </article>
 
 <article>
-<div class="review">
+<div class="record">
 {{range .ResponseGroups}}
 <div class="response-group-title">{{.GroupKey}}</div>
 <div class="response-group" id="response-group-{{.GroupKey}}">

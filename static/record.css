@@ -39,24 +39,24 @@
 .overview {
 	padding: 1em;
 }
-.profile-name:after {
+.form-name:after {
     content: "\")";
 }
-.profile-name:before {
-    content: "(using profile: \"";
+.form-name:before {
+    content: "(using form: \"";
 }
-.profile-name {
+.form-name {
     font-size:  120%;
 }
-.review-name:before {
-    content: "Review: ";
+.record-name:before {
+    content: "Record: ";
 }
 body {
     max-width: 40pc;
     padding:  1em;
     font-family: "Helvetica", sans-serif;
 }
-.review-name {
+.record-name {
     font-size:  160%;
 }
 

@@ -95,7 +95,7 @@ func (self *PersistJSON) jsonAddQuestionHelper(question *entity.Question) error 
 	if err != nil {
 		return err
 	}
-	log.Printf("jsonAddProfile(): encoded questionSetV1: %v", view)
+	log.Printf("jsonAddForm(): encoded questionSetV1: %v", view)
 
 	return nil
 }
@@ -125,89 +125,89 @@ func makeQuestionsMap(questions []*entity.Question) map[entity.Version]*entity.Q
 	return questionsMap
 }
 
-func (self *PersistJSON) jsonGetAllProfiles() ([]*entity.Profile, error) {
-	log.Printf("PersistJSON.GetAllProfiles(): getting all questions...")
+func (self *PersistJSON) jsonGetAllForms() ([]*entity.Form, error) {
+	log.Printf("PersistJSON.GetAllForms(): getting all questions...")
 	questions, err := self.jsonGetAllQuestions()
 	if err != nil {
 		return nil, err
 	}
 	questionsMap := makeQuestionsMap(questions)
 
-	f, err := self.jsonReadPath(self.profilesPath)
+	f, err := self.jsonReadPath(self.formsPath)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	log.Printf("PersistJSON.GetAllProfiles(): data/profiles.json opened")
+	log.Printf("PersistJSON.GetAllForms(): data/forms.json opened")
 
 	decoder := json.NewDecoder(bufio.NewReader(f))
-	log.Printf("PersistJSON.GetAllProfiles(): made decoder")
+	log.Printf("PersistJSON.GetAllForms(): made decoder")
 
-	ps := profileSetV1{}
+	ps := formSetV1{}
 	err = decoder.Decode(&ps)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("PersistJSON.GetAllProfiles(): decoded profileSet: %v", ps)
+	log.Printf("PersistJSON.GetAllForms(): decoded formSet: %v", ps)
 
-	root := persistProfileSetV1ToEntityProfilePtrSlice(ps, questionsMap)
+	root := persistFormSetV1ToEntityFormPtrSlice(ps, questionsMap)
 	return root, nil
 }
 
-func (self *PersistJSON) jsonGetProfileById(id entity.Version) (*entity.Profile, error) {
-	profiles, err := self.jsonGetAllProfiles()
+func (self *PersistJSON) jsonGetFormById(id entity.Version) (*entity.Form, error) {
+	forms, err := self.jsonGetAllForms()
 	if err != nil {
 		return nil, err
 	}
-	for _, prof := range profiles {
+	for _, prof := range forms {
 		if prof.Version == id {
 			return prof, nil
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("PersistJSON.GetProfileById(): profile version '%v' not found", id))
+	return nil, errors.New(fmt.Sprintf("PersistJSON.GetFormById(): form version '%v' not found", id))
 }
 
-func (self *PersistJSON) jsonAddProfile(profile *entity.Profile) error {
-	err := self.jsonAddProfileHelper(profile)
+func (self *PersistJSON) jsonAddForm(form *entity.Form) error {
+	err := self.jsonAddFormHelper(form)
 	if err == nil {
-		err = self.jsonRenameTmpPath(self.profilesPath)
+		err = self.jsonRenameTmpPath(self.formsPath)
 	}
 	return err
 }
 
-func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
-	log.Printf("jsonAddProfile(): adding new profile: %v", profile)
-	allProfs, err := self.jsonGetAllProfiles()
-	log.Printf("jsonAddProfile(): profs: %v", allProfs)
+func (self *PersistJSON) jsonAddFormHelper(form *entity.Form) error {
+	log.Printf("jsonAddForm(): adding new form: %v", form)
+	allProfs, err := self.jsonGetAllForms()
+	log.Printf("jsonAddForm(): profs: %v", allProfs)
 	if err != nil {
 		return err
 	}
 
 	found := false
 	for idx, prof := range allProfs {
-		if prof.Version == profile.Version {
+		if prof.Version == form.Version {
 			found = true
-			allProfs[idx] = profile
+			allProfs[idx] = form
 		}
 	}
 	if !found {
-		allProfs = append(allProfs, profile)
+		allProfs = append(allProfs, form)
 	}
 
-	f, err := self.jsonWriteTmpPath(self.profilesPath)
+	f, err := self.jsonWriteTmpPath(self.formsPath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	log.Printf("jsonAddProfile(): data/profiles.json.tmp opened for write")
+	log.Printf("jsonAddForm(): data/forms.json.tmp opened for write")
 
 	writer := bufio.NewWriter(f)
 	defer writer.Flush()
 
 	encoder := json.NewEncoder(writer)
-	log.Printf("jsonAddProfile(): made encoder")
+	log.Printf("jsonAddForm(): made encoder")
 
-	view, err := entityProfilePtrSliceToPersistProfileSetV1(allProfs)
+	view, err := entityFormPtrSliceToPersistFormSetV1(allProfs)
 	if err != nil {
 		return err
 	}
@@ -216,92 +216,92 @@ func (self *PersistJSON) jsonAddProfileHelper(profile *entity.Profile) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("jsonAddProfile(): encoded profileSetV1: %v", view)
+	log.Printf("jsonAddForm(): encoded formSetV1: %v", view)
 
 	return nil
 }
 
-func (self *PersistJSON) jsonGetAllReviews() ([]*entity.Review, error) {
-	f, err := self.jsonReadPath(self.reviewsPath)
+func (self *PersistJSON) jsonGetAllRecords() ([]*entity.Record, error) {
+	f, err := self.jsonReadPath(self.recordsPath)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	log.Printf("PersistJSON.GetAllReviews(): data/reviews.json opened")
+	log.Printf("PersistJSON.GetAllRecords(): data/records.json opened")
 
 	decoder := json.NewDecoder(bufio.NewReader(f))
-	log.Printf("PersistJSON.GetAllReviews(): made decoder")
+	log.Printf("PersistJSON.GetAllRecords(): made decoder")
 
-	rs := reviewSetV1{}
+	rs := recordSetV1{}
 	err = decoder.Decode(&rs)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("PersistJSON.GetAllReviews(): decoded reviewSet: %v", rs)
+	log.Printf("PersistJSON.GetAllRecords(): decoded recordSet: %v", rs)
 
-	return self.persistReviewSetV1ToEntityReviewPtrSlice(rs), nil
+	return self.persistRecordSetV1ToEntityRecordPtrSlice(rs), nil
 }
 
-func (self *PersistJSON) jsonGetReviewById(id entity.Version) (*entity.Review, error) {
-	reviews, err := self.jsonGetAllReviews()
+func (self *PersistJSON) jsonGetRecordById(id entity.Version) (*entity.Record, error) {
+	records, err := self.jsonGetAllRecords()
 	if err != nil {
 		return nil, err
 	}
-	for _, rev := range reviews {
+	for _, rev := range records {
 		if rev.Version == id {
 			return rev, nil
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("PersistJSON.GetReviewById(): review version '%v' not found", id))
+	return nil, errors.New(fmt.Sprintf("PersistJSON.GetRecordById(): record version '%v' not found", id))
 }
 
-func (self *PersistJSON) jsonAddReview(review *entity.Review) error {
-	err := self.jsonAddReviewHelper(review)
+func (self *PersistJSON) jsonAddRecord(record *entity.Record) error {
+	err := self.jsonAddRecordHelper(record)
 	if err == nil {
-		err = self.jsonRenameTmpPath(self.reviewsPath)
+		err = self.jsonRenameTmpPath(self.recordsPath)
 	}
 	return err
 }
 
-func (self *PersistJSON) jsonAddReviewHelper(review *entity.Review) error {
-	allRevs, err := self.jsonGetAllReviews()
-	log.Printf("PersistJSON.AddReview(): revs: %v", allRevs)
+func (self *PersistJSON) jsonAddRecordHelper(record *entity.Record) error {
+	allRevs, err := self.jsonGetAllRecords()
+	log.Printf("PersistJSON.AddRecord(): revs: %v", allRevs)
 	if err != nil {
 		return err
 	}
 
 	found := false
 	for idx, rev := range allRevs {
-		if rev.Version == review.Version {
+		if rev.Version == record.Version {
 			found = true
-			allRevs[idx] = review
+			allRevs[idx] = record
 		}
 	}
 	if !found {
-		allRevs = append(allRevs, review)
+		allRevs = append(allRevs, record)
 	}
 
-	f, err := self.jsonWriteTmpPath(self.reviewsPath)
+	f, err := self.jsonWriteTmpPath(self.recordsPath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	log.Printf("PersistJSON.AddReview(): data/reviews.json.tmp opened for write")
+	log.Printf("PersistJSON.AddRecord(): data/records.json.tmp opened for write")
 
 	writer := bufio.NewWriter(f)
 	defer writer.Flush()
 
 	encoder := json.NewEncoder(writer)
-	log.Printf("PersistJSON.AddReview(): made encoder: %v", encoder)
+	log.Printf("PersistJSON.AddRecord(): made encoder: %v", encoder)
 
-	rs := entityReviewPtrSliceToPersistReviewSetV1(allRevs)
-	log.Printf("PersistJSON.AddReview(): made reviewSetV1: %v", rs)
+	rs := entityRecordPtrSliceToPersistRecordSetV1(allRevs)
+	log.Printf("PersistJSON.AddRecord(): made recordSetV1: %v", rs)
 
 	err = encoder.Encode(rs)
 	if err != nil {
 		return err
 	}
-	log.Printf("PersistJSON.AddReview(): encoded reviewSet: %v", rs)
+	log.Printf("PersistJSON.AddRecord(): encoded recordSet: %v", rs)
 
 	return nil
 }

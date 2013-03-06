@@ -36,66 +36,66 @@ type addQuestionOp struct {
 	Question  *entity.Question
 }
 
-type getAllProfilesOpRx struct {
-	Val []*entity.Profile
+type getAllFormsOpRx struct {
+	Val []*entity.Form
 	Err error
 }
 
-type getAllProfilesOp struct {
+type getAllFormsOp struct {
 	Persist   *PersistJSON
-	ReplyChan chan getAllProfilesOpRx
+	ReplyChan chan getAllFormsOpRx
 }
 
-type getProfileByIdOpRx struct {
-	Val *entity.Profile
+type getFormByIdOpRx struct {
+	Val *entity.Form
 	Err error
 }
 
-type getProfileByIdOp struct {
+type getFormByIdOp struct {
 	Persist   *PersistJSON
-	ReplyChan chan getProfileByIdOpRx
+	ReplyChan chan getFormByIdOpRx
 	Id        entity.Version
 }
 
-type addProfileOpRx struct {
+type addFormOpRx struct {
 	Err error
 }
 
-type addProfileOp struct {
+type addFormOp struct {
 	Persist   *PersistJSON
-	ReplyChan chan addProfileOpRx
-	Profile   *entity.Profile
+	ReplyChan chan addFormOpRx
+	Form   *entity.Form
 }
 
-type getAllReviewsOpRx struct {
-	Val []*entity.Review
+type getAllRecordsOpRx struct {
+	Val []*entity.Record
 	Err error
 }
 
-type getAllReviewsOp struct {
+type getAllRecordsOp struct {
 	Persist   *PersistJSON
-	ReplyChan chan getAllReviewsOpRx
+	ReplyChan chan getAllRecordsOpRx
 }
 
-type getReviewByIdOpRx struct {
-	Val *entity.Review
+type getRecordByIdOpRx struct {
+	Val *entity.Record
 	Err error
 }
 
-type getReviewByIdOp struct {
+type getRecordByIdOp struct {
 	Persist   *PersistJSON
-	ReplyChan chan getReviewByIdOpRx
+	ReplyChan chan getRecordByIdOpRx
 	Id        entity.Version
 }
 
-type addReviewOpRx struct {
+type addRecordOpRx struct {
 	Err error
 }
 
-type addReviewOp struct {
+type addRecordOp struct {
 	Persist   *PersistJSON
-	ReplyChan chan addReviewOpRx
-	Review    *entity.Review
+	ReplyChan chan addRecordOpRx
+	Record    *entity.Record
 }
 
 // Messages on opChan will be type-switched to Ops. (See above.)
@@ -116,24 +116,24 @@ func dispatchOpChan(opChan opChan) {
 		case addQuestionOp:
 			err := op.Persist.jsonAddQuestion(op.Question)
 			op.ReplyChan <- addQuestionOpRx{err}
-		case getAllProfilesOp:
-			val, err := op.Persist.jsonGetAllProfiles()
-			op.ReplyChan <- getAllProfilesOpRx{val, err}
-		case getProfileByIdOp:
-			val, err := op.Persist.jsonGetProfileById(op.Id)
-			op.ReplyChan <- getProfileByIdOpRx{val, err}
-		case addProfileOp:
-			err := op.Persist.jsonAddProfile(op.Profile)
-			op.ReplyChan <- addProfileOpRx{err}
-		case getAllReviewsOp:
-			val, err := op.Persist.jsonGetAllReviews()
-			op.ReplyChan <- getAllReviewsOpRx{val, err}
-		case getReviewByIdOp:
-			val, err := op.Persist.jsonGetReviewById(op.Id)
-			op.ReplyChan <- getReviewByIdOpRx{val, err}
-		case addReviewOp:
-			err := op.Persist.jsonAddReview(op.Review)
-			op.ReplyChan <- addReviewOpRx{err}
+		case getAllFormsOp:
+			val, err := op.Persist.jsonGetAllForms()
+			op.ReplyChan <- getAllFormsOpRx{val, err}
+		case getFormByIdOp:
+			val, err := op.Persist.jsonGetFormById(op.Id)
+			op.ReplyChan <- getFormByIdOpRx{val, err}
+		case addFormOp:
+			err := op.Persist.jsonAddForm(op.Form)
+			op.ReplyChan <- addFormOpRx{err}
+		case getAllRecordsOp:
+			val, err := op.Persist.jsonGetAllRecords()
+			op.ReplyChan <- getAllRecordsOpRx{val, err}
+		case getRecordByIdOp:
+			val, err := op.Persist.jsonGetRecordById(op.Id)
+			op.ReplyChan <- getRecordByIdOpRx{val, err}
+		case addRecordOp:
+			err := op.Persist.jsonAddRecord(op.Record)
+			op.ReplyChan <- addRecordOpRx{err}
 		}
 	}
 }

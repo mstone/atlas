@@ -36,8 +36,8 @@ func init() {
 	normalApp = &App{
 		HttpAddr:     httpAddr,
 		QuestionRepo: entity.QuestionRepo(normalPersist),
-		ProfileRepo:  entity.ProfileRepo(normalPersist),
-		ReviewRepo:   entity.ReviewRepo(normalPersist),
+		FormRepo:  entity.FormRepo(normalPersist),
+		RecordRepo:   entity.RecordRepo(normalPersist),
 		HtmlPath:     htmlPath,
 		StaticPath:   staticPath,
 		StaticRoot:   staticRoot,
@@ -51,15 +51,15 @@ func init() {
 			path.Join(htmlPath, "*.html")))
 }
 
-func TestReviewSetGet(t *testing.T) {
+func TestRecordSetGet(t *testing.T) {
 	t.Parallel()
-	t.Log("TestReviewSetGet(): starting.")
+	t.Log("TestRecordSetGet(): starting.")
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "http://localhost:3001/forms/reviews/", nil)
+	r, _ := http.NewRequest("GET", "http://localhost:3001/forms/records/", nil)
 	normalApp.ServeHTTP(w, r)
-	t.Logf("TestReviewSetGet(): status code %d", w.Code)
+	t.Logf("TestRecordSetGet(): status code %d", w.Code)
 	if w.Code != 200 {
-		t.Fatalf("TestReviewSetGet() failed: %s", w)
+		t.Fatalf("TestRecordSetGet() failed: %s", w)
 	}
 }
 
@@ -71,19 +71,19 @@ func TestQuestionSetGet(t *testing.T) {
 	normalApp.ServeHTTP(w, r)
 	t.Logf("TestQuestionGet(): status code %d", w.Code)
 	if w.Code != 200 {
-		t.Fatalf("TestReviewSetGet() failed: %s", w)
+		t.Fatalf("TestRecordSetGet() failed: %s", w)
 	}
 }
 
-func TestProfileSetGet(t *testing.T) {
+func TestFormSetGet(t *testing.T) {
 	t.Parallel()
-	t.Log("TestProfileSetGet(): starting.")
+	t.Log("TestFormSetGet(): starting.")
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "http://localhost:3001/forms/profiles/", nil)
+	r, _ := http.NewRequest("GET", "http://localhost:3001/forms/forms/", nil)
 	normalApp.ServeHTTP(w, r)
-	t.Logf("TestProfileGet(): status code %d", w.Code)
+	t.Logf("TestFormGet(): status code %d", w.Code)
 	if w.Code != 200 {
-		t.Fatalf("TestReviewSetGet() failed: %s", w)
+		t.Fatalf("TestRecordSetGet() failed: %s", w)
 	}
 }
 

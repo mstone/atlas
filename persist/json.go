@@ -13,8 +13,8 @@ type PersistJSON struct {
 	opChan        opChan
 	dataPath      string
 	questionsPath string
-	profilesPath  string
-	reviewsPath   string
+	formsPath  string
+	recordsPath   string
 }
 
 func NewPersistJSON(dataPath string) *PersistJSON {
@@ -28,8 +28,8 @@ func NewPersistJSON(dataPath string) *PersistJSON {
 		opChan:        opChan(jsonOpChan),
 		dataPath:      dataPath,
 		questionsPath: path.Join(dataPath, "questions.json"),
-		profilesPath:  path.Join(dataPath, "profiles.json"),
-		reviewsPath:   path.Join(dataPath, "reviews.json"),
+		formsPath:  path.Join(dataPath, "forms.json"),
+		recordsPath:   path.Join(dataPath, "records.json"),
 	}
 }
 
@@ -56,21 +56,21 @@ func (self *PersistJSON) GetQuestionById(version entity.Version) (*entity.Questi
 	return rx.Val, rx.Err
 }
 
-func (self *PersistJSON) AddQuestion(profile *entity.Question) error {
+func (self *PersistJSON) AddQuestion(form *entity.Question) error {
 	replyChan := make(chan addQuestionOpRx)
 	op := addQuestionOp{
 		Persist:   self,
 		ReplyChan: replyChan,
-		Question:  profile,
+		Question:  form,
 	}
 	self.opChan <- op
 	rx := <-replyChan
 	return rx.Err
 }
 
-func (self *PersistJSON) GetAllProfiles() ([]*entity.Profile, error) {
-	replyChan := make(chan getAllProfilesOpRx)
-	op := getAllProfilesOp{
+func (self *PersistJSON) GetAllForms() ([]*entity.Form, error) {
+	replyChan := make(chan getAllFormsOpRx)
+	op := getAllFormsOp{
 		Persist:   self,
 		ReplyChan: replyChan,
 	}
@@ -79,9 +79,9 @@ func (self *PersistJSON) GetAllProfiles() ([]*entity.Profile, error) {
 	return rx.Val, rx.Err
 }
 
-func (self *PersistJSON) GetProfileById(version entity.Version) (*entity.Profile, error) {
-	replyChan := make(chan getProfileByIdOpRx)
-	op := getProfileByIdOp{
+func (self *PersistJSON) GetFormById(version entity.Version) (*entity.Form, error) {
+	replyChan := make(chan getFormByIdOpRx)
+	op := getFormByIdOp{
 		Persist:   self,
 		ReplyChan: replyChan,
 		Id:        version,
@@ -91,21 +91,21 @@ func (self *PersistJSON) GetProfileById(version entity.Version) (*entity.Profile
 	return rx.Val, rx.Err
 }
 
-func (self *PersistJSON) AddProfile(profile *entity.Profile) error {
-	replyChan := make(chan addProfileOpRx)
-	op := addProfileOp{
+func (self *PersistJSON) AddForm(form *entity.Form) error {
+	replyChan := make(chan addFormOpRx)
+	op := addFormOp{
 		Persist:   self,
 		ReplyChan: replyChan,
-		Profile:   profile,
+		Form:   form,
 	}
 	self.opChan <- op
 	rx := <-replyChan
 	return rx.Err
 }
 
-func (self *PersistJSON) GetAllReviews() ([]*entity.Review, error) {
-	replyChan := make(chan getAllReviewsOpRx)
-	op := getAllReviewsOp{
+func (self *PersistJSON) GetAllRecords() ([]*entity.Record, error) {
+	replyChan := make(chan getAllRecordsOpRx)
+	op := getAllRecordsOp{
 		Persist:   self,
 		ReplyChan: replyChan,
 	}
@@ -114,9 +114,9 @@ func (self *PersistJSON) GetAllReviews() ([]*entity.Review, error) {
 	return rx.Val, rx.Err
 }
 
-func (self *PersistJSON) GetReviewById(version entity.Version) (*entity.Review, error) {
-	replyChan := make(chan getReviewByIdOpRx)
-	op := getReviewByIdOp{
+func (self *PersistJSON) GetRecordById(version entity.Version) (*entity.Record, error) {
+	replyChan := make(chan getRecordByIdOpRx)
+	op := getRecordByIdOp{
 		Persist:   self,
 		ReplyChan: replyChan,
 		Id:        version,
@@ -126,12 +126,12 @@ func (self *PersistJSON) GetReviewById(version entity.Version) (*entity.Review, 
 	return rx.Val, rx.Err
 }
 
-func (self *PersistJSON) AddReview(review *entity.Review) error {
-	replyChan := make(chan addReviewOpRx)
-	op := addReviewOp{
+func (self *PersistJSON) AddRecord(record *entity.Record) error {
+	replyChan := make(chan addRecordOpRx)
+	op := addRecordOp{
 		Persist:   self,
 		ReplyChan: replyChan,
-		Review:    review,
+		Record:    record,
 	}
 	self.opChan <- op
 	rx := <-replyChan

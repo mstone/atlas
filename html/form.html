@@ -1,12 +1,12 @@
 <!doctype html>
 <html>
 <head>
-	<title>Profile: {{.ProfileName}}</title>
+	<title>Form: {{.FormName}}</title>
 	{{template "head" .}}
 </head>
 <body>
 <header>
-<div class="profile-name">{{.ProfileName}}</div>
+<div class="form-name">{{.FormName}}</div>
 {{template "nav" .}}
 </header>
 
@@ -41,7 +41,7 @@
 </article>
 
 <article>
-<div class="profile">
+<div class="form">
 {{range .QuestionGroups}}
 <div class="question-group-title">{{.GroupKey}}</div>
 <div class="question-group" id="question-group-{{.GroupKey}}">

@@ -40,50 +40,50 @@ import (
 	"flag"
 )
 
-// dataPath tells us where to store our persisted
-// entities.
-var dataPath = flag.String("data", "data/", "path to atlas-forms database")
+// httpAddr tells the web controller on what address to
+// listen for requests.
+var httpAddr = flag.String("http", "127.0.0.1:3001", "addr:port")
 
 // htmlPath tells the web controller where to look for
 // HTML templates to render.
 var htmlPath = flag.String("html", "html/", "path to atlas-forms html templates")
 
-// staticPath tells the web controller where to look for non-template static
-// assets
-var staticPath = flag.String("static", "static/", "path to atlas-forms static assets")
-
-// chartsPath tells us where to look for charts to render
-var chartsPath = flag.String("charts", "charts/", "path to atlas charts")
-
-// httpAddr tells the web controller on what address to
-// listen for requests.
-var httpAddr = flag.String("http", "127.0.0.1:3001", "addr:port")
-
-// staticRoot tells the web controller what URL prefix to discard
-var staticRoot = flag.String("staticroot", "static", "static app url prefix")
+// formsPath tells us where to store our persisted
+// entities.
+var formsPath = flag.String("forms", "forms/", "path to forms database")
 
 // formsRoot tells the web controller what URL prefix to discard
 var formsRoot = flag.String("formsroot", "", "forms app url prefix")
 
+// staticPath tells the web controller where to look for non-template static
+// assets
+var staticPath = flag.String("static", "static/", "path to atlas-forms static assets")
+
+// staticRoot tells the web controller what URL prefix to discard
+var staticRoot = flag.String("staticroot", "static", "static app url prefix")
+
 // chartsRoot tells the web controller what URL prefix to discard
 var chartsRoot = flag.String("chartsroot", "charts", "charts app url prefix")
+
+// chartsPath tells us where to look for charts to render
+var chartsPath = flag.String("charts", "charts/", "path to atlas charts")
 
 func main() {
 	flag.Parse()
 
-	persist := persist.NewPersistJSON(*dataPath)
+	persist := persist.NewPersistJSON(*formsPath)
 
 	web := &web.App{
 		HttpAddr:     *httpAddr,
 		QuestionRepo: entity.QuestionRepo(persist),
-		FormRepo:  entity.FormRepo(persist),
+		FormRepo:     entity.FormRepo(persist),
 		RecordRepo:   entity.RecordRepo(persist),
+		FormsRoot:    *formsRoot,
 		HtmlPath:     *htmlPath,
 		StaticPath:   *staticPath,
 		StaticRoot:   *staticRoot,
-		ChartsPath:   *chartsPath,
 		ChartsRoot:   *chartsRoot,
-		FormsRoot:    *formsRoot,
+		ChartsPath:   *chartsPath,
 	}
 
 	web.Serve()

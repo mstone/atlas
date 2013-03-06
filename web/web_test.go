@@ -23,7 +23,7 @@ func init() {
 	}
 
 	httpAddr := "localhost:3001"
-	dataPath := path.Join(testPath, "test/data/")
+	dataPath := path.Join(testPath, "test/forms/")
 	htmlPath := path.Join(testPath, "html/")
 	chartsPath := path.Join(testPath, "test/charts/")
 	staticPath := path.Join(testPath, "static/")
@@ -36,7 +36,7 @@ func init() {
 	normalApp = &App{
 		HttpAddr:     httpAddr,
 		QuestionRepo: entity.QuestionRepo(normalPersist),
-		FormRepo:  entity.FormRepo(normalPersist),
+		FormRepo:     entity.FormRepo(normalPersist),
 		RecordRepo:   entity.RecordRepo(normalPersist),
 		HtmlPath:     htmlPath,
 		StaticPath:   staticPath,

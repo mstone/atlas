@@ -20,6 +20,7 @@ go build -o ./atlas-forms akamai/atlas/forms
 
 ./atlas-forms \
   -http       'localhost:3001' \
+  -forms      'data/' \
   -formsroot  'forms' \
   -charts     "${HOME}/p4/docs/security/arch/" \
   -chartsroot ''

@@ -2,6 +2,11 @@
 each response as a ticket (w/ next_action, owner, points, ...)
 example text?
 nicer question names?
+  * are we dealing with new resources?
+      LatestX vs. FrozenX?
+      refs vs. commits vs. trees?
+        notes stored at SHA1(key) -> note?
+
 display question titles?
 
 navigation

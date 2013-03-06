@@ -1087,26 +1087,29 @@ func (self *App) HandleForms(w http.ResponseWriter, r *http.Request) {
 func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer recoverHTTP(w, r)
 	log.Printf("HandleRootApp: path: %v", r.URL.Path)
+
 	isStatic := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.StaticRoot))
 	if isStatic {
 		log.Printf("HandleRootApp: dispatching to static...")
 		self.HandleStatic(w, r)
-	} else {
-		isForm := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.FormsRoot))
-		if isForm {
-			log.Printf("HandleRootApp: dispatching to forms...")
-			self.HandleForms(w, r)
-			return
-		} else {
-			isChart := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.ChartsRoot))
-			if isChart {
-				log.Printf("HandleRootApp: dispatching to charts...")
-				HandleChartGet(self, w, r)
-			} else {
-				panic(fmt.Sprintf("Can't route path: %v", r.URL.Path))
-			}
-		}
+		return
 	}
+
+	isForm := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.FormsRoot))
+	if isForm {
+		log.Printf("HandleRootApp: dispatching to forms...")
+		self.HandleForms(w, r)
+		return
+	}
+
+	isChart := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.ChartsRoot))
+	if isChart {
+		log.Printf("HandleRootApp: dispatching to charts...")
+		HandleChartGet(self, w, r)
+		return
+	}
+
+	log.Printf("warning: can't route path: %v", r.URL.Path)
 }
 
 // Serve initializes some variables on self and then delegates to net/http to

@@ -102,6 +102,21 @@ func TestChartsGet(t *testing.T) {
 	}
 }
 
+func TestChartsGetIndexText(t *testing.T) {
+	t.Parallel()
+	t.Log("TestChartsGet(): starting.")
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "http://localhost:3001/subchart/", nil)
+	normalApp.ServeHTTP(w, r)
+	if w.Code != 200 {
+		t.Fatalf("TestChartsGetIndexText() failed: response code %d != 200", w.Code)
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "What could go wrong?") {
+		t.Fatalf("TestChartsGetIndexText() failed: body does not mention 'What could go wrong?':\n %s", w.Body)
+	}
+}
+
 func TestSiteJsonGet(t *testing.T) {
 	t.Parallel()
 	t.Log("TestSiteJsonGet(): starting.")
@@ -129,6 +144,15 @@ func TestChartSetGet(t *testing.T) {
 	body := w.Body.String()
 	if !strings.Contains(body, "Demo Atlas") {
 		t.Fatalf("TestChartSetGet() failed: body does not mention 'Demo Atlas':\n %s", w.Body)
+	}
+	if !strings.Contains(body, "Just for kicks...") {
+		t.Fatalf("TestChartSetGet() failed: body does not mention 'Just for kicks...':\n %s", w.Body)
+	}
+	if !strings.Contains(body, "subchart") {
+		t.Fatalf("TestChartSetGet() failed: body does not mention 'subchart...':\n %s", w.Body)
+	}
+	if !strings.Contains(body, "index.text") {
+		t.Fatalf("TestChartSetGet() failed: body does not mention 'index.text...':\n %s", w.Body)
 	}
 }
 

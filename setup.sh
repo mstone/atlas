@@ -18,6 +18,8 @@ fi
 
 go build -o ./atlas-forms akamai/atlas/forms
 
+(sleep 1; xdg-open 'http://localhost:3001' || open 'http://localhost:3001') &
+
 ./atlas-forms \
   -http       'localhost:3001' \
   -forms      'data/' \

@@ -28,11 +28,11 @@
 package web
 
 import (
+	"akamai/atlas/forms/chart"
 	"akamai/atlas/forms/entity"
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/russross/blackfriday"
 	"html/template"
@@ -116,8 +116,8 @@ func (s vRecordList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 type vRecordSet struct {
 	*vRoot
-	Forms vFormList
-	Records  vRecordList
+	Forms   vFormList
+	Records vRecordList
 }
 
 func (self *App) GetRecordUrl(version *entity.Version) (url.URL, error) {
@@ -142,7 +142,7 @@ func HandleRecordSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	for idx, prof := range forms {
 		isPace := prof.Version.String() == "pace-1.0.0"
 		formsList[idx] = vForm{
-			Form:  prof,
+			Form:     prof,
 			Selected: isPace,
 		}
 	}
@@ -161,9 +161,9 @@ func HandleRecordSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	sort.Sort(recordsList)
 
 	view := &vRecordSet{
-		Forms: formsList,
-		Records:  recordsList,
-		vRoot:    newVRoot(self, "record_set", "", "", ""),
+		Forms:   formsList,
+		Records: recordsList,
+		vRoot:   newVRoot(self, "record_set", "", "", ""),
 	}
 
 	self.renderTemplate(w, "record_set", view)
@@ -193,7 +193,7 @@ func HandleRecordSetPost(self *App, w http.ResponseWriter, r *http.Request) {
 	// make a new Record
 	record := &entity.Record{
 		Version:   *recordVer,
-		Form:   form,
+		Form:      form,
 		Responses: make(map[entity.Version]*entity.Response, len(form.Questions)),
 	}
 
@@ -250,7 +250,7 @@ func (s vResponseGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 type vRecord struct {
 	*vRoot
 	RecordName     string
-	FormName    string
+	FormName       string
 	ResponseNames  []string
 	ResponseGroups vResponseGroupList
 }
@@ -328,7 +328,7 @@ func HandleRecordGet(self *App, w http.ResponseWriter, r *http.Request) {
 	view := vRecord{
 		vRoot:          newVRoot(self, "record", "", "", ""),
 		RecordName:     record.Version.String(),
-		FormName:    record.Form.Version.String(),
+		FormName:       record.Form.Version.String(),
 		ResponseNames:  responseNames,
 		ResponseGroups: responseGroupsList,
 	}
@@ -401,12 +401,12 @@ func HandleFormSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 		checkHTTP(err)
 		vForms[idx] = &vForm3{
 			Form: form,
-			Url:     url,
+			Url:  url,
 		}
 	}
 
 	view := &vFormSet{
-		vRoot:    newVRoot(self, "form_set", "", "", ""),
+		vRoot: newVRoot(self, "form_set", "", "", ""),
 		Forms: vForms,
 	}
 	self.renderTemplate(w, "form_set", view)
@@ -461,7 +461,7 @@ func (s vQuestionGroupList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type vForm2 struct {
 	*vRoot
-	FormName    string
+	FormName       string
 	QuestionNames  []string
 	QuestionGroups vQuestionGroupList
 }
@@ -532,7 +532,7 @@ func HandleFormGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 	view := vForm2{
 		vRoot:          newVRoot(self, "form", "", "", ""),
-		FormName:    form.Version.String(),
+		FormName:       form.Version.String(),
 		QuestionNames:  questionNames,
 		QuestionGroups: questionGroupList,
 	}
@@ -760,34 +760,6 @@ type vChart struct {
 	Html     template.HTML
 }
 
-func (self *App) ReadChart(path string) ([]byte, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	fi, err := f.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	size := fi.Size()
-	if size > MAX_CHART_SIZE {
-		return nil, errors.New(fmt.Sprintf("Chart too big: %s", path))
-	}
-
-	buf := make([]byte, size)
-
-	n, err := f.Read(buf)
-	if err != nil {
-		return nil, err
-	}
-	buf = buf[0:n]
-
-	return buf, nil
-}
-
 func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 	chartUrl := path.Clean(r.URL.Path)
 	log.Printf("HandleChartGet(): chartUrl: %v\n", chartUrl)
@@ -800,6 +772,16 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 			panic("method")
 		case "GET":
 			HandleSiteJsonGet(self, w, r)
+		}
+		return
+	}
+
+	if chartUrl == "/pages" {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			HandleChartSetGet(self, w, r)
 		}
 		return
 	}
@@ -895,7 +877,7 @@ type vRoot struct {
 	FormsRoot      string
 	ChartsRoot     string
 	QuestionSetUrl string
-	FormSetUrl  string
+	FormSetUrl     string
 	RecordSetUrl   string
 }
 
@@ -913,7 +895,7 @@ func newVRoot(self *App, pageName string, title string, authors string, date str
 		FormsRoot:      self.FormsRoot,
 		ChartsRoot:     path.Clean(self.ChartsRoot + "/"),
 		QuestionSetUrl: questionSetUrl.String(),
-		FormSetUrl:  formSetUrl.String(),
+		FormSetUrl:     formSetUrl.String(),
 		RecordSetUrl:   recordSetUrl.String(),
 	}
 }
@@ -923,48 +905,62 @@ func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
 	self.renderTemplate(w, "root", view)
 }
 
-func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleSiteJsonGet(): start")
+func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleChartSetGet(): start")
 
-	view := map[string]string{}
+	var view []string = nil
+
 	filepath.Walk(self.ChartsPath, func(name string, fi os.FileInfo, err error) error {
-		log.Printf("HandleSiteJsonGet(): visiting path %s", name)
+		log.Printf("HandleChartSetGet(): visiting path %s", name)
 		if err != nil {
 			return err
 		}
 
-		dir := filepath.Dir(name)
-		base := filepath.Base(name)
-		pfx := path.Clean(self.ChartsPath)
+		chart := chart.NewChart(name, self.ChartsPath)
 
-		var sfx string
-		if len(dir) > len(pfx) {
-			sfx = dir[len(pfx)+1:] + "/"
-		} else {
-			sfx = ""
-		}
-		key := sfx
-
-		log.Printf("HandleSiteJsonGet(): pfx %s", pfx)
-		log.Printf("HandleSiteJsonGet(): dir %s", dir)
-		log.Printf("HandleSiteJsonGet(): base %s", base)
-		log.Printf("HandleSiteJsonGet(): sfx %s", sfx)
-
-		switch base {
-		default:
-			return nil
-		case "index.text":
-			fallthrough
-		case "index.txt":
-			text, err := self.ReadChart(name)
-			if err != nil {
-				log.Printf("HandleSiteJsonGet(): warning %s", err)
-			} else {
-				view[key] = string(text)
-			}
+		key, err := chart.Slug()
+		if err == nil {
+			view = append(view, key)
 		}
 		return nil
 	})
+}
+
+func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleSiteJsonGet(): start")
+
+	view := map[string]string{}
+
+	filepath.Walk(self.ChartsPath, func(name string, fi os.FileInfo, err error) error {
+		//log.Printf("HandleSiteJsonGet(): visiting path %s", name)
+		if err != nil {
+			return err
+		}
+
+		chart := chart.NewChart(name, self.ChartsPath)
+
+		key, err := chart.Slug()
+		if err != nil {
+			//log.Printf("HandleSiteJsonGet(): warning before read: %s", err)
+			return nil
+		}
+		log.Printf("HandleSiteJsonGet(): found key %s", key)
+
+		err = chart.Read()
+		if err != nil {
+			log.Printf("HandleSiteJsonGet(): warning after read: %s", err)
+			return nil
+		}
+
+		body := chart.Body()
+		//log.Printf("HandleSiteJsonGet(): found body: %s", body)
+
+		view[key] = body
+
+		return nil
+	})
+
+	//log.Printf("HandleSiteJsonGet(): view: %s", view)
 
 	writer := bufio.NewWriter(w)
 	defer writer.Flush()

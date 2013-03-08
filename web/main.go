@@ -791,6 +791,7 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			w.WriteHeader(http.StatusNotFound)
+			return
 		} else {
 			checkHTTP(err)
 		}

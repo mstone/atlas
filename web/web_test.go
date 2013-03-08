@@ -131,3 +131,14 @@ func TestChartSetGet(t *testing.T) {
 		t.Fatalf("TestChartSetGet() failed: body does not mention 'Demo Atlas':\n %s", w.Body)
 	}
 }
+
+func TestChartGet404(t *testing.T) {
+	t.Parallel()
+	t.Log("TestChartGet(): starting.")
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "http://localhost:3001/i.do.not.exist", nil)
+	normalApp.ServeHTTP(w, r)
+	if w.Code != 404 {
+		t.Fatalf("TestChartSetGet() failed: response code %d != 404", w.Code)
+	}
+}

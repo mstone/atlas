@@ -29,8 +29,19 @@ func TestChartRead(t *testing.T) {
 		t.Fatalf("TestChartsRead() failed: unable to read test chart: %s", err)
 	}
 
+	meta := chart.Meta()
+	if meta.Title != "Demo Atlas" {
+		t.Fatalf("TestChartsRead() failed: title is not 'Demo Atlas':\n %s", meta.Title)
+	}
+	if meta.Authors != "Michael Stone" {
+		t.Fatalf("TestChartsRead() failed: authors is not 'Michael Stone':\n %s", meta.Authors)
+	}
+	if meta.Date != "March 3, 2013" {
+		t.Fatalf("TestChartsRead() failed: date is not 'March 3, 2013':\n %s", meta.Date)
+	}
+
 	body := chart.Body()
-	if !strings.Contains(body, "Demo Atlas") {
+	if !strings.Contains(body, "gotta start somewhere") {
 		t.Fatalf("TestChartsRead() failed: body does not mention 'Demo Atlas':\n %s", body)
 	}
 }

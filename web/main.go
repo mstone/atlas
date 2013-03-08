@@ -786,12 +786,15 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	buf := make([]byte, 1000000)
-
 	// anyway, assuming it's a chart, find the index.txt
-
 	fi, err := os.Stat(fullPath)
-	checkHTTP(err)
+	if err != nil {
+		if os.IsNotExist(err) {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			checkHTTP(err)
+		}
+	}
 
 	if !fi.IsDir() {
 		fp3 := fullPath
@@ -800,45 +803,20 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, fp3)
 		return
 	} else {
-		fp1 := path.Join(fullPath, "index.txt")
-		f, err := os.Open(fp1)
-		if err != nil {
-			if os.IsNotExist(err) {
-				fp2 := path.Join(fullPath, "index.text")
-				f2, err := os.Open(fp2)
-				checkHTTP(err)
-				defer f2.Close()
-
-				n, err := f2.Read(buf)
-				checkHTTP(err)
-				buf = buf[0:n]
-			} else {
-				panic(err)
-			}
-		} else {
-			defer f.Close()
-			n, err := f.Read(buf)
+		name := path.Join(fullPath, "index.txt")
+		if _, err := os.Stat(name); os.IsNotExist(err) {
+			name = path.Join(fullPath, "index.text")
+			_, err = os.Stat(name)
 			checkHTTP(err)
-			buf = buf[0:n]
 		}
+
+		chart := chart.NewChart(name, self.ChartsPath)
+
+		err = chart.Read()
+		checkHTTP(err)
 
 		// attempt to parse header lines
-		title := ""
-		authors := ""
-		date := ""
-		sbuf := string(buf)
-		lines := strings.Split(sbuf, "\n")
-		log.Printf("HandleChartGet: found %d lines", len(lines))
-		if len(lines) > 3 {
-			title = strings.TrimLeft(lines[0], "% ")
-			authors = strings.TrimLeft(lines[1], "% ")
-			date = strings.TrimLeft(lines[2], "% ")
-			rest := strings.SplitAfterN(sbuf, "\n", 4)
-			buf = []byte(rest[3])
-		}
-		log.Printf("HandleChartGet: found title: %s", title)
-		log.Printf("HandleChartGet: found authors: %s", authors)
-		log.Printf("HandleChartGet: found date: %s", date)
+		meta := chart.Meta()
 
 		htmlFlags := 0
 		//htmlFlags |= blackfriday.HTML_USE_XHTML
@@ -854,10 +832,10 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		extFlags |= blackfriday.EXTENSION_STRIKETHROUGH
 		extFlags |= blackfriday.EXTENSION_SPACE_HEADERS
 
-		html := blackfriday.Markdown(buf, renderer, extFlags)
+		html := blackfriday.Markdown([]byte(chart.Body()), renderer, extFlags)
 
 		view := &vChart{
-			vRoot: newVRoot(self, "chart", title, authors, date),
+			vRoot: newVRoot(self, "chart", meta.Title, meta.Authors, meta.Date),
 			//Url:          chartUrl.String(),
 			FullPath: fullPath,
 			Url:      chartUrl,
@@ -905,10 +883,32 @@ func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
 	self.renderTemplate(w, "root", view)
 }
 
+func (self *App) GetChartUrl(chart *chart.Chart) (url.URL, error) {
+	slug, err := chart.Slug()
+	if err != nil {
+		return url.URL{}, err
+	}
+	return url.URL{
+		Path: path.Clean(path.Join("/", self.ChartsRoot, slug)) + "/",
+	}, nil
+}
+
+type vChartLink struct {
+	chart.ChartMeta
+	Link url.URL
+}
+
+type vChartLinkList []*vChartLink
+
+type vChartSet struct {
+	*vRoot
+	Charts vChartLinkList
+}
+
 func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleChartSetGet(): start")
 
-	var view []string = nil
+	var charts vChartLinkList = nil
 
 	filepath.Walk(self.ChartsPath, func(name string, fi os.FileInfo, err error) error {
 		log.Printf("HandleChartSetGet(): visiting path %s", name)
@@ -918,12 +918,32 @@ func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 		chart := chart.NewChart(name, self.ChartsPath)
 
-		key, err := chart.Slug()
+		err = chart.Read()
+		if err != nil {
+			return nil
+		}
+
+		link, err := self.GetChartUrl(chart)
+
 		if err == nil {
-			view = append(view, key)
+			charts = append(charts, &vChartLink{
+				ChartMeta: chart.Meta(),
+				Link:      link,
+			})
 		}
 		return nil
 	})
+
+	now := time.Now()
+	date := fmt.Sprintf("%s %0.2d, %d", now.Month().String(), now.Day(), now.Year())
+
+	view := &vChartSet{
+		vRoot:  newVRoot(self, "chart_set", "List of Charts", "Michael Stone", date),
+		Charts: charts,
+	}
+	log.Printf("HandleChartSetGet(): view: %s", view)
+
+	self.renderTemplate(w, "chart_set", view)
 }
 
 func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
@@ -952,10 +972,10 @@ func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
 			return nil
 		}
 
-		body := chart.Body()
+		bytes := chart.Bytes()
 		//log.Printf("HandleSiteJsonGet(): found body: %s", body)
 
-		view[key] = body
+		view[key] = string(bytes)
 
 		return nil
 	})

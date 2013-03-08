@@ -6,6 +6,7 @@ import (
 	"log"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 // BUG(mistone): Chart's methods are not goroutine-safe.
@@ -13,6 +14,7 @@ type Chart struct {
 	dsnPath     string
 	srcPath     string
 	meta        ChartMeta
+	bytes       []byte
 	body        string
 	hasBeenRead bool
 }
@@ -35,25 +37,41 @@ func (self *Chart) Read() error {
 	body, err := ioutil.ReadFile(self.srcPath)
 	//log.Printf("Chart.Read(): read body %s", body)
 	log.Printf("Chart.Read(): read err %s", err)
-	if err == nil {
-		self.hasBeenRead = true
-		self.body = string(body)
+	if err != nil {
+		return err
 	}
-	return err
+
+	self.hasBeenRead = true
+	self.bytes = body
+	self.body = string(body)
+
+	lines := strings.Split(self.body, "\n")
+	log.Printf("Chart.Read: found %d lines", len(lines))
+
+	if len(lines) > 3 {
+		self.meta.Title = strings.TrimLeft(lines[0], "% ")
+		self.meta.Authors = strings.TrimLeft(lines[1], "% ")
+		self.meta.Date = strings.TrimLeft(lines[2], "% ")
+		self.body = strings.SplitAfterN(self.body, "\n", 4)[3]
+	}
+
+	log.Printf("Chart.Read: found title: %s", self.meta.Title)
+	log.Printf("Chart.Read: found authors: %s", self.meta.Authors)
+	log.Printf("Chart.Read: found date: %s", self.meta.Date)
+
+	return nil
 }
 
 func (self *Chart) Body() string {
 	return self.body
 }
 
-func (self *Chart) Meta() (ChartMeta, error) {
-	if !self.hasBeenRead {
-		err := self.Read()
-		if err != nil {
-			return ChartMeta{}, err
-		}
-	}
-	return self.meta, nil
+func (self *Chart) Bytes() []byte {
+	return self.bytes
+}
+
+func (self *Chart) Meta() ChartMeta {
+	return self.meta
 }
 
 type NotAChart struct {

@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+	<title>{{.Title}}</title>
+	{{template "head" .}}
+</head>
+<body>
+<h1 class="title"><a href="{{.ChartsRoot}}">{{.Title}}</a></h1>
+<span class="author">{{.Authors}}</span>
+<span class="date">{{.Date}}</span>
+<div id="searchbar">
+  <form action="">
+    <label for="searchbox">Search the Atlas:</label>
+    <input id="searchbox" name="searchbox" type="text" size="30" autocomplete="off" />
+  </form>
+  <div id="searchresults"></div>
+</div>
+<ol>
+{{range .Charts}}
+<li><a href="{{.Link.String}}">{{.Title}}</a> <small>by {{.Authors}}, published on {{.Date}}</small></li>
+{{end}}
+</ol>
+</body>
+</html>

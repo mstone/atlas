@@ -11,6 +11,9 @@ display question titles?
 
 navigation
   floating?
+    meta.json?
+
+layers?
 
 form instructions
 general help
@@ -26,6 +29,5 @@ question visibility controls
 question genealogy
 
 atom
-pages
 site.min.js, site.min.css
 index/suffixarray

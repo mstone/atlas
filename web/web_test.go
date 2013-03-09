@@ -130,6 +130,9 @@ func TestSiteJsonGet(t *testing.T) {
 	if !strings.Contains(body, "Demo Atlas") {
 		t.Fatalf("TestSiteJsonGet() failed: body does not mention 'Demo Atlas':\n %s", w.Body)
 	}
+	if !strings.Contains(body, "ad tag") {
+		t.Fatalf("TestSiteJsonGet() failed: body does not mention 'ad tag':\n %s", w.Body)
+	}
 }
 
 func TestChartSetGet(t *testing.T) {

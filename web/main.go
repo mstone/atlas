@@ -30,6 +30,7 @@ package web
 import (
 	"akamai/atlas/forms/chart"
 	"akamai/atlas/forms/entity"
+	"akamai/atlas/forms/linker"
 	"bufio"
 	"bytes"
 	"encoding/json"
@@ -823,7 +824,9 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		//htmlFlags |= blackfriday.HTML_USE_XHTML
 		htmlFlags |= blackfriday.HTML_TOC
 
-		renderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
+		htmlRenderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
+
+		linkRenderer := linker.NewLinkRenderer()
 
 		extFlags := 0
 		extFlags |= blackfriday.EXTENSION_NO_INTRA_EMPHASIS
@@ -833,7 +836,11 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		extFlags |= blackfriday.EXTENSION_STRIKETHROUGH
 		extFlags |= blackfriday.EXTENSION_SPACE_HEADERS
 
-		html := blackfriday.Markdown([]byte(chart.Body()), renderer, extFlags)
+		html := blackfriday.Markdown([]byte(chart.Body()), htmlRenderer, extFlags)
+
+		blackfriday.Markdown([]byte(chart.Body()), linkRenderer, extFlags)
+
+		log.Printf("HandleChartGet(): found links: %s", linkRenderer.Links)
 
 		view := &vChart{
 			vRoot: newVRoot(self, "chart", meta.Title, meta.Authors, meta.Date),

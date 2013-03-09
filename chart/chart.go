@@ -83,23 +83,24 @@ func (self *NotAChart) Error() string {
 	return fmt.Sprintf("Error: %s, %s is not a chart.", self.err, self.path)
 }
 
-func (self *Chart) Slug() (string, error) {
-	dir := filepath.Dir(self.srcPath)
+func (self *Chart) IsChart() bool {
 	base := filepath.Base(self.srcPath)
-	pfx := path.Clean(self.dsnPath)
 
 	if base != "index.txt" && base != "index.text" {
-		return "", &NotAChart{
-			path: self.srcPath,
-			err:  nil,
-		}
+		return false
 	}
+	return true
+}
 
-	log.Printf("Chart.Slug(): srcPath: %s", self.srcPath)
-	log.Printf("Chart.Slug(): dsnPath: %s", self.dsnPath)
-	log.Printf("Chart.Slug(): dir : %s", dir)
-	log.Printf("Chart.Slug(): base: %s", base)
-	log.Printf("Chart.Slug(): pfx : %s", pfx)
+func (self *Chart) Slug() string {
+	dir := filepath.Dir(self.srcPath)
+	pfx := path.Clean(self.dsnPath)
+
+	//log.Printf("Chart.Slug(): srcPath: %s", self.srcPath)
+	//log.Printf("Chart.Slug(): dsnPath: %s", self.dsnPath)
+	//log.Printf("Chart.Slug(): dir : %s", dir)
+	//log.Printf("Chart.Slug(): base: %s", base)
+	//log.Printf("Chart.Slug(): pfx : %s", pfx)
 
 	var sfx string
 	if len(dir) > len(pfx) {
@@ -108,5 +109,9 @@ func (self *Chart) Slug() (string, error) {
 		sfx = ""
 	}
 	log.Printf("Chart.Slug(): sfx : %s", sfx)
-	return sfx, nil
+	return sfx
+}
+
+func (self *Chart) Dir() string {
+	return path.Dir(self.srcPath)
 }

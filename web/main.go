@@ -31,12 +31,14 @@ import (
 	"akamai/atlas/forms/chart"
 	"akamai/atlas/forms/entity"
 	"akamai/atlas/forms/linker"
+	"akamai/atlas/forms/svgtext"
 	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/russross/blackfriday"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -826,8 +828,6 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 		htmlRenderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
 
-		linkRenderer := linker.NewLinkRenderer()
-
 		extFlags := 0
 		extFlags |= blackfriday.EXTENSION_NO_INTRA_EMPHASIS
 		extFlags |= blackfriday.EXTENSION_TABLES
@@ -837,11 +837,6 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		extFlags |= blackfriday.EXTENSION_SPACE_HEADERS
 
 		html := blackfriday.Markdown([]byte(chart.Body()), htmlRenderer, extFlags)
-
-		blackfriday.Markdown([]byte(chart.Body()), linkRenderer, extFlags)
-
-		log.Printf("HandleChartGet(): found links: %s", linkRenderer.Links)
-
 		view := &vChart{
 			vRoot: newVRoot(self, "chart", meta.Title, meta.Authors, meta.Date),
 			//Url:          chartUrl.String(),
@@ -892,10 +887,7 @@ func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
 }
 
 func (self *App) GetChartUrl(chart *chart.Chart) (url.URL, error) {
-	slug, err := chart.Slug()
-	if err != nil {
-		return url.URL{}, err
-	}
+	slug := chart.Slug()
 	return url.URL{
 		Path: path.Clean(path.Join("/", self.ChartsRoot, slug)) + "/",
 	}, nil
@@ -967,11 +959,12 @@ func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 		chart := chart.NewChart(name, self.ChartsPath)
 
-		key, err := chart.Slug()
-		if err != nil {
-			//log.Printf("HandleSiteJsonGet(): warning before read: %s", err)
+		isChart := chart.IsChart()
+		if !isChart {
 			return nil
 		}
+
+		key := chart.Slug()
 		log.Printf("HandleSiteJsonGet(): found key %s", key)
 
 		err = chart.Read()
@@ -980,10 +973,51 @@ func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
 			return nil
 		}
 
-		bytes := chart.Bytes()
+		chartBytes := chart.Bytes()
 		//log.Printf("HandleSiteJsonGet(): found body: %s", body)
 
-		view[key] = string(bytes)
+		view[key] = string(chartBytes)
+
+		linkRenderer := linker.NewLinkRenderer()
+		extFlags := 0
+		extFlags |= blackfriday.EXTENSION_NO_INTRA_EMPHASIS
+		extFlags |= blackfriday.EXTENSION_TABLES
+		extFlags |= blackfriday.EXTENSION_FENCED_CODE
+		extFlags |= blackfriday.EXTENSION_AUTOLINK
+		extFlags |= blackfriday.EXTENSION_STRIKETHROUGH
+		extFlags |= blackfriday.EXTENSION_SPACE_HEADERS
+		blackfriday.Markdown([]byte(chart.Body()), linkRenderer, extFlags)
+		log.Printf("HandleSiteJsonGet(): found links: %s", linkRenderer.Links)
+
+		for _, link := range linkRenderer.Links {
+			// BUG(mistone): directory traversal
+			sfx := strings.HasSuffix(link.Href, "svg")
+			if sfx {
+				svgPath := path.Clean(path.Join(chart.Dir(), link.Href))
+				log.Printf("HandleSiteJsonGet(): found svg: %s", svgPath)
+
+				svgBody, err := ioutil.ReadFile(svgPath)
+				if err != nil {
+					log.Printf("HandleSiteJsonGet(): unable to read svg: %s, error: %s", svgPath, err)
+					continue
+				}
+				cdata, err := svgtext.GetCData(svgBody)
+				if err != nil {
+					log.Printf("HandleSiteJsonGet(): unable to parse svg: %s, error: %s", svgPath, err)
+					continue
+				}
+				log.Printf("HandleSiteJsonGet(): found svg cdata items: %s", len(cdata))
+				log.Printf("HandleSiteJsonGet(): found svg cdata: %s", cdata)
+				log.Printf("HandleSiteJsonGet(): done with svg: %s", svgPath)
+				var buf bytes.Buffer
+				for _, datum := range cdata {
+					buf.WriteString("svg: ")
+					buf.WriteString(datum)
+					buf.WriteRune('\n')
+				}
+				view[key] = view[key] + "\n" + buf.String()
+			}
+		}
 
 		return nil
 	})

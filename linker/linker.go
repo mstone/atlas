@@ -2,6 +2,8 @@ package linker
 
 import (
 	"bytes"
+	"log"
+	"regexp"
 )
 
 type LinkRenderer struct {
@@ -21,9 +23,10 @@ type Link struct {
 }
 
 const (
-	AUTOLINK = iota
-	LINK
-	IMAGE
+	AUTOLINK = iota // Markdown autolink
+	LINK            // Markdown link
+	IMAGE           // Markdown image
+	IMG             // HTML img tag
 )
 
 // block-level callbacks
@@ -115,8 +118,18 @@ func (self *LinkRenderer) Link(out *bytes.Buffer, link []byte, title []byte, con
 	})
 }
 
+var imgRe *regexp.Regexp = regexp.MustCompile(`<img.*src="([^"]*)"`)
+
 func (self *LinkRenderer) RawHtmlTag(out *bytes.Buffer, tag []byte) {
-	return
+	log.Printf("LinkRenderer.RawHtmlTag(): %s", tag)
+	matches := imgRe.FindSubmatch(tag)
+	if matches != nil {
+		log.Printf("LinkRenderer.RawHtmlTag(): found matches: %s", matches)
+		self.Links = append(self.Links, Link{
+			Kind: IMG,
+			Href: string(matches[1]),
+		})
+	}
 }
 
 func (self *LinkRenderer) TripleEmphasis(out *bytes.Buffer, text []byte) {

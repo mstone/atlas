@@ -918,6 +918,10 @@ func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 		chart := chart.NewChart(name, self.ChartsPath)
 
+		if !chart.IsChart() {
+			return nil
+		}
+
 		err = chart.Read()
 		if err != nil {
 			return nil

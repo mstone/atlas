@@ -48,11 +48,21 @@ func (self *Chart) Read() error {
 	lines := strings.Split(self.body, "\n")
 	log.Printf("Chart.Read: found %d lines", len(lines))
 
+	foundHeaderChars := false
 	if len(lines) > 3 {
-		self.meta.Title = strings.TrimLeft(lines[0], "% ")
-		self.meta.Authors = strings.TrimLeft(lines[1], "% ")
-		self.meta.Date = strings.TrimLeft(lines[2], "% ")
-		self.body = strings.SplitAfterN(self.body, "\n", 4)[3]
+		foundHeaderChars = true
+		for i := 0; i < 3; i++ {
+			if len(lines[i]) < 1 || lines[i][0] != '%' {
+				foundHeaderChars = false
+			}
+		}
+
+		if foundHeaderChars {
+			self.meta.Title = strings.TrimLeft(lines[0], "% ")
+			self.meta.Authors = strings.TrimLeft(lines[1], "% ")
+			self.meta.Date = strings.TrimLeft(lines[2], "% ")
+			self.body = strings.SplitAfterN(self.body, "\n", 4)[3]
+		}
 	}
 
 	log.Printf("Chart.Read: found title: %s", self.meta.Title)

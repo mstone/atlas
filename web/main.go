@@ -34,7 +34,9 @@ import (
 	"akamai/atlas/forms/svgtext"
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/russross/blackfriday"
 	"html/template"
@@ -65,9 +67,7 @@ type App struct {
 	HtmlPath   string
 	ChartsPath string
 	HttpAddr   string
-	//router     *mux.Router
-	templates *template.Template
-	//wrap       func(fn func(*App, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request)
+	templates  *template.Template
 }
 
 func recoverHTTP(w http.ResponseWriter, r *http.Request) {
@@ -1047,18 +1047,112 @@ func (self *App) renderTemplate(w http.ResponseWriter, tmpl string, p interface{
 
 func (self *App) HandleStatic(w http.ResponseWriter, r *http.Request) {
 	// BUG(mistone): directory traversal?
-	up := path.Clean(r.URL.Path)
-	sp := path.Clean("/"+self.StaticRoot) + "/"
-	fp := up[len(sp):]
+	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.StaticRoot)
+	checkHTTP(err)
 	log.Printf("HandleStatic: file path: %v", fp)
 	http.ServeFile(w, r, path.Join(self.StaticPath, fp))
 }
 
-func (self *App) HandleForms(w http.ResponseWriter, r *http.Request) {
-	up := path.Clean(r.URL.Path)
-	sp := path.Clean("/" + self.FormsRoot)
-	fp := up[len(sp):]
+func (self *App) HandleSvgEditorPost(w http.ResponseWriter, r *http.Request) {
+	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
+	checkHTTP(err)
 
+	svg := path.Dir(fp)
+	log.Printf("HandleSvgEditorPost(): got svg: %s", svg)
+
+	//now := time.Now()
+	//date := fmt.Sprintf("%s %0.2d, %d", now.Month().String(), now.Day(), now.Year())
+
+	svgBodyB64 := r.FormValue("filepath")
+	log.Printf("HandleSvgEditorPost(): got svg body b64: %s", svgBodyB64)
+
+	reader := base64.NewDecoder(base64.StdEncoding, bytes.NewBufferString(svgBodyB64))
+	svgBody, err := ioutil.ReadAll(reader)
+	checkHTTP(err)
+	log.Printf("HandleSvgEditorPost(): got svg body: %s", svgBody)
+}
+
+type vSvgEditor struct {
+	*vRoot
+	SvgEditorUrl     url.URL
+	StaticSvgEditUrl url.URL
+}
+
+func (self *App) GetSvgEditorUrl() (url.URL, error) {
+	url := url.URL{
+		Path: path.Clean(path.Join(self.StaticRoot, "svg-edit-2.6", "svg-editor.html")),
+	}
+	return url, nil
+}
+
+func (self *App) GetStaticSvgEditUrl() (url.URL, error) {
+	url := url.URL{
+		Path: path.Clean(path.Join(self.StaticRoot, "svg-edit-2.6")),
+	}
+	return url, nil
+}
+
+func (self *App) HandleSvgEditorGet(w http.ResponseWriter, r *http.Request) {
+	log.Printf("HandleSvgEditorGet(): starting")
+
+	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
+	checkHTTP(err)
+
+	svg := path.Dir(fp)
+	log.Printf("HandleSvgEditorGet(): handling svg: %s", svg)
+
+	now := time.Now()
+	date := fmt.Sprintf("%s %0.2d, %d", now.Month().String(), now.Day(), now.Year())
+
+	editorUrl, err := self.GetSvgEditorUrl()
+	checkHTTP(err)
+
+	staticSvgEditUrl, err := self.GetStaticSvgEditUrl()
+	checkHTTP(err)
+
+	view := &vSvgEditor{
+		vRoot:            newVRoot(self, "svg_editor", "SVG Editor", "Michael Stone", date),
+		SvgEditorUrl:     editorUrl,
+		StaticSvgEditUrl: staticSvgEditUrl,
+	}
+	log.Printf("HandleSvgEditorGet(): view: %s", view)
+
+	self.renderTemplate(w, "svg_editor", view)
+}
+
+var errTooShort = errors.New("URL path too short.")
+var errWrongPrefix = errors.New("URL has wrong prefix.")
+
+func (self *App) RemoveUrlPrefix(urlPath string, prefix string) (string, error) {
+	prefixDirty := ""
+	if len(prefix) > 0 && prefix[len(prefix)-1] != '/' {
+		prefixDirty = "/"
+	}
+
+	log.Printf("RemoveUrlPrefix(%q, %q, %q)", urlPath, prefix, prefixDirty)
+	up := path.Clean(urlPath)
+	sp := path.Clean("/"+prefix) + prefixDirty
+	fp := ""
+	log.Printf("RemoveUrlPrefix(): up: %q, sp: %q", up, sp)
+	err := errTooShort
+	if len(up) > len(sp) {
+		if strings.HasPrefix(up, sp) {
+			fp = up[len(sp):]
+			err = nil
+		} else {
+			err = errWrongPrefix
+		}
+	} else {
+		if len(up) == len(sp) && up == sp {
+			err = nil
+		}
+	}
+	return fp, err
+}
+
+func (self *App) HandleForms(w http.ResponseWriter, r *http.Request) {
+	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.FormsRoot)
+	checkHTTP(err)
 	log.Printf("HandleForms: file path: %v", fp)
 
 	if fp == "" {
@@ -1146,6 +1240,33 @@ func (self *App) HandleForms(w http.ResponseWriter, r *http.Request) {
 	panic("unknown form resource")
 }
 
+func (self *App) HandleChart(w http.ResponseWriter, r *http.Request) {
+	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
+	checkHTTP(err)
+	log.Printf("HandleChart: file path: %v", fp)
+
+	base := path.Base(fp)
+	ext := path.Ext(path.Dir(fp))
+
+	log.Printf("HandleChart: base: %s, ext: %s", base, ext)
+
+	isSvgEditor := (base == "editor") && (ext == ".svg")
+
+	if isSvgEditor {
+		switch r.Method {
+		default:
+			panic("method")
+		case "GET":
+			self.HandleSvgEditorGet(w, r)
+		case "POST":
+			self.HandleSvgEditorPost(w, r)
+		}
+		return
+	} else {
+		HandleChartGet(self, w, r)
+	}
+}
+
 func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer recoverHTTP(w, r)
 	log.Printf("HandleRootApp: path: %v", r.URL.Path)
@@ -1167,7 +1288,7 @@ func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	isChart := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.ChartsRoot))
 	if isChart {
 		log.Printf("HandleRootApp: dispatching to charts...")
-		HandleChartGet(self, w, r)
+		self.HandleChart(w, r)
 		return
 	}
 

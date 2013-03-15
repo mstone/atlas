@@ -18,7 +18,10 @@ fi
 
 go build -o ./atlas-forms akamai/atlas/forms
 
-(sleep 1; xdg-open 'http://localhost:3001' || open 'http://localhost:3001') &
+#URL="http://localhost:3001/hades/design/system.svg/editor"
+URL="http://localhost:3001"
+
+(sleep 1; xdg-open "$URL" || open "$URL") &
 
 ./atlas-forms \
   -http       'localhost:3001' \

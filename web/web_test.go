@@ -169,3 +169,18 @@ func TestChartGet404(t *testing.T) {
 		t.Fatalf("TestChartSetGet() failed: response code %d != 404", w.Code)
 	}
 }
+
+func TestSvgEditorGet(t *testing.T) {
+	t.Parallel()
+	t.Log("TestSvgEditorGet(): starting.")
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "http://localhost:3001/hades.svg/editor", nil)
+	normalApp.ServeHTTP(w, r)
+	if w.Code != 200 {
+		t.Fatalf("TestSvgEditorGet() failed: response code %d != 404", w.Code)
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "svg-editor") {
+		t.Fatalf("TestSvgEditorGet() failed: body does not mention 'svg-editor':\n %s", w.Body)
+	}
+}

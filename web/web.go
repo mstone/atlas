@@ -31,6 +31,7 @@ import (
 	"akamai/atlas/forms/chart"
 	"akamai/atlas/forms/entity"
 	"akamai/atlas/forms/linker"
+	"akamai/atlas/forms/shake"
 	"akamai/atlas/forms/svgtext"
 	"bufio"
 	"bytes"
@@ -1267,15 +1268,69 @@ func (self *App) HandleChart(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type WebQuestion struct {
+	http.ResponseWriter
+	*http.Request
+}
+
+// BUG(mistone): WebQuestion's Key() method is really scary!
+func (self WebQuestion) Key() (shake.Key, error) {
+	return shake.Key(self.Method + " " + self.URL.Path), nil
+}
+
+type StaticContentRule struct {
+	*App
+}
+
+func (self *StaticContentRule) Matches(question shake.Question, key shake.Key) bool {
+	ret := false
+	if q, ok := question.(WebQuestion); ok {
+		ret = strings.HasPrefix(q.URL.Path, path.Clean("/"+self.StaticRoot))
+	}
+	if ret {
+		log.Printf("StaticContentRule.Matches(): true.")
+	}
+	return ret
+}
+
+func (self *StaticContentRule) Make(question shake.Question, key shake.Key, rules *shake.RuleSet) (shake.Result, error) {
+	if q, ok := question.(WebQuestion); ok {
+		self.HandleStatic(q.ResponseWriter, q.Request)
+		result := shake.Result{
+			Key:     key,
+			Changed: true,
+			Value:   nil,
+			Rule:    self,
+			Deps:    nil,
+			Cookie:  nil,
+		}
+		return result, nil
+	}
+	return shake.Result{}, &shake.BadQuestionError{
+		Key: key,
+	}
+}
+
+func (self *StaticContentRule) Validate(key shake.Key, cookie interface{}) error {
+	return &shake.OutOfDateError{key}
+}
+
 func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer recoverHTTP(w, r)
 	log.Printf("HandleRootApp: path: %v", r.URL.Path)
 
-	isStatic := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.StaticRoot))
-	if isStatic {
-		log.Printf("HandleRootApp: dispatching to static...")
-		self.HandleStatic(w, r)
+	question := WebQuestion{w, r}
+	rules := shake.NewRuleSet()
+	rules.Rules = append(rules.Rules, &StaticContentRule{self})
+
+	_, err := rules.Make(question)
+	switch err.(type) {
+	default:
+		panic(err)
+	case nil:
 		return
+	case *shake.NoMatchingRuleError:
+		break
 	}
 
 	isForm := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.FormsRoot))

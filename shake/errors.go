@@ -41,3 +41,13 @@ type BadCookieError struct {
 func (self *BadCookieError) Error() string {
 	return fmt.Sprintf("shake: bad cookie: key %s", self.Key)
 }
+
+// A BadQuestionError signals that one of your rules was unable to typecast
+// (typically its own) question to the expected type.
+type BadQuestionError struct {
+	Key Key
+}
+
+func (self *BadQuestionError) Error() string {
+	return fmt.Sprintf("shake: bad question: key %s", self.Key)
+}

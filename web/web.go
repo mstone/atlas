@@ -1273,44 +1273,7 @@ type WebQuestion struct {
 
 // BUG(mistone): WebQuestion's Key() method is really scary!
 func (self WebQuestion) Key() (shake.Key, error) {
-	return shake.Key(self.Method + " " + self.URL.Path), nil
-}
-
-type StaticContentRule struct {
-	*App
-}
-
-func (self *StaticContentRule) Matches(question shake.Question, key shake.Key) bool {
-	ret := false
-	if q, ok := question.(WebQuestion); ok {
-		ret = strings.HasPrefix(q.URL.Path, path.Clean("/"+self.StaticRoot))
-	}
-	if ret {
-		log.Printf("StaticContentRule.Matches(): true.")
-	}
-	return ret
-}
-
-func (self *StaticContentRule) Make(question shake.Question, key shake.Key, rules *shake.RuleSet) (shake.Result, error) {
-	if q, ok := question.(WebQuestion); ok {
-		self.HandleStatic(q.ResponseWriter, q.Request)
-		result := shake.Result{
-			Key:     key,
-			Changed: true,
-			Value:   nil,
-			Rule:    self,
-			Deps:    nil,
-			Cookie:  nil,
-		}
-		return result, nil
-	}
-	return shake.Result{}, &shake.BadQuestionError{
-		Key: key,
-	}
-}
-
-func (self *StaticContentRule) Validate(key shake.Key, cookie interface{}) error {
-	return &shake.OutOfDateError{key}
+	return shake.Key(self.Method + " " + path.Clean(self.URL.Path)), nil
 }
 
 func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -1318,8 +1281,13 @@ func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleRootApp: path: %v", r.URL.Path)
 
 	question := WebQuestion{w, r}
+
 	rules := shake.NewRuleSet()
-	rules.Rules = append(rules.Rules, &StaticContentRule{self})
+	rules.Rules = []shake.Rule{
+		&StaticContentRule{self},
+		&FormsContentRule{self},
+		&ChartsContentRule{self},
+	}
 
 	_, err := rules.Make(question)
 	switch err.(type) {
@@ -1329,20 +1297,6 @@ func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	case *shake.NoMatchingRuleError:
 		break
-	}
-
-	isForm := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.FormsRoot))
-	if isForm {
-		log.Printf("HandleRootApp: dispatching to forms...")
-		self.HandleForms(w, r)
-		return
-	}
-
-	isChart := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.ChartsRoot))
-	if isChart {
-		log.Printf("HandleRootApp: dispatching to charts...")
-		self.HandleChart(w, r)
-		return
 	}
 
 	log.Printf("warning: can't route path: %v", r.URL.Path)

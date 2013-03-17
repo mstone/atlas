@@ -1,0 +1,64 @@
+Initial Repo sig was
+
+    type QuestionRepo interface {
+    	GetAllQuestions() ([]*Question, error)
+    	GetQuestionById(version Version) (*Question, error)
+    	AddQuestion(*Question) error
+    }
+
+In Hawkins' language, relations work like so:
+
+  tuple language:
+    t : tuple  := t is a finite map; i.e., an arrow in Set.
+    r : rel    := r is a set of tuples, (i.e., an exponent in Set?)
+    dom t      := the (set of) columns of t
+    t(c)       := the value of t at column c
+    t ⊇ s      := t extends s; i.e.,
+                    (dom s) ⊆ (dom t) and s and t agree on (dom s)
+    t ~ s      := t matches s; i.e.,
+                    the tuples are equal on all common columns
+    t ~ R      := t matches relation R; i.e.,
+                    t matches every tuple in R
+    key?(s, R) := s is a key for relation R if
+                    (dom s) functionally determines R
+
+  ref language:
+    x : rel ref  := "x is a reference to a relation"
+      ref x      := "a fresh reference to x"
+      !x         := "the value held in x"
+      x ← y      := "update x to hold value y"
+
+  rel language:
+    empty  ()    =
+      ref ∅
+
+    remove (r : rel ref) (s : key)   =
+      r ← !r \ { t ∈ !r | t ⊇ s }
+
+    query  (r : rel ref) (s : key) (C : col set) =
+      π_C { t ∈ !r | t ⊇ s }
+
+    insert (r : rel ref) (s : key) (t : tuple) =
+      if ∄u. (u ∈ !r) ∧ (u ⊇ s)
+        then r ← !r ∪ {s ∪ t} end
+
+  container language:
+    lookup (k : key)
+
+    scan (f : func(k,v))
+
+    write (k : key) (v : val option)
+
+  decomposition language:
+    decomp := a rooted dag
+    DI := a rooted dag compatible with a matching decomp
+
+    let-notation let's us write down the dag bottom-up, preserving sharing.
+
+  query planner:
+    generate a good query plan (i.e., query and mutation function
+    implementations) for data described as a set of columns and a set of
+    fundeps.
+
+  autotuner:
+    generate all valid decompositions of size < bound.

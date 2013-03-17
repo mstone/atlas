@@ -1,0 +1,92 @@
+% Atlas: Design Approach
+% Michael Stone
+% March 16, 2013
+
+## Overview
+
+An atlas is a chart-rendering environment.
+
+Each chart is an environment that provides:
+
+  A fixed UUID.
+
+  One or more routable keys.
+
+  A ref to a repo of mutable state.
+    (The ref language is probably non-trivial: i.e., includes file://, git://,
+    and maybe meta://)
+
+  A Shake rules-set, for answering questions.
+    (There are some well-known questions, like "what is your nav program?" and
+     "what is the URL of an appropriate editor for the sub-resource named X?".)
+
+  A cache, for caching entries of answers to questions along with dep info.
+
+The (UUID, field-name) keys are looked up in an environment that merges
+atlas-level overrides (perhaps for both user and site- preferences) with
+information from a chart-level prototype chain (so that we can instantiate
+"kinds" of chart with appropriate default nav programs).
+
+## Shake
+
+Shake is DSL for writing build-systems (i.e., systematic ways of answering
+questions) with awesome support for dynamic dependency discovery:
+
+ * <http://neilmitchell.blogspot.co.uk/2013/02/shake-links.html>
+ * <http://hackage.haskell.org/packages/archive/shake/latest/doc/html/Development-Shake.html>
+ * <http://community.haskell.org/~ndm/downloads/paper-shake_before_building-10_sep_2012.pdf>
+
+and, critically, with awesome support for detecting that seemingly stale built
+objects are actually fresh on account of the fact that the output of their deps
+didn't change when we rebuilt them.
+
+We're going to use its ideas like so:
+
+  GET /?n=hades-design
+  Accept: text/html
+
+is a question whose answer is a default HTML representation of a chart named
+"hades-design".
+
+To calculate this answer, we're going to do a couple of things:
+
+  0. Calculate the cache key C for the question Q.
+
+  1. (cond ((isFresh? C) (serve a)) (else (build q)))
+
+        Note: for isFresh? to work, we need our Result to store deps.
+              then we need to recursively check isFresh? on all those deps'
+              cache keys. isFresh? also needs to check that external
+              representations haven't changed.
+
+  2. Assuming that we need to rebuild, build needs to pick a rule to use to
+     calculate an answer A for question Q and to run the action associated with
+     that rule. Actions may either return a value, update action state, or
+     perform IO. The most notable kind of update is "register-and-build-a-dep".
+
+  3. A typical rule for answering Q would:
+
+        1) need a rendering object...
+
+            "atlas-eval://hades-design/nav.json"
+
+          2) ...based on a rendering program file...
+
+              "atlas-file://hades-design/nav.json"
+
+            3) ...in storage...
+
+                 "atlas-git+fs:///repo"
+
+              4) ...at a certain commit:
+
+                   8228d8e13b31cd4f5f6eeee75bfc48e1f9687b
+
+        5) ...which should be applied to one another to produce the answer,
+           perhaps by way of another action like rendering some additional
+           inputs:
+
+             [atlas-file://index.txt atlas-file://diagram.svg]
+
+     (Note: I sense a DAG. Perhaps let-notation will be helpful?)
+

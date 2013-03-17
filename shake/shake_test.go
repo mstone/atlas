@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -33,8 +32,6 @@ func (self *AlwaysRule) Make(key Key, rules *RuleSet) (Result, error) {
 	result := Result{
 		Key:     key,
 		Changed: true,
-		Epoch:   0,
-		Type:    reflect.TypeOf(value),
 		Value:   value,
 		Rule:    self,
 		Deps:    nil,
@@ -95,8 +92,6 @@ func (self *FileRule) Make(key Key, rules *RuleSet) (Result, error) {
 	result := Result{
 		Key:     key,
 		Changed: true,
-		Epoch:   0,
-		Type:    reflect.TypeOf(text),
 		Value:   text,
 		Rule:    self,
 		Deps:    nil,
@@ -142,9 +137,6 @@ func TestFileKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Shake failed w/ FileRule!")
 	}
-	if res.Type != reflect.TypeOf("") {
-		t.Fatalf("shake.TestFileKey() failed: result type != string, res: %s", res)
-	}
 	val, ok := res.Value.(string)
 	if !ok {
 		t.Fatalf("shake.TestFileKey() failed: result /value/ type != string, res: %s", res)
@@ -161,9 +153,6 @@ func TestFileKey(t *testing.T) {
 	}
 	if res2.Changed {
 		t.Fatalf("shake.TestFileKey() failed: bad file change reported: %s", res2)
-	}
-	if res2.Type != reflect.TypeOf("") {
-		t.Fatalf("shake.TestFileKey() failed: result type != string, res: %s", res2)
 	}
 	val2, ok := res2.Value.(string)
 	if !ok {
@@ -188,9 +177,6 @@ func TestFileKey(t *testing.T) {
 	}
 	if !res3.Changed {
 		t.Fatalf("shake.TestFileKey() failed: no file change reported: %s", res3)
-	}
-	if res3.Type != reflect.TypeOf("") {
-		t.Fatalf("shake.TestFileKey() failed: result type != string, res: %s", res3)
 	}
 	val3, ok := res3.Value.(string)
 	if !ok {

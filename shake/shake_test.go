@@ -1,7 +1,6 @@
 package shake
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -23,11 +22,11 @@ func init() {
 
 type AlwaysRule struct{}
 
-func (self *AlwaysRule) Matches(key Key) bool {
+func (self *AlwaysRule) Matches(question Question, key Key) bool {
 	return true
 }
 
-func (self *AlwaysRule) Make(key Key, rules *RuleSet) (Result, error) {
+func (self *AlwaysRule) Make(question Question, key Key, rules *RuleSet) (Result, error) {
 	value := "hi"
 	result := Result{
 		Key:     key,
@@ -47,7 +46,7 @@ func (self *AlwaysRule) Validate(key Key, cookie interface{}) error {
 func TestAlwaysKey(t *testing.T) {
 	rs := NewRuleSet()
 	rs.Rules = append(rs.Rules, &AlwaysRule{})
-	res, err := rs.Make("i.do.exit!")
+	res, err := rs.Make(StringQuestion("i.do.exit!"))
 	if err != nil {
 		t.Fatalf("Shake failed w/ a default rule!")
 	}
@@ -56,84 +55,20 @@ func TestAlwaysKey(t *testing.T) {
 
 func TestMissingKey(t *testing.T) {
 	rs := NewRuleSet()
-	_, err := rs.Make("i.do.not.exist")
+	_, err := rs.Make(StringQuestion("i.do.not.exist"))
 	if err == nil {
 		t.Fatalf("Shake failed to fail!")
 	}
 }
 
-type FileRule struct {
-	Pattern Key
-}
-
-func (self *FileRule) Matches(key Key) bool {
-	return key == self.Pattern
-}
-
-func (self *FileRule) Make(key Key, rules *RuleSet) (Result, error) {
-	file, err := os.Open(string(key))
-	if err != nil {
-		return Result{}, err
-	}
-	defer file.Close()
-
-	fi, err := file.Stat()
-	if err != nil {
-		return Result{}, err
-	}
-
-	value, err := ioutil.ReadAll(file)
-	if err != nil {
-		return Result{}, err
-	}
-
-	text := string(value)
-
-	result := Result{
-		Key:     key,
-		Changed: true,
-		Value:   text,
-		Rule:    self,
-		Deps:    nil,
-		Cookie:  fi,
-	}
-	return result, nil
-}
-
-func (self *FileRule) Validate(key Key, cookie interface{}) error {
-	fi, err := os.Stat(string(key))
-	if err != nil {
-		return err
-	}
-
-	oldFi, ok := cookie.(os.FileInfo)
-	if !ok {
-		return &BadCookieError{
-			Key: key,
-		}
-	}
-
-	err = nil
-
-	sizeOk := fi.Size() == oldFi.Size()
-	modeOk := fi.Mode() == oldFi.Mode()
-	modTimeOk := fi.ModTime() == oldFi.ModTime()
-
-	if !(sizeOk && modeOk && modTimeOk) {
-		err = &OutOfDateError{
-			Key: key,
-		}
-	}
-	return err
-}
-
 func TestFileKey(t *testing.T) {
 	name := path.Join(shakePath, "demo.txt")
 	rs := NewRuleSet()
-	rs.Rules = append(rs.Rules, &FileRule{Pattern: Key(name)})
+	rs.Rules = append(rs.Rules, &ReadFileRule{Pattern: name})
 
 	// First we read a test file...
-	res, err := rs.Make(Key(name))
+	question := StringQuestion(name)
+	res, err := rs.Make(question)
 	if err != nil {
 		t.Fatalf("Shake failed w/ FileRule!")
 	}
@@ -147,7 +82,7 @@ func TestFileKey(t *testing.T) {
 
 	// ...and then we read it again to make sure our cache validation logic
 	// works...
-	res2, err := rs.Make(Key(name))
+	res2, err := rs.Make(question)
 	if err != nil {
 		t.Fatalf("Shake failed w/ FileRule!")
 	}
@@ -171,7 +106,7 @@ func TestFileKey(t *testing.T) {
 
 	// ...and then we read it a third time to check that our cache
 	// *in*validation works.
-	res3, err := rs.Make(Key(name))
+	res3, err := rs.Make(question)
 	if err != nil {
 		t.Fatalf("Shake failed w/ FileRule!")
 	}

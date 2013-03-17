@@ -23,7 +23,7 @@ $(document).ready(function(){
         cont.append($("<li/>").append(makeLink(k, v)));
       });
       $("#searchresults").empty().append(
-          $("<br/><h2>Matching Posts</h2>")
+          $("<br/><h2>Matching Charts</h2>")
         , cont
         );
     }
@@ -55,9 +55,9 @@ $(document).ready(function(){
           }
         });
         if (results.length > 0) {
-          $("#searchresults").empty().append('<br/><h2>Matching Posts</h2>', results);
+          $("#searchresults").empty().append('<br/><h2>Matching Charts</h2>', results);
         } else {
-          $("#searchresults").empty().append('<br/><h2>Matching Posts</h2>', $('<p>None</p>'));
+          $("#searchresults").empty().append('<br/><h2>Matching Charts</h2>', $('<p><b>None</b></p>'));
         }
       }
       else {

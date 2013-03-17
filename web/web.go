@@ -1125,27 +1125,25 @@ var errTooShort = errors.New("URL path too short.")
 var errWrongPrefix = errors.New("URL has wrong prefix.")
 
 func (self *App) RemoveUrlPrefix(urlPath string, prefix string) (string, error) {
-	prefixDirty := ""
-	if len(prefix) > 0 && prefix[len(prefix)-1] != '/' {
-		prefixDirty = "/"
+	up := path.Clean(urlPath)
+	sp := path.Clean("/" + prefix)
+
+	log.Printf("RemoveUrlPrefix(%q, %q)", urlPath, prefix)
+	log.Printf("RemoveUrlPrefix(): up: %q, sp: %q", up, sp)
+
+	fp := ""
+	err := errTooShort
+
+	if up == sp {
+		err = nil
 	}
 
-	log.Printf("RemoveUrlPrefix(%q, %q, %q)", urlPath, prefix, prefixDirty)
-	up := path.Clean(urlPath)
-	sp := path.Clean("/"+prefix) + prefixDirty
-	fp := ""
-	log.Printf("RemoveUrlPrefix(): up: %q, sp: %q", up, sp)
-	err := errTooShort
 	if len(up) > len(sp) {
 		if strings.HasPrefix(up, sp) {
 			fp = up[len(sp):]
 			err = nil
 		} else {
 			err = errWrongPrefix
-		}
-	} else {
-		if len(up) == len(sp) && up == sp {
-			err = nil
 		}
 	}
 	return fp, err

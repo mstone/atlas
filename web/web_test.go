@@ -184,3 +184,28 @@ func TestSvgEditorGet(t *testing.T) {
 		t.Fatalf("TestSvgEditorGet() failed: body does not mention 'svg-editor':\n %s", w.Body)
 	}
 }
+
+func TestRemoveUrlPrefix(t *testing.T) {
+	t.Parallel()
+	t.Log("TestRemoveUrlPrefix(): starting.")
+
+	fp, err := normalApp.RemoveUrlPrefix("/", "/")
+	if fp != "" || err != nil {
+		t.Fatalf("TestRemoveUrlPrefix() failed: (/ /) -> (%q %q)", fp, err)
+	}
+
+	fp, err = normalApp.RemoveUrlPrefix("/", "/abc")
+	if fp != "" || err == nil {
+		t.Fatalf("TestRemoveUrlPrefix() failed: (/ /) -> (%q %q)", fp, err)
+	}
+
+	fp, err = normalApp.RemoveUrlPrefix("/abc", "")
+	if fp != "abc" || err != nil {
+		t.Fatalf("TestRemoveUrlPrefix() failed: (/ /) -> (%q %q)", fp, err)
+	}
+
+	fp, err = normalApp.RemoveUrlPrefix("/abc", "/abc/")
+	if fp != "" || err != nil {
+		t.Fatalf("TestRemoveUrlPrefix() failed: (/ /) -> (%q %q)", fp, err)
+	}
+}

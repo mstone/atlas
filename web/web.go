@@ -1046,14 +1046,6 @@ func (self *App) renderTemplate(w http.ResponseWriter, tmpl string, p interface{
 	}
 }
 
-func (self *App) HandleStatic(w http.ResponseWriter, r *http.Request) {
-	// BUG(mistone): directory traversal?
-	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.StaticRoot)
-	checkHTTP(err)
-	log.Printf("HandleStatic: file path: %v", fp)
-	http.ServeFile(w, r, path.Join(self.StaticPath, fp))
-}
-
 func (self *App) HandleSvgEditorPost(w http.ResponseWriter, r *http.Request) {
 	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
 	checkHTTP(err)

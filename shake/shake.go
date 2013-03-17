@@ -28,6 +28,14 @@ func (self *ForgottenDepError) Error() string {
 	return fmt.Sprintf("shake: forgot dep: key %s", self.Key)
 }
 
+type BadCookieError struct {
+	Key Key
+}
+
+func (self *BadCookieError) Error() string {
+	return fmt.Sprintf("shake: bad cookie: key %s", self.Key)
+}
+
 func IsOutOfDate(err error) bool {
 	_, ok := err.(*OutOfDateError)
 	return ok

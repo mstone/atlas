@@ -1,7 +1,6 @@
 package shake
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -10,7 +9,13 @@ import (
 // argh; can't map []byte because == isn't defined...
 type Key string
 
-var ErrNoMatchingRule = errors.New("shake: no matching rule.")
+type NoMatchingRuleError struct {
+	Key Key
+}
+
+func (self *NoMatchingRuleError) Error() string {
+	return fmt.Sprintf("shake: no matching rule: key %s", self.Key)
+}
 
 type OutOfDateError struct {
 	Key Key
@@ -108,5 +113,7 @@ func (self *RuleSet) Make(key Key) (Result, error) {
 			return result, nil
 		}
 	}
-	return Result{}, ErrNoMatchingRule
+	return Result{}, &NoMatchingRuleError{
+		Key: key,
+	}
 }

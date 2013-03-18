@@ -1,10 +1,20 @@
 (function($){
 $(document).ready(function(){
+  var loadFragment = function(){
+    // examine fragment for search terms
+    var patSearchFrag = RegExp("search=([^&]*)");
+    var match = patSearchFrag.exec(location.hash)
+    if (match) {
+      $("#searchbox").val(match[1]);
+      $("#searchbox").trigger('keyup');
+    }
+  }
   var site;
   // $.getJSON('@APPROOT@' + '/site.json', function(data){
   $.getJSON('/site.json', function(data){
     site = data;
     $("#searchbar").css("display", "inline-block");
+    loadFragment();
   });
   var makeLink;
   makeLink = function(k, v) {
@@ -33,10 +43,11 @@ $(document).ready(function(){
         var results = $("<ul>");
         $.each(site, function(k, v){
           if (v.match(pat)) {
-            var pat2 = RegExp("^(.*)(" + search + ")(.*)$", "igm")
+            var pat2 = RegExp("^(.*)(" + search + ")(.*)$", "igm");
             var elt = $("<li/>").append(makeLink(k, v));
             var cont = $("<ul/>");
             var count = 0;
+            var match;
             while(match = pat2.exec(v))
             {
               count++;
@@ -66,4 +77,5 @@ $(document).ready(function(){
     }
   };
   $("#searchbox").keyup(doSearch);
+  loadFragment();
 });})(jQuery);

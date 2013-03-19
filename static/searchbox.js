@@ -1,6 +1,8 @@
 (function($){
 $(document).ready(function(){
-  var loadFragment = function(){
+  // Function for implementing bookmarkable searches.
+  var loadFragment;
+  loadFragment = function(){
     // examine fragment for search terms
     var patSearchFrag = RegExp("search=([^&]*)");
     var match = patSearchFrag.exec(location.hash)
@@ -9,20 +11,50 @@ $(document).ready(function(){
       $("#searchbox").trigger('keyup');
     }
   }
+
+  // Ref for a chart-name -> search-view map.
   var site;
+
+  // Ref for matching (chart-names), for form submission-handling.
+  // Updated by doSearch(); read by doSubmit().
+  var matchingChartnames = [];
+
+  // Use XHR to attempt to fill the site-ref.
   // $.getJSON('@APPROOT@' + '/site.json', function(data){
   $.getJSON('/site.json', function(data){
     site = data;
+    $("#searchbox").attr("disabled", false);
     $("#searchbar").css("display", "inline-block");
     loadFragment();
   });
-  var makeLink;
-  makeLink = function(k, v) {
+
+  // Helper function to convert (chart-name, search-view) to (href,
+  // text)
+  var makeLinkData;
+  makeLinkData = function(k, v) {
     var text = v.split(/\n/)[0].replace(/^% /, '');
     //var link = "@APPROOT@" + k;
     var link = "/" + k;
-    return $("<a/>", {"href": link, "text": text});
+    return {"href": link, "text": text};
+  };
+
+  // Return an anchor element for (chart-name, search-view)
+  var makeLink;
+  makeLink = function(k, v) {
+    return $("<a/>", makeLinkData(k, v));
   }
+
+  // If only one result is found, jump to it; called on
+  // #searchform.submit()
+  var doSubmit;
+  doSubmit = function(){
+    if (matchingChartNames.length > 0) {
+      location.href = "/" + matchingChartNames[0];
+    }
+    return false;
+  };
+
+  // Calculate search results; called on #searchinput.keyup()
   var doSearch;
   doSearch = function(){
     var search;
@@ -41,6 +73,7 @@ $(document).ready(function(){
       if (search.length > 0) {
         var pat = RegExp(search, "i");
         var results = $("<ul>");
+        matchingChartNames = [];
         $.each(site, function(k, v){
           if (v.match(pat)) {
             var pat2 = RegExp("^(.*)(" + search + ")(.*)$", "igm");
@@ -63,6 +96,7 @@ $(document).ready(function(){
             }
             elt.append(cont);
             results.append(elt);
+            matchingChartNames.push(k);
           }
         });
         if (results.length > 0) {
@@ -75,7 +109,9 @@ $(document).ready(function(){
         $("#searchresults").empty();
       }
     }
+    $('html, body').scrollTop(0);
   };
+  $("#searchform").submit(doSubmit);
   $("#searchbox").keyup(doSearch);
   loadFragment();
 });})(jQuery);

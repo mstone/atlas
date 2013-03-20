@@ -114,4 +114,43 @@ $(document).ready(function(){
   $("#searchform").submit(doSubmit);
   $("#searchbox").keyup(doSearch);
   loadFragment();
+
+
+  // Display ticket information!
+  $("h1, h2, h3, h4, h5, h6").wrap("<div style=\"clear: both;\"></div>");
+  var ticketUriPrefix = "data:tkt,";
+  var ticketAttrSelector = "a[href^=\"" + ticketUriPrefix + "\"]";
+  var ticketSelector = ["h1 > " + ticketAttrSelector,
+                        "h2 > " + ticketAttrSelector,
+                        "h3 > " + ticketAttrSelector,
+                        "h4 > " + ticketAttrSelector,
+                        "h5 > " + ticketAttrSelector,
+                        "h6 > " + ticketAttrSelector].join(", ");
+  var renderTicket = function(k,v){
+    var href = v.href;
+    if (href.startsWith(ticketUriPrefix)) {
+      var qs = href.substr(ticketUriPrefix.length);
+      var obj = {};
+      var match;
+      var kvPat = RegExp("([^=&]+)=([^&]*)&?", "g");
+      while(match = kvPat.exec(qs)) {
+        obj[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
+      }
+
+      $(v).attr({"display": "none"});
+
+      var tbl = $("<table>")
+                  .attr({"class": "ticket"})
+                  .append($("<caption>Ticket State</caption>"));
+      //tbl.append("<tr><th>Key</th><th>Value</th></tr>");
+      $.each(obj, function(k,v){
+          var tr = $("<tr>").append($("<td class=\"ticket-key\">").append(k))
+                            .append($("<td class=\"ticket-val\">").append(v));
+          tbl.append(tr);
+      });
+      $(v).parent().parent().append(tbl);
+    }
+  };
+  $(ticketSelector).each(renderTicket);
+
 });})(jQuery);

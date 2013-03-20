@@ -299,3 +299,13 @@ span.author:before {
 span.date:before {
   content: "Date: ";
 }
+
+.ticket {
+  float: right;
+  padding: 1em;
+  margin-left: 1em;
+}
+
+.ticket-key {
+  font-style: italic;
+}

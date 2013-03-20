@@ -1,0 +1,28 @@
+% Form: Catechism
+% Michael Stone
+% March 19, 2013
+
+# Q: Goal?                  [ ](data:tkt,owner=&next_action=)
+
+> What are you trying to do? (Articulate your objectives using absolutely no
+jargon.)
+
+# Q: Current Practice?      [ ](data:tkt,owner=&next_action=)
+
+> How is it done today, and what are the limits of current practice?
+
+# Q: What's New?            [ ](data:tkt,owner=&next_action=)
+
+> What's new in your approach and wy do you think it will be successful?
+
+# Q: Who Cares?             [ ](data:tkt,owner=&next_action=)
+
+> Who cares? If you're successful, what difference will it make?
+
+# Q: Risks?                 [ ](data:tkt,owner=&next_action=)
+
+> What are the risks and the payoffs?
+
+# Q: Cost?                  [ ](data:tkt,owner=&next_action=)
+
+> How much will it cost? How long will it take?

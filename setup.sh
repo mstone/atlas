@@ -25,8 +25,6 @@ URL="http://localhost:3001"
 
 ./atlas-forms \
   -http       'localhost:3001' \
-  -forms      'data/' \
-  -formsroot  'forms' \
   -charts     "${HOME}/p4/docs/security/arch/" \
   -chartsroot ''
 

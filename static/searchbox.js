@@ -128,7 +128,7 @@ $(document).ready(function(){
                         "h6 > " + ticketAttrSelector].join(", ");
   var renderTicket = function(k,v){
     var href = v.href;
-    if (href.startsWith(ticketUriPrefix)) {
+    if (href.indexOf(ticketUriPrefix) == 0) {
       var qs = href.substr(ticketUriPrefix.length);
       var obj = {};
       var match;

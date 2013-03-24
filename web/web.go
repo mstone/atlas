@@ -363,14 +363,7 @@ func (self *App) renderTemplate(w http.ResponseWriter, tmpl string, p interface{
 	}
 }
 
-// BUG(mistone): XSS Safety for SVG editor?
-func (self *App) HandleSvgEditorPost(w http.ResponseWriter, r *http.Request) {
-	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
-	checkHTTP(err)
-
-	svgName := path.Clean(path.Dir(fp))
-	log.Printf("HandleSvgEditorPost(): got svg: %s", svgName)
-
+func (self *App) SvgEditFile(svgName string) (*os.File, error) {
 	if strings.HasPrefix(svgName, "..") {
 		panic("HandleSvgEditorPost(): directory traversal")
 	}
@@ -379,19 +372,27 @@ func (self *App) HandleSvgEditorPost(w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleSvgEditorPost(): got svg dir: %s", svgDir)
 
 	realSvgDir := path.Join(self.ChartsPath, svgDir)
-	err = os.MkdirAll(realSvgDir, 0755)
+	err := os.MkdirAll(realSvgDir, 0755)
 	checkHTTP(err)
 
-	//now := time.Now()
-	//date := fmt.Sprintf("%s %0.2d, %d", now.Month().String(), now.Day(), now.Year())
+	realSvgName := path.Join(self.ChartsPath, svgName)
+	return os.Create(realSvgName)
+}
+
+// BUG(mistone): XSS Safety for SVG editor?
+func (self *App) HandleSvgEditorPost(w http.ResponseWriter, r *http.Request) {
+	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
+	checkHTTP(err)
+
+	svgName := path.Clean(path.Dir(fp))
+	log.Printf("HandleSvgEditorPost(): got svg: %s", svgName)
 
 	svgBodyB64 := r.FormValue("filepath")
 	log.Printf("HandleSvgEditorPost(): got svg body b64: %s", svgBodyB64)
 
 	reader := base64.NewDecoder(base64.StdEncoding, bytes.NewBufferString(svgBodyB64))
 
-	realSvgName := path.Join(self.ChartsPath, svgName)
-	svgFile, err := os.Create(realSvgName)
+	svgFile, err := self.SvgEditFile(svgName)
 	checkHTTP(err)
 	defer svgFile.Close()
 
@@ -422,14 +423,36 @@ func (self *App) GetStaticSvgEditUrl() (url.URL, error) {
 	return url, nil
 }
 
+func (self *App) InitializeSvg(svgName string) error {
+	svgFile, err := self.SvgEditFile(svgName)
+	checkHTTP(err)
+	defer svgFile.Close()
+
+	_, err = svgFile.WriteString(`<?xml version="1.0"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+ <metadata id="metadata7">image/svg+xml</metadata>
+ <g>
+  <title>Layer 1</title>
+ </g>
+</svg>
+`)
+	return err
+}
+
 func (self *App) HandleSvgEditorGet(w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleSvgEditorGet(): starting")
 
 	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
 	checkHTTP(err)
 
-	svg := path.Dir(fp)
-	log.Printf("HandleSvgEditorGet(): handling svg: %s", svg)
+	svgName := path.Clean(path.Dir(fp))
+	log.Printf("HandleSvgEditorGet(): handling svgName: %s", svgName)
+
+	realSvgName := path.Join(self.ChartsPath, svgName)
+	_, err = os.Stat(realSvgName)
+	if err != nil && os.IsNotExist(err) {
+		err = self.InitializeSvg(svgName)
+	}
 
 	now := time.Now()
 	date := fmt.Sprintf("%s %0.2d, %d", now.Month().String(), now.Day(), now.Year())

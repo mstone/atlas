@@ -5,7 +5,8 @@
 	{{template "head" .}}
 </head>
 <body>
-<h1 class="title"><a href="{{.ChartsRoot}}" tabindex="2">{{.Title}}</a></h1>
+<h1 class="title"><a href="{{.ChartsRoot}}" tabindex="2">{{.Title}}</a> <span class="editLink">(<a href="{{.EditorUrl.String}}">edit</a>)</span>
+</h1>
 <span class="author">{{.Authors}}</span>
 <span class="date">{{.Date}}</span>
 <div id="searchbar">

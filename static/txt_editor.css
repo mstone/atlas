@@ -295,6 +295,10 @@ span.author {
 span.date {
   display: block;
 }
+span.returnLink {
+  font-size: 50%;
+  border-left: 1px thin black;
+}
 
 span.author:before {
   content: "Author(s): ";
@@ -317,4 +321,9 @@ iframe {
 	margin-top: 1em;
 	width: 100%;
 	height: 100%;
+}
+
+#txtEditorNav form {
+	display: inline-block;
+	margin-right: 1em;
 }

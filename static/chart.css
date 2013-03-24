@@ -292,6 +292,10 @@ span.author {
 span.date {
   display: block;
 }
+span.editLink {
+  font-size: 50%;
+  border-left: 1px thin black;
+}
 
 span.author:before {
   content: "Author(s): ";

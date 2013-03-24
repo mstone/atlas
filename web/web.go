@@ -92,9 +92,10 @@ func checkHTTP(err error) {
 
 type vChart struct {
 	*vRoot
-	FullPath string
-	Url      string
-	Html     template.HTML
+	FullPath  string
+	Url       string
+	EditorUrl url.URL
+	Html      template.HTML
 }
 
 func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
@@ -141,9 +142,11 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, fp3)
 		return
 	} else {
-		name := path.Join(fullPath, "index.txt")
+		txtFile := "index.txt"
+		name := path.Join(fullPath, txtFile)
 		if _, err := os.Stat(name); os.IsNotExist(err) {
-			name = path.Join(fullPath, "index.text")
+			txtFile = "index.text"
+			name = path.Join(fullPath, txtFile)
 			_, err = os.Stat(name)
 			checkHTTP(err)
 		}
@@ -152,6 +155,10 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 		err = chart.Read()
 		checkHTTP(err)
+
+		editorUrl, err := self.GetChartUrl(chart)
+		checkHTTP(err)
+		editorUrl.Path = path.Join(editorUrl.Path, txtFile, "editor")
 
 		// attempt to parse header lines
 		meta := chart.Meta()
@@ -174,9 +181,10 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		view := &vChart{
 			vRoot: newVRoot(self, "chart", meta.Title, meta.Authors, meta.Date),
 			//Url:          chartUrl.String(),
-			FullPath: fullPath,
-			Url:      chartUrl,
-			Html:     template.HTML(html),
+			FullPath:  fullPath,
+			Url:       chartUrl,
+			Html:      template.HTML(html),
+			EditorUrl: editorUrl,
 		}
 
 		self.renderTemplate(w, "chart", view)
@@ -210,9 +218,13 @@ func HandleRootGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 func (self *App) GetChartUrl(chart *chart.Chart) (url.URL, error) {
 	slug := chart.Slug()
-	return url.URL{
-		Path: path.Clean(path.Join("/", self.ChartsRoot, slug)) + "/",
-	}, nil
+	url := url.URL{}
+	if slug != "" {
+		url.Path = path.Clean(path.Join("/", self.ChartsRoot, slug)) + "/"
+	} else {
+		url.Path = path.Clean(path.Join("/", self.ChartsRoot))
+	}
+	return url, nil
 }
 
 type vChartLink struct {
@@ -730,10 +742,16 @@ func (self *App) HandleTxtEditorGet(w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 	log.Printf("HandleTxtEditorGet(): found chart url: %q", chartUrl)
 
-	title := "Chart Editor: " + txtName
+	slug := chart.Slug()
+	title := "Chart Editor: "
+	if slug == "" {
+		title = title + "Root Chart"
+	} else {
+		title = title + slug[0:len(slug)-1]
+	}
 
 	view := &vTxtEditor{
-		vRoot:        newVRoot(self, "txt_editor", title, "Michael Stone", date),
+		vRoot:        newVRoot(self, "txt_editor", title, "(none)", date),
 		TxtEditorUrl: editorUrl,
 		ChartUrl:     chartUrl,
 	}
@@ -831,7 +849,7 @@ func (self *App) HandleChart(w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleChart: base: %s, ext: %s", base, ext)
 
 	isSvgEditor := (base == "editor") && (ext == ".svg")
-	isTxtEditor := (base == "editor") && (ext == ".txt")
+	isTxtEditor := (base == "editor") && ((ext == ".txt") || (ext == ".text"))
 
 	if isSvgEditor {
 		switch r.Method {

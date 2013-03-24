@@ -5,7 +5,7 @@
 	{{template "head" .}}
 </head>
 <body>
-<h1 class="title"><a href="{{.ChartsRoot}}" tabindex="2">{{.Title}}</a></h1>
+<h1 class="title"><a href="{{.ChartsRoot}}" tabindex="2">{{.Title}}</a> <span class="returnLink">(<a href="{{.ChartUrl.String}}">return</a>)</span></h1>
 <span class="author">{{.Authors}}</span>
 <span class="date">{{.Date}}</span>
 <div id="searchbar">
@@ -16,9 +16,7 @@
   <div id="searchresults"></div>
 </div>
 
-<p>
-<a href="{{.ChartUrl.String}}">Return to chart...</a>
-
+<div id="txtEditorNav">
 <form id="txtEditorSaveForm" method="post" action="">
 <input type="hidden" name="action" value="save"></input>
 <input id="txtEditorSaveButton" type="submit" value="Click to Save!"></input>
@@ -28,7 +26,7 @@
 <input type="hidden" name="action" value="reload"></input>
 <input id="txtEditorSaveButton" type="submit" value="Reload from Disk!"></input>
 </form>
-</p>
+</div>
 
 <iframe src="{{.TxtEditorUrl.String}}"></iframe>
 

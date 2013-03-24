@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -135,6 +136,45 @@ func TestSvgEditorGet(t *testing.T) {
 	body := w.Body.String()
 	if !strings.Contains(body, "svg-editor") {
 		t.Fatalf("TestSvgEditorGet() failed: body does not mention 'svg-editor':\n %s", w.Body)
+	}
+}
+
+func TestSvgEditorPost(t *testing.T) {
+	t.Parallel()
+	t.Log("TestSvgEditorPost(): starting.")
+
+	// try to delete whatever we create
+	defer os.Remove(path.Join(normalApp.ChartsPath, "new.svg"))
+	defer os.Remove(path.Join(normalApp.ChartsPath, "newchart"))
+
+	svgUrl := "/newchart/new.svg"
+	svgEditorUrl := path.Join(svgUrl, "editor")
+
+	// check that new.svg doesn't exist yet...
+	w0 := httptest.NewRecorder()
+	r0, _ := http.NewRequest("GET", svgUrl, nil)
+	normalApp.ServeHTTP(w0, r0)
+	if w0.Code != 404 {
+		t.Fatalf("TestSvgEditorPost() failed: response code %d != 404", w0.Code)
+	}
+
+	// create new.svg
+	w1 := httptest.NewRecorder()
+	svgBody := "filepath=PD94bWwgdmVyc2lvbj0iMS4wIj8%2BCjxzdmcgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI%2BCgogPG1ldGFkYXRhIGlkPSJtZXRhZGF0YTciPmltYWdlL3N2Zyt4bWw8L21ldGFkYXRhPgogPGc%2BCiAgPHRpdGxlPkxheWVyIDE8L3RpdGxlPgogIDx0ZXh0IHN0cm9rZT0iIzAwMDAwMCIgdHJhbnNmb3JtPSJtYXRyaXgoMSAwIDAgMS4wNjg5NyAwIC0zLjU4NjIxKSIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjI0IiBpZD0ic3ZnXzEiIHk9IjMyNy4wMTYxMTkiIHg9IjI5NiIgc3Ryb2tlLXdpZHRoPSIwIiBmaWxsPSIjMDAwMDAwIj53aWRnZXQ8L3RleHQ%2BCiAgPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjI0IiBpZD0ic3ZnXzIiIHk9IjIyMy41IiB4PSIzOTEiIHN0cm9rZS13aWR0aD0iMCIgc3Ryb2tlPSIjMDAwMDAwIiBmaWxsPSIjMDAwMDAwIj5naXptb3M8L3RleHQ%2BCiAgPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjI0IiBpZD0ic3ZnXzMiIHk9IjM0Ni41IiB4PSI1MDkiIHN0cm9rZS13aWR0aD0iMCIgc3Ryb2tlPSIjMDAwMDAwIiBmaWxsPSIjMDAwMDAwIj5zcHJvY2tldDwvdGV4dD4KICA8bGluZSBzdHJva2U9IiM4MDAwMDAiIGlkPSJzdmdfNSIgeTI9IjI0MCIgeDI9IjM1OSIgeTE9IjMyMC45OTk5OTciIHgxPSIzMjIiIGZpbGw9Im5vbmUiLz4KICA8bGluZSBzdHJva2U9IiM4MDAwMDAiIGlkPSJzdmdfNiIgeTI9IjMxOSIgeDI9IjQ3MCIgeTE9IjIzNS4wMDAwMDQiIHgxPSI0MzIiIGZpbGw9Im5vbmUiLz4KIDwvZz4KPC9zdmc%2B&filename=drawing.svg&contenttype=application%2Fx-svgdraw"
+	svgBodyReader := bytes.NewBufferString(svgBody)
+	r1, _ := http.NewRequest("POST", svgEditorUrl, svgBodyReader)
+	r1.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	normalApp.ServeHTTP(w1, r1)
+	if w1.Code != 204 {
+		t.Fatalf("TestSvgEditorPost() failed: response code %d != 204", w1.Code)
+	}
+
+	// check that new.svg now exists
+	w2 := httptest.NewRecorder()
+	r2, _ := http.NewRequest("GET", svgUrl, nil)
+	normalApp.ServeHTTP(w2, r2)
+	if w2.Code != 200 {
+		t.Fatalf("TestSvgEditorPost() failed: response code %d != 200", w2.Code)
 	}
 }
 

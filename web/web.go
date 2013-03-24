@@ -40,6 +40,7 @@ import (
 	"fmt"
 	"github.com/russross/blackfriday"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -362,12 +363,24 @@ func (self *App) renderTemplate(w http.ResponseWriter, tmpl string, p interface{
 	}
 }
 
+// BUG(mistone): XSS Safety for SVG editor?
 func (self *App) HandleSvgEditorPost(w http.ResponseWriter, r *http.Request) {
 	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
 	checkHTTP(err)
 
-	svg := path.Dir(fp)
-	log.Printf("HandleSvgEditorPost(): got svg: %s", svg)
+	svgName := path.Clean(path.Dir(fp))
+	log.Printf("HandleSvgEditorPost(): got svg: %s", svgName)
+
+	if strings.HasPrefix(svgName, "..") {
+		panic("HandleSvgEditorPost(): directory traversal")
+	}
+
+	svgDir := path.Dir(svgName)
+	log.Printf("HandleSvgEditorPost(): got svg dir: %s", svgDir)
+
+	realSvgDir := path.Join(self.ChartsPath, svgDir)
+	err = os.MkdirAll(realSvgDir, 0755)
+	checkHTTP(err)
 
 	//now := time.Now()
 	//date := fmt.Sprintf("%s %0.2d, %d", now.Month().String(), now.Day(), now.Year())
@@ -376,9 +389,17 @@ func (self *App) HandleSvgEditorPost(w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleSvgEditorPost(): got svg body b64: %s", svgBodyB64)
 
 	reader := base64.NewDecoder(base64.StdEncoding, bytes.NewBufferString(svgBodyB64))
-	svgBody, err := ioutil.ReadAll(reader)
+
+	realSvgName := path.Join(self.ChartsPath, svgName)
+	svgFile, err := os.Create(realSvgName)
 	checkHTTP(err)
-	log.Printf("HandleSvgEditorPost(): got svg body: %s", svgBody)
+	defer svgFile.Close()
+
+	written, err := io.Copy(svgFile, reader)
+	checkHTTP(err)
+
+	log.Printf("HandleSvgEditorPost(): wrote %d bytes of svg body", written)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type vSvgEditor struct {

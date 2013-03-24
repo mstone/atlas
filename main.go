@@ -9,6 +9,9 @@ package main
 import (
 	"akamai/atlas/forms/web"
 	"flag"
+	"io/ioutil"
+	"net/url"
+	"strings"
 )
 
 // httpAddr tells the web controller on what address to
@@ -32,16 +35,36 @@ var chartsRoot = flag.String("chartsroot", "charts", "charts app url prefix")
 // chartsPath tells us where to look for charts to render
 var chartsPath = flag.String("charts", "charts/", "path to atlas charts")
 
+// etherpadApiUrlStr tells us where to access etherpads for chart editing
+var etherpadApiUrlStr = flag.String("etherpadApiUrl", "http://localhost:9001/api", "etherpad API url")
+
+// etherpadApiSecretPath tells us where to look for the etherpad API key
+var etherpadApiSecretPath = flag.String("etherpadApiSecretPath", "eplite/APIKEY.txt", "path to the etherpad API secret")
+
 func main() {
 	flag.Parse()
 
+	etherpadApiSecretRaw, err := ioutil.ReadFile(*etherpadApiSecretPath)
+	if err != nil {
+		panic(err)
+	}
+
+	etherpadApiSecret := strings.Trim(string(etherpadApiSecretRaw), " \t\n")
+
+	etherpadApiUrl, err := url.Parse(*etherpadApiUrlStr)
+	if err != nil {
+		panic(err)
+	}
+
 	web := &web.App{
-		HttpAddr:   *httpAddr,
-		HtmlPath:   *htmlPath,
-		StaticPath: *staticPath,
-		StaticRoot: *staticRoot,
-		ChartsRoot: *chartsRoot,
-		ChartsPath: *chartsPath,
+		HttpAddr:          *httpAddr,
+		HtmlPath:          *htmlPath,
+		StaticPath:        *staticPath,
+		StaticRoot:        *staticRoot,
+		ChartsRoot:        *chartsRoot,
+		ChartsPath:        *chartsPath,
+		EtherpadApiUrl:    etherpadApiUrl,
+		EtherpadApiSecret: etherpadApiSecret,
 	}
 
 	web.Serve()

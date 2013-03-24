@@ -12,7 +12,9 @@ URL="http://localhost:3001"
 (sleep 1; xdg-open "$URL" || open "$URL") &
 
 ./atlas-forms \
-  -http       'localhost:3001' \
-  -charts     "${HOME}/p4/docs/security/arch/" \
-  -chartsroot ''
+  -http                  "localhost:3001" \
+  -charts                "${HOME}/p4/docs/security/arch/" \
+  -chartsroot            "" \
+  -etherpadApiUrl        "http://localhost:9001/api" \
+  -etherpadApiSecretPath "${HOME}/src/eplite/APIKEY.txt"
 

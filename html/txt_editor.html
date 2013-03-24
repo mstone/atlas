@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+	<title>{{.Title}}</title>
+	{{template "head" .}}
+</head>
+<body>
+<h1 class="title"><a href="{{.ChartsRoot}}" tabindex="2">{{.Title}}</a></h1>
+<span class="author">{{.Authors}}</span>
+<span class="date">{{.Date}}</span>
+<div id="searchbar">
+  <form id="searchform" action="">
+    <label for="searchbox">Search the Atlas:</label>
+    <input id="searchbox" name="searchbox" type="text" size="30" autocomplete="off" disabled tabindex="1" />
+  </form>
+  <div id="searchresults"></div>
+</div>
+
+<p>
+<a href="{{.ChartUrl.String}}">Return to chart...</a>
+
+<form id="txtEditorSaveForm" method="post" action="">
+<input type="hidden" name="action" value="save"></input>
+<input id="txtEditorSaveButton" type="submit" value="Click to Save!"></input>
+</form>
+
+<form id="txtEditorReloadForm" method="post" action="">
+<input type="hidden" name="action" value="reload"></input>
+<input id="txtEditorSaveButton" type="submit" value="Reload from Disk!"></input>
+</form>
+</p>
+
+<iframe src="{{.TxtEditorUrl.String}}"></iframe>
+
+</body>
+</html>

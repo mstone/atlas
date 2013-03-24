@@ -36,7 +36,7 @@ func (self *Chart) Read() error {
 	log.Printf("Chart.Read(): reading path %s", self.srcPath)
 	body, err := ioutil.ReadFile(self.srcPath)
 	//log.Printf("Chart.Read(): read body %s", body)
-	log.Printf("Chart.Read(): read err %s", err)
+	//log.Printf("Chart.Read(): read err %s", err)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (self *Chart) Read() error {
 	self.body = string(body)
 
 	lines := strings.Split(self.body, "\n")
-	log.Printf("Chart.Read: found %d lines", len(lines))
+	//log.Printf("Chart.Read: found %d lines", len(lines))
 
 	foundHeaderChars := false
 	if len(lines) > 3 {
@@ -65,9 +65,9 @@ func (self *Chart) Read() error {
 		}
 	}
 
-	log.Printf("Chart.Read: found title: %s", self.meta.Title)
-	log.Printf("Chart.Read: found authors: %s", self.meta.Authors)
-	log.Printf("Chart.Read: found date: %s", self.meta.Date)
+	//log.Printf("Chart.Read: found title: %s", self.meta.Title)
+	//log.Printf("Chart.Read: found authors: %s", self.meta.Authors)
+	//log.Printf("Chart.Read: found date: %s", self.meta.Date)
 
 	return nil
 }

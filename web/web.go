@@ -166,6 +166,7 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 		htmlFlags := 0
 		//htmlFlags |= blackfriday.HTML_USE_XHTML
 		htmlFlags |= blackfriday.HTML_TOC
+		htmlFlags |= blackfriday.HTML_SKIP_HTML // disable script tags!
 
 		htmlRenderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
 

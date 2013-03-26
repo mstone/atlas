@@ -28,10 +28,10 @@
 package web
 
 import (
-	"akamai/atlas/forms/chart"
-	"akamai/atlas/forms/linker"
-	"akamai/atlas/forms/shake"
-	"akamai/atlas/forms/svgtext"
+	"akamai/atlas/chart"
+	"akamai/atlas/linker"
+	"akamai/atlas/shake"
+	"akamai/atlas/svgtext"
 	"bufio"
 	"bytes"
 	"crypto/sha1"

@@ -1,15 +1,17 @@
-Welcome to the atlas-forms component.
+Welcome to the https://github.com/akamai/atlas component. atlas is built using
+[Google Go](http://golang.org) and, as a result, this repository is intended to
+be included as a git submodule at
 
-To run atlas-forms, first install go (Debian package: golang-go), then set up
-the atlas-forms go environment, then install deps, and then run.
+  src/akamai/atlas
 
-   cd ~/src/atlas-forms
+along with other submodules for its dependencies in a git repo on GOPATH. An
+example tracking repo is available here at
 
-   mkdir -p {pkg,bin,src}
-   export GOPATH=$(pwd)
-   export PATH=$(pwd)/bin:${PATH}
-   cd src && go get
-   go run src/main.go
+  https://github.com/akamai-tech/atls.io
+
+To run atlas, install go (Debian package: golang-go), optionally install
+[etherpad-lite](http://etherpad.org), clone the atls.io tracking repo above,
+then run "make" in that repo.
 
 Other fun:
 
@@ -20,8 +22,4 @@ Other fun:
    For online help, see:
 
      godoc -http=:6060 &
-     open "http://localhost:6060/"
-
-   To sort & pretty-print json:
-
-     python bin/sort_questions.py IN OUT
+     xdg-open "http://localhost:6060/" || open "http://localhost:6060/"

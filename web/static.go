@@ -1,7 +1,7 @@
 package web
 
 import (
-	"akamai/atlas/forms/shake"
+	"akamai/atlas/shake"
 	"log"
 	"net/http"
 	"path"

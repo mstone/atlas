@@ -1,17 +1,4 @@
 "saved yet?" indicator
-each response as a ticket (w/ next_action, owner, points, ...)
-example text?
-nicer question names?
-  * are we dealing with new resources?
-      LatestX vs. FrozenX?
-      refs vs. commits vs. trees?
-        notes stored at SHA1(key) -> note?
-
-display question titles?
-
-navigation
-  floating?
-    meta.json?
 
 layers?
 
@@ -20,13 +7,8 @@ general help
 overview indicators for which questions require more work
 
 audit log
-presence indicator
-etherpad iframe?
-data sources: BART rails/components.json
+presence indicator?
 promises
-ad-hoc questions
-question visibility controls
-question genealogy
 
 atom
 site.min.js, site.min.css

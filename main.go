@@ -7,7 +7,7 @@
 package main
 
 import (
-	"akamai/atlas/forms/web"
+	"akamai/atlas/web"
 	"flag"
 	"io/ioutil"
 	"net/url"

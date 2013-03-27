@@ -99,10 +99,13 @@ $(document).ready(function(){
             matchingChartNames.push(k);
           }
         });
+        var newChartLink = $("<a>make a new chart</a>").attr({href: "/" + $.trim(search) + "/index.txt/editor"});
+        $("#searchresults").empty();
+        $("#searchresults").append($('<p class="newChartLink">').append(['(Alternately, shall we ', newChartLink, ' for that?)']));
         if (results.length > 0) {
-          $("#searchresults").empty().append('<br/><h2>Matching Charts</h2>', results);
+          $("#searchresults").append('<h2>Matching Charts</h2>', results);
         } else {
-          $("#searchresults").empty().append('<br/><h2>Matching Charts</h2>', $('<p><b>None</b></p>'));
+          $("#searchresults").append('<h2>Matching Charts</h2>', $('<p><b>None</b></p>'));
         }
       }
       else {

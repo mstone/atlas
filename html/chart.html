@@ -5,17 +5,18 @@
 	{{template "head" .}}
 </head>
 <body>
-<h1 class="title"><a href="{{.ChartsRoot}}" tabindex="2">{{.Title}}</a> <span class="editLink">(<a href="{{.EditorUrl.String}}">edit</a>)</span>
+<h1 class="title"><a href="{{.ChartsRoot}}" tabindex="1">{{.Title}}</a> <span class="editLink">(<a href="{{.EditorUrl.String}}">edit</a>)</span>
 </h1>
 <span class="author">{{.Authors}}</span>
 <span class="date">{{.Date}}</span>
 <div id="searchbar">
   <form id="searchform" action="">
-    <label for="searchbox">Search the Atlas:</label>
-    <input id="searchbox" name="searchbox" type="text" size="30" autocomplete="off" disabled tabindex="1" />
+    <input id="searchfind" name="find" type="text" size="10" autocomplete="off" disabled tabindex="2" placeholder="find"/>
+    <input id="searchgrep" name="search" type="text" size="30" autocomplete="off" disabled tabindex="3" placeholder="grep"/>
   </form>
   <div id="searchresults"></div>
 </div>
+<h2>Outline</h2>
 {{.Html}}
 </body>
 </html>

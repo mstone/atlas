@@ -88,7 +88,7 @@ div {
   font-style: italic;
 }
 
-#searchbox {
+#searchkey, #searchvalue {
   font-size: 85%;
   border: 1px solid #aaa;
 }

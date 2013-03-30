@@ -4,11 +4,15 @@ $(document).ready(function(){
   var loadFragment;
   loadFragment = function(){
     // examine fragment for search terms
+    var patFindFrag = RegExp("find=([^&]*)");
+    var matchFind = patFindFrag.exec(location.hash);
+
     var patSearchFrag = RegExp("search=([^&]*)");
-    var match = patSearchFrag.exec(location.hash)
-    if (match) {
-      $("#searchbox").val(match[1]);
-      $("#searchbox").trigger('keyup');
+    var matchSearch = patSearchFrag.exec(location.hash);
+    if (matchFind || matchSearch) {
+      $("#searchfind").val(matchFind[1] || "");
+      $("#searchgrep").val(matchGrep[1] || "");
+      $("#searchgrep").trigger('keyup');
     }
   }
 
@@ -23,7 +27,8 @@ $(document).ready(function(){
   // $.getJSON('@APPROOT@' + '/site.json', function(data){
   $.getJSON('/site.json', function(data){
     site = data;
-    $("#searchbox").attr("disabled", false);
+    $("#searchfind").attr("disabled", false);
+    $("#searchgrep").attr("disabled", false);
     $("#searchbar").css("display", "inline-block");
     loadFragment();
   });
@@ -54,59 +59,81 @@ $(document).ready(function(){
     return false;
   };
 
-  // Calculate search results; called on #searchinput.keyup()
-  var doSearch;
-  doSearch = function(){
-    var search;
-    search = $("#searchbox").val();
-    if (search === ".") {
-      var cont = $("<ul/>");
-      $.each(site, function(k, v){
-        cont.append($("<li/>").append(makeLink(k, v)));
-      });
-      $("#searchresults").empty().append(
-          $("<br/><h2>Matching Charts</h2>")
-        , cont
-        );
-    }
-    else {
-      if (search.length > 0) {
-        var pat = RegExp(search, "i");
-        var results = $("<ul>");
-        matchingChartNames = [];
-        $.each(site, function(k, v){
-          if (v.match(pat)) {
-            var pat2 = RegExp("^(.*)(" + search + ")(.*)$", "igm");
-            var elt = $("<li/>").append(makeLink(k, v));
-            var cont = $("<ul/>");
-            var count = 0;
-            var match;
-            while(match = pat2.exec(v))
-            {
-              count++;
-              if (count > 3) { break; }
-              cont.append(
-                $("<li/>").append("..."
-                  , $("<span/>", {"class": "searchctx", "text": match[1]})
-                  , $("<span/>", {"class": "searchhit", "text": match[2]})
-                  , $("<span/>", {"class": "searchctx", "text": match[3]})
-                  , "..."
-                  )
-                );
-            }
-            elt.append(cont);
-            results.append(elt);
-            matchingChartNames.push(k);
-          }
-        });
-        var newChartLink = $("<a>make a new chart</a>").attr({href: "/" + $.trim(search) + "/index.txt/editor"});
+  var updateResults;
+  updateResults = function(prefix, results) {
         $("#searchresults").empty();
-        $("#searchresults").append($('<p class="newChartLink">').append(['(Alternately, shall we ', newChartLink, ' for that?)']));
+        if (prefix !== null) {
+          $("#searchresults").append(prefix);
+        }
         if (results.length > 0) {
           $("#searchresults").append('<h2>Matching Charts</h2>', results);
         } else {
           $("#searchresults").append('<h2>Matching Charts</h2>', $('<p><b>None</b></p>'));
         }
+  }
+
+  // Calculate search results; called on #searchinput.keyup()
+  var doSearch;
+  doSearch = function(ev){
+    // check for form submission
+    if (ev.which == 13) {
+      doSubmit();
+      return;
+    }
+    var findStr; // chart url filter string
+    var grepStr; // chart body filter string
+    var findPat = null; // regex of chart url filter
+    var grepPat; // regex of chart body filter
+    findStr = $("#searchfind").val() || "";
+    grepStr = $("#searchgrep").val() || "";
+    matchingChartNames = [];
+    if (findStr.length > 0) {
+      findPat = RegExp(findStr, "i");
+    }
+    // if asked to list names...
+    if (grepStr === "." || (findStr.length > 0 && grepStr.length == 0)) {
+      var cont = $("<ul/>");
+      $.each(site, function(k, v){
+        if (findPat === null || k.match(findPat)) {
+          matchingChartNames.push(k)
+          cont.append($("<li/>").append(makeLink(k, v)));
+        }
+      });
+      updateResults(null, cont);
+    } else { // examine bodies
+      if (grepStr.length > 0) {
+        grepPat = RegExp(grepStr, "i");
+        var results = $("<ul>");
+        $.each(site, function(k, v){
+          if (findPat === null || k.match(findPat)) {
+            if (v.match(grepPat)) {
+              matchingChartNames.push(k);
+              var pat2 = RegExp("^(.*)(" + grepStr + ")(.*)$", "igm");
+              var elt = $("<li/>").append(makeLink(k, v));
+              var cont = $("<ul/>");
+              var count = 0;
+              var match;
+              while(match = pat2.exec(v))
+              {
+                count++;
+                if (count > 3) { break; }
+                cont.append(
+                  $("<li/>").append("..."
+                    , $("<span/>", {"class": "searchctx", "text": match[1]})
+                    , $("<span/>", {"class": "searchhit", "text": match[2]})
+                    , $("<span/>", {"class": "searchctx", "text": match[3]})
+                    , "..."
+                    )
+                  );
+              }
+              elt.append(cont);
+              results.append(elt);
+            }
+          }
+        });
+        var newChartLink = $("<a>make a new chart</a>").attr({href: "/" + $.trim(grepStr) + "/index.txt/editor"});
+        var resultsPrefix = $('<p class="newChartLink">').append(['(Alternately, shall we ', newChartLink, ' for that?)']);
+        updateResults(resultsPrefix, results);
       }
       else {
         $("#searchresults").empty();
@@ -115,7 +142,8 @@ $(document).ready(function(){
     $('html, body').scrollTop(0);
   };
   $("#searchform").submit(doSubmit);
-  $("#searchbox").keyup(doSearch);
+  $("#searchfind").keyup(doSearch);
+  $("#searchgrep").keyup(doSearch);
   loadFragment();
 
 

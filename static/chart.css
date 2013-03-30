@@ -319,3 +319,8 @@ span.date:before {
   margin-bottom: 0.5em;
   font-size: 85%;
 }
+
+.clear {
+  clear: both;
+  margin: 0;
+}

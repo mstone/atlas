@@ -2,18 +2,43 @@
 $(document).ready(function(){
   // Function for implementing bookmarkable searches.
   var loadFragment;
-  loadFragment = function(){
-    // examine fragment for search terms
-    var patFindFrag = RegExp("find=([^&]*)");
-    var matchFind = patFindFrag.exec(location.hash);
 
-    var patSearchFrag = RegExp("search=([^&]*)");
-    var matchSearch = patSearchFrag.exec(location.hash);
-    if (matchFind || matchSearch) {
-      $("#searchfind").val(matchFind[1] || "");
-      $("#searchgrep").val(matchGrep[1] || "");
-      $("#searchgrep").trigger('keyup');
+  // Calculate search results; called on #searchinput.keyup()
+  var doSearch;
+
+  // Re-create the results tree.
+  var updateResults;
+
+  // If only one result is found, jump to it; called on
+  // #searchform.submit()
+  var doSubmit;
+
+  // Return an anchor element for (chart-name, search-view)
+  var makeLink;
+
+  // Helper function to convert (chart-name, search-view) to (href,
+  // text)
+  var makeLinkData;
+
+  loadFragment = function(ev){
+    // examine fragment for search terms
+    var findStr = $.bbq.getState("find");
+    var matchStr = $.bbq.getState("search");
+
+    var findExists = typeof findStr != 'undefined';
+    var matchExists = typeof matchStr != 'undefined';
+
+    if (!findExists) {
+      findStr = "";
     }
+
+    if (!matchExists) {
+      matchStr = "";
+    }
+
+    $("#searchfind").val(findStr);
+    $("#searchgrep").val(matchStr);
+    doSearch();
   }
 
   // Ref for a chart-name -> search-view map.
@@ -33,9 +58,6 @@ $(document).ready(function(){
     loadFragment();
   });
 
-  // Helper function to convert (chart-name, search-view) to (href,
-  // text)
-  var makeLinkData;
   makeLinkData = function(k, v) {
     var text = v.split(/\n/)[0].replace(/^% /, '');
     //var link = "@APPROOT@" + k;
@@ -43,15 +65,10 @@ $(document).ready(function(){
     return {"href": link, "text": text};
   };
 
-  // Return an anchor element for (chart-name, search-view)
-  var makeLink;
   makeLink = function(k, v) {
     return $("<a/>", makeLinkData(k, v));
   }
 
-  // If only one result is found, jump to it; called on
-  // #searchform.submit()
-  var doSubmit;
   doSubmit = function(){
     if (matchingChartNames.length > 0) {
       location.href = "/" + matchingChartNames[0];
@@ -59,7 +76,6 @@ $(document).ready(function(){
     return false;
   };
 
-  var updateResults;
   updateResults = function(prefix, results) {
         $("#searchresults").empty();
         if (prefix !== null) {
@@ -72,11 +88,9 @@ $(document).ready(function(){
         }
   }
 
-  // Calculate search results; called on #searchinput.keyup()
-  var doSearch;
   doSearch = function(ev){
     // check for form submission
-    if (ev.which == 13) {
+    if (typeof ev != 'undefined' && ev !== null && ev.which == 13) {
       doSubmit();
       return;
     }
@@ -144,6 +158,7 @@ $(document).ready(function(){
   $("#searchform").submit(doSubmit);
   $("#searchfind").keyup(doSearch);
   $("#searchgrep").keyup(doSearch);
+  $(window).bind("hashchange", loadFragment);
   loadFragment();
 
 

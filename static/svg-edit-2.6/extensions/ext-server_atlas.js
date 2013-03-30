@@ -18,7 +18,7 @@ svgEditor.addExtension("server_opensave", {
       save: function(win, data) {
         //var formTarget = window.parent.document.location;
         var formTarget = window.document.location;
-        var svg = "<?xml version=\"1.0\"?>\n" + data;
+        var svg = "<?xml version=\"1.0\"?>\n" + data.replace(/&nbsp;/g, "&#160;");
         var b64_svg = svgedit.utilities.encode64(svg);
         var form = $('<form>').attr({
           method: 'post',

@@ -66,7 +66,7 @@ type App struct {
 	HttpAddr          string
 	EtherpadApiUrl    *url.URL
 	EtherpadApiSecret string
-	templates         *template.Template
+	Shake             *shake.RuleSet
 }
 
 func recoverHTTP(w http.ResponseWriter, r *http.Request) {
@@ -373,8 +373,19 @@ func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
 	//log.Printf("SiteJsonGet(): encoded view: %v", view)
 }
 
-func (self *App) renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
-	err := self.templates.ExecuteTemplate(w, tmpl+".html", p)
+func (self *App) renderTemplate(w http.ResponseWriter, templateName string, view interface{}) {
+	question := TemplateQuestion{templateName}
+	answer, err := self.Shake.Make(question)
+	checkHTTP(err)
+
+	tmpl, ok := answer.Value.(*template.Template)
+	if !ok {
+		log.Printf("renderTemplate(): tmpl: %q", tmpl)
+		http.Error(w, "Oops.", http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.ExecuteTemplate(w, templateName+".html", view)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -895,13 +906,7 @@ func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	question := WebQuestion{w, r}
 
-	rules := shake.NewRuleSet()
-	rules.Rules = []shake.Rule{
-		&StaticContentRule{self},
-		&ChartsContentRule{self},
-	}
-
-	_, err := rules.Make(question)
+	_, err := self.Shake.Make(question)
 	switch err.(type) {
 	default:
 		panic(err)
@@ -917,11 +922,14 @@ func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // Serve initializes some variables on self and then delegates to net/http to
 // to receive incoming HTTP requests. Requests are handled by self.ServeHTTP()
 func (self *App) Serve() {
-	self.templates = template.Must(
-		template.ParseGlob(
-			path.Join(self.HtmlPath, "*.html")))
-
 	self.StaticRoot = path.Clean("/" + self.StaticRoot)
+
+	self.Shake = shake.NewRuleSet()
+	self.Shake.Rules = []shake.Rule{
+		&StaticContentRule{self},
+		&ChartsContentRule{self},
+		&TemplateRule{self},
+	}
 
 	fmt.Printf("App: %v\n", self)
 

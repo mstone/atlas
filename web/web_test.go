@@ -1,8 +1,8 @@
 package web
 
 import (
+	"akamai/atlas/shake"
 	"bytes"
-	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -36,9 +36,12 @@ func init() {
 		ChartsRoot: chartsRoot,
 	}
 
-	normalApp.templates = template.Must(
-		template.ParseGlob(
-			path.Join(htmlPath, "*.html")))
+	normalApp.Shake = shake.NewRuleSet()
+	normalApp.Shake.Rules = []shake.Rule{
+		&StaticContentRule{normalApp},
+		&ChartsContentRule{normalApp},
+		&TemplateRule{normalApp},
+	}
 }
 
 func TestChartsGet(t *testing.T) {

@@ -2,6 +2,7 @@ package shake
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 )
@@ -64,6 +65,7 @@ func (self *ReadFileRule) Make(question Question, key Key, rules *RuleSet) (Resu
 }
 
 func (self *ReadFileRule) Validate(key Key, cookie interface{}) error {
+	log.Printf("ReadFileRule.Validate(): key: %q", key)
 	ok := strings.HasPrefix(string(key), readFileKeyPrefix)
 	if !ok {
 		return &BadKeyError{key}

@@ -97,9 +97,7 @@ func findDeps(node parse.Node, deps *[]string) error {
 
 func (self *TemplateRule) Make(question shake.Question, key shake.Key, rules *shake.RuleSet) (shake.Result, error) {
 	if q, ok := question.(TemplateQuestion); ok {
-		// tmpls := template.Must(
-		// 	template.ParseGlob(
-		// 		path.Join(self.HtmlPath, "*.html")))
+		allShakeDeps := []shake.Result{}
 
 		// ick
 		rootTmplPath := path.Join(self.HtmlPath, q.templateName+".html")
@@ -108,6 +106,7 @@ func (self *TemplateRule) Make(question shake.Question, key shake.Key, rules *sh
 		if err != nil {
 			return shake.Result{}, err
 		}
+		allShakeDeps = append(allShakeDeps, textAnswer)
 
 		text, ok := textAnswer.Value.(string)
 		if !ok {
@@ -156,6 +155,7 @@ func (self *TemplateRule) Make(question shake.Question, key shake.Key, rules *sh
 				log.Printf("TemplateRule.Make(): failed to build DEP: %q, %q", dep, err)
 				return shake.Result{}, err
 			}
+			allShakeDeps = append(allShakeDeps, depTmplResult)
 			depTmplAnswer, ok := depTmplResult.Value.(TemplateAnswer)
 			if !ok {
 				log.Printf("TemplateRule.Make(): building DEP didn't return a TemplateAnswer: %q, %q", dep, depTmplAnswer)
@@ -178,7 +178,7 @@ func (self *TemplateRule) Make(question shake.Question, key shake.Key, rules *sh
 			Changed: true,
 			Value:   answer,
 			Rule:    self,
-			Deps:    nil,
+			Deps:    allShakeDeps,
 			Cookie:  nil,
 		}
 		return result, nil
@@ -189,5 +189,6 @@ func (self *TemplateRule) Make(question shake.Question, key shake.Key, rules *sh
 }
 
 func (self *TemplateRule) Validate(key shake.Key, cookie interface{}) error {
-	return &shake.OutOfDateError{key}
+	log.Printf("TemplateRule.Validate(): key: %q", key)
+	return nil
 }

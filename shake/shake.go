@@ -94,6 +94,7 @@ func (self *RuleSet) Make(question Question) (Result, error) {
 		if err := result.Validate(self); err == nil {
 			res := result
 			res.Changed = false
+			log.Printf("RuleSet.Make(): found valid answer for key: %q", key)
 			return res, nil
 		} else {
 			log.Printf("shake: warning: %s", err)

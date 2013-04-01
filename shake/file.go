@@ -3,7 +3,16 @@ package shake
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 )
+
+type ReadFileQuestion string
+
+const readFileKeyPrefix = "atlas-readfile://"
+
+func (self ReadFileQuestion) Key() (Key, error) {
+	return Key(readFileKeyPrefix + self), nil
+}
 
 // ReadFileRule is a rule for reading the contents of a given file.
 // ReadFileRule's cookies are os.FileInfo. ReadFileRule cookies are valid if the
@@ -14,15 +23,18 @@ type ReadFileRule struct {
 }
 
 func (self *ReadFileRule) Matches(question Question, key Key) bool {
-	ret := false
-	if val, ok := question.(StringQuestion); ok {
-		ret = string(val) == self.Pattern
-	}
-	return ret
+	_, ok := question.(ReadFileQuestion)
+	// BUG(mistone): validate file paths!
+	return ok
 }
 
 func (self *ReadFileRule) Make(question Question, key Key, rules *RuleSet) (Result, error) {
-	file, err := os.Open(string(key))
+	q, ok := question.(ReadFileQuestion)
+	if !ok {
+		return Result{}, &BadQuestionError{Key: key}
+	}
+
+	file, err := os.Open(string(q))
 	if err != nil {
 		return Result{}, err
 	}
@@ -52,16 +64,21 @@ func (self *ReadFileRule) Make(question Question, key Key, rules *RuleSet) (Resu
 }
 
 func (self *ReadFileRule) Validate(key Key, cookie interface{}) error {
-	fi, err := os.Stat(string(key))
+	ok := strings.HasPrefix(string(key), readFileKeyPrefix)
+	if !ok {
+		return &BadKeyError{key}
+	}
+
+	filePath := string(key)[len(readFileKeyPrefix):]
+
+	fi, err := os.Stat(filePath)
 	if err != nil {
 		return err
 	}
 
 	oldFi, ok := cookie.(os.FileInfo)
 	if !ok {
-		return &BadCookieError{
-			Key: key,
-		}
+		return &BadCookieError{key}
 	}
 
 	err = nil

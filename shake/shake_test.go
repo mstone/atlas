@@ -67,7 +67,7 @@ func TestFileKey(t *testing.T) {
 	rs.Rules = append(rs.Rules, &ReadFileRule{Pattern: name})
 
 	// First we read a test file...
-	question := StringQuestion(name)
+	question := ReadFileQuestion(name)
 	res, err := rs.Make(question)
 	if err != nil {
 		t.Fatalf("Shake failed w/ FileRule!")

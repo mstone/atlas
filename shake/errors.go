@@ -51,3 +51,13 @@ type BadQuestionError struct {
 func (self *BadQuestionError) Error() string {
 	return fmt.Sprintf("shake: bad question: key %s", self.Key)
 }
+
+// A BadKeyError signals that one of your rules was unable to parse (typically
+// its own) key.
+type BadKeyError struct {
+	Key Key
+}
+
+func (self *BadKeyError) Error() string {
+	return fmt.Sprintf("shake: bad question: key %s", self.Key)
+}

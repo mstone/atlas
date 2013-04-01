@@ -378,14 +378,16 @@ func (self *App) renderTemplate(w http.ResponseWriter, templateName string, view
 	answer, err := self.Shake.Make(question)
 	checkHTTP(err)
 
-	tmpl, ok := answer.Value.(*template.Template)
+	tmplAnswer, ok := answer.Value.(TemplateAnswer)
 	if !ok {
-		log.Printf("renderTemplate(): tmpl: %q", tmpl)
-		http.Error(w, "Oops.", http.StatusInternalServerError)
+		log.Printf("renderTemplate(): tmpl: %q", answer)
+		http.Error(w, fmt.Sprintf("Oops: %q", answer), http.StatusInternalServerError)
 		return
 	}
 
-	err = tmpl.ExecuteTemplate(w, templateName+".html", view)
+	tmpl := tmplAnswer.Template
+
+	err = tmpl.ExecuteTemplate(w, templateName, view)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -929,6 +931,7 @@ func (self *App) Serve() {
 		&StaticContentRule{self},
 		&ChartsContentRule{self},
 		&TemplateRule{self},
+		&shake.ReadFileRule{""},
 	}
 
 	fmt.Printf("App: %v\n", self)

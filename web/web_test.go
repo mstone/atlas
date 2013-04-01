@@ -41,6 +41,7 @@ func init() {
 		&StaticContentRule{normalApp},
 		&ChartsContentRule{normalApp},
 		&TemplateRule{normalApp},
+		&shake.ReadFileRule{""},
 	}
 }
 
@@ -147,8 +148,7 @@ func TestSvgEditorPost(t *testing.T) {
 	t.Log("TestSvgEditorPost(): starting.")
 
 	// try to delete whatever we create
-	defer os.Remove(path.Join(normalApp.ChartsPath, "new.svg"))
-	defer os.Remove(path.Join(normalApp.ChartsPath, "newchart"))
+	defer os.RemoveAll(path.Join(normalApp.ChartsPath, "newchart"))
 
 	svgUrl := "/newchart/new.svg"
 	svgEditorUrl := path.Join(svgUrl, "editor")

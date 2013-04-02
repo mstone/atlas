@@ -30,6 +30,7 @@ package web
 import (
 	"akamai/atlas/chart"
 	"akamai/atlas/linker"
+	"akamai/atlas/resumes"
 	"akamai/atlas/shake"
 	"akamai/atlas/svgtext"
 	"bufio"
@@ -98,7 +99,76 @@ type vChart struct {
 	Html      template.HTML
 }
 
-func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
+func (self *App) HandleResumePost(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
+	checkHTTP(err)
+	log.Printf("HandleResumePost(): fp: %v\n", fp)
+
+	ext := path.Ext(fp)
+
+	switch ext {
+	default:
+		log.Fatalf("HandleResumePost(): bad ext: %q", ext)
+	case ".doc":
+		break
+	case ".docx":
+		break
+	case ".pdf":
+		break
+	}
+
+	// BUG(mistone): other name validation?
+	dstPath := path.Join(self.ChartsPath, fp, "upload"+ext)
+	dstDir := path.Dir(dstPath)
+
+	err = os.MkdirAll(dstDir, 0755)
+	checkHTTP(err)
+
+	dstFile, err := os.Create(dstPath)
+	checkHTTP(err)
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, r.Body)
+	checkHTTP(err)
+
+	displayName := resumes.SimplifyName(path.Base(fp[:len(fp)-len(ext)]))
+
+	log.Printf("HandleResumePost(): attempting to convert: %q -> %q", dstPath, dstDir)
+	err = resumes.Convert(dstPath, dstDir, displayName)
+	checkHTTP(err)
+
+	chartName := path.Join(dstDir, "index.txt")
+	chart := chart.NewChart(chartName, self.ChartsPath)
+
+	if !chart.IsChart() {
+		log.Fatalf("HandleResumePost(): missing chart: %q", chartName)
+	}
+
+	err = chart.Read()
+	if err != nil {
+		log.Fatalf("HandleResumePost(): bad chart: %q", chartName)
+	}
+
+	link, err := self.GetChartUrl(chart)
+
+	if err == nil {
+		http.Redirect(w, r, link.String(), http.StatusSeeOther)
+	}
+}
+
+func (self *App) HandleChartPost(w http.ResponseWriter, r *http.Request) {
+	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
+	checkHTTP(err)
+	log.Printf("HandleChartPost(): fp: %v\n", fp)
+
+	if strings.HasPrefix(fp, "resumes/") {
+		self.HandleResumePost(w, r)
+	}
+}
+
+func (self *App) HandleChartGet(w http.ResponseWriter, r *http.Request) {
 	chartUrl := path.Clean(r.URL.Path)
 	log.Printf("HandleChartGet(): chartUrl: %v\n", chartUrl)
 
@@ -148,7 +218,12 @@ func HandleChartGet(self *App, w http.ResponseWriter, r *http.Request) {
 			txtFile = "index.text"
 			name = path.Join(fullPath, txtFile)
 			_, err = os.Stat(name)
-			checkHTTP(err)
+			if err != nil && os.IsNotExist(err) {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			} else {
+				checkHTTP(err)
+			}
 		}
 
 		chart := chart.NewChart(name, self.ChartsPath)
@@ -889,7 +964,15 @@ func (self *App) HandleChart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	HandleChartGet(self, w, r)
+	switch r.Method {
+	default:
+		panic("method")
+	case "GET":
+		self.HandleChartGet(w, r)
+	case "POST":
+		self.HandleChartPost(w, r)
+	}
+	return
 }
 
 type WebQuestion struct {

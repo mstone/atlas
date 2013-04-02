@@ -181,6 +181,47 @@ func TestSvgEditorPost(t *testing.T) {
 	}
 }
 
+func TestResumePost(t *testing.T) {
+	t.Parallel()
+	t.Log("TestResumePost(): starting.")
+
+	// try to delete whatever we create
+	defer os.RemoveAll(path.Join(normalApp.ChartsPath, "resumes/hello.pdf"))
+
+	resumeUrl := "/resumes/hello.pdf/"
+
+	// check that resumes/hello/ doesn't exist yet...
+	w0 := httptest.NewRecorder()
+	r0, _ := http.NewRequest("GET", resumeUrl, nil)
+	normalApp.ServeHTTP(w0, r0)
+	if w0.Code != 404 {
+		t.Fatalf("TestResumePost() failed: response code %d != 404", w0.Code)
+	}
+
+	// create resumes/hello/hello.pdf
+	w1 := httptest.NewRecorder()
+	resumeBodyReader, err := os.Open(path.Join(normalApp.ChartsPath, "hello.pdf"))
+	if err != nil {
+		t.Fatalf("TestResumePost() failed: unable to open hello.pdf: %q", err)
+	}
+	defer resumeBodyReader.Close()
+
+	r1, _ := http.NewRequest("POST", resumeUrl, resumeBodyReader)
+	r1.Header.Add("Content-Type", "application/pdf")
+	normalApp.ServeHTTP(w1, r1)
+	if w1.Code != 303 {
+		t.Fatalf("TestResumePost() failed: response code %d != 303", w1.Code)
+	}
+
+	// check that resumes/hello/ now exists
+	w2 := httptest.NewRecorder()
+	r2, _ := http.NewRequest("GET", resumeUrl, nil)
+	normalApp.ServeHTTP(w2, r2)
+	if w2.Code != 200 {
+		t.Fatalf("TestResumePost() failed: response code %d != 200", w2.Code)
+	}
+}
+
 func TestRemoveUrlPrefix(t *testing.T) {
 	t.Parallel()
 	t.Log("TestRemoveUrlPrefix(): starting.")

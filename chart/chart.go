@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -102,6 +103,27 @@ func (self *Chart) IsChart() bool {
 	return true
 }
 
+func Resolve(dirPath, dsnPath string) (*Chart, error) {
+	var err error
+
+	txtPath := path.Join(dirPath, "index.txt")
+	_, err = os.Stat(txtPath)
+
+	if err == nil {
+		return NewChart(txtPath, dsnPath), nil
+	} else {
+		if os.IsNotExist(err) {
+			textPath := path.Join(dirPath, "index.text")
+			_, err := os.Stat(textPath)
+
+			if err == nil {
+				return NewChart(textPath, dsnPath), nil
+			}
+		}
+	}
+	return nil, err
+}
+
 func (self *Chart) Slug() string {
 	dir := filepath.Dir(self.srcPath)
 	pfx := path.Clean(self.dsnPath)
@@ -124,4 +146,8 @@ func (self *Chart) Slug() string {
 
 func (self *Chart) Dir() string {
 	return path.Dir(self.srcPath)
+}
+
+func (self *Chart) Src() string {
+	return self.srcPath
 }

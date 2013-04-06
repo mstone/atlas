@@ -45,3 +45,29 @@ func TestChartRead(t *testing.T) {
 		t.Fatalf("TestChartsRead() failed: body does not mention 'Demo Atlas':\n %s", body)
 	}
 }
+
+func TestChartResolve(t *testing.T) {
+	t.Parallel()
+	c1, err := Resolve(chartsPath, chartsPath)
+
+	if err != nil {
+		t.Fatalf("TestChartResolve() Resolve returned %q for c1.", err)
+	}
+
+	c1src := c1.Src()
+	c1base := path.Base(c1src)
+	if c1base != "index.txt" {
+		t.Fatalf("TestChartResolve() failed: c1.Src() = %q, not ...", c1src)
+	}
+
+	c2, err := Resolve(path.Join(chartsPath, "subchart"), chartsPath)
+	if err != nil {
+		t.Fatalf("TestChartResolve() Resolve returned %q for c1.", err)
+	}
+
+	c2src := c2.Src()
+	c2base := path.Base(c2src)
+	if c2base != "index.text" {
+		t.Fatalf("TestChartResolve() failed: c2.Src() = %q, not ...", c2src)
+	}
+}

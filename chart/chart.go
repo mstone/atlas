@@ -1,7 +1,8 @@
 package chart
 
 import (
-	"fmt"
+	//"akamai/atlas/stat"
+	"flag"
 	"io/ioutil"
 	"log"
 	"os"
@@ -10,14 +11,22 @@ import (
 	"strings"
 )
 
+var logCharts = flag.Bool("log.charts", false, "log chart ops")
+
+func L(s string, v ...interface{}) {
+	if *logCharts {
+		log.Printf("chart "+s, v...)
+	}
+}
+
 // BUG(mistone): Chart's methods are not goroutine-safe.
 type Chart struct {
-	dsnPath     string
-	srcPath     string
-	meta        ChartMeta
-	bytes       []byte
-	body        string
-	hasBeenRead bool
+	dsnPath string
+	srcPath string
+	fi      os.FileInfo
+	meta    ChartMeta
+	bytes   []byte
+	body    string
 }
 
 type ChartMeta struct {
@@ -30,24 +39,35 @@ func NewChart(srcPath, dsnPath string) *Chart {
 	return &Chart{
 		dsnPath: dsnPath,
 		srcPath: srcPath,
+		fi:      nil,
 	}
 }
 
-func (self *Chart) Read() error {
-	log.Printf("Chart.Read(): reading path %s", self.srcPath)
-	body, err := ioutil.ReadFile(self.srcPath)
-	//log.Printf("Chart.Read(): read body %s", body)
-	//log.Printf("Chart.Read(): read err %s", err)
+func (self *Chart) Read() (err error) {
+	L("read path %s", self.srcPath)
+	f, err := os.Open(self.srcPath)
 	if err != nil {
-		return err
+		return
+	}
+	defer f.Close()
+
+	self.fi, err = f.Stat()
+	if err != nil {
+		return
 	}
 
-	self.hasBeenRead = true
+	body, err := ioutil.ReadAll(f)
+	L("read body %s", body)
+	L("read err %s", err)
+	if err != nil {
+		return
+	}
+
 	self.bytes = body
 	self.body = string(body)
 
 	lines := strings.Split(self.body, "\n")
-	//log.Printf("Chart.Read: found %d lines", len(lines))
+	L("read found %d lines", len(lines))
 
 	foundHeaderChars := false
 	if len(lines) > 3 {
@@ -66,9 +86,9 @@ func (self *Chart) Read() error {
 		}
 	}
 
-	//log.Printf("Chart.Read: found title: %s", self.meta.Title)
-	//log.Printf("Chart.Read: found authors: %s", self.meta.Authors)
-	//log.Printf("Chart.Read: found date: %s", self.meta.Date)
+	L("read title %q", self.meta.Title)
+	L("read authors %q", self.meta.Authors)
+	L("read date %q", self.meta.Date)
 
 	return nil
 }
@@ -85,13 +105,8 @@ func (self *Chart) Meta() ChartMeta {
 	return self.meta
 }
 
-type NotAChart struct {
-	path string
-	err  error
-}
-
-func (self *NotAChart) Error() string {
-	return fmt.Sprintf("Error: %s, %s is not a chart.", self.err, self.path)
+func (self *Chart) Make() (built bool, err error) {
+	return true, self.Read()
 }
 
 func (self *Chart) IsChart() bool {
@@ -128,11 +143,10 @@ func (self *Chart) Slug() string {
 	dir := filepath.Dir(self.srcPath)
 	pfx := path.Clean(self.dsnPath)
 
-	//log.Printf("Chart.Slug(): srcPath: %s", self.srcPath)
-	//log.Printf("Chart.Slug(): dsnPath: %s", self.dsnPath)
-	//log.Printf("Chart.Slug(): dir : %s", dir)
-	//log.Printf("Chart.Slug(): base: %s", base)
-	//log.Printf("Chart.Slug(): pfx : %s", pfx)
+	L("slug srcPath: %q", self.srcPath)
+	L("slug dsnPath: %q", self.dsnPath)
+	L("slug dir : %q", dir)
+	L("slug pfx : %q", pfx)
 
 	var sfx string
 	if len(dir) > len(pfx) {
@@ -140,7 +154,7 @@ func (self *Chart) Slug() string {
 	} else {
 		sfx = ""
 	}
-	log.Printf("Chart.Slug(): sfx : %s", sfx)
+	L("slug sfx %q", sfx)
 	return sfx
 }
 
@@ -150,4 +164,8 @@ func (self *Chart) Dir() string {
 
 func (self *Chart) Src() string {
 	return self.srcPath
+}
+
+func (self *Chart) FileInfo() os.FileInfo {
+	return self.fi
 }

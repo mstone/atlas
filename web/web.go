@@ -29,11 +29,10 @@ package web
 
 import (
 	"akamai/atlas/chart"
-	"akamai/atlas/linker"
 	"akamai/atlas/resumes"
-	"akamai/atlas/shake"
-	"akamai/atlas/svgtext"
-	"bufio"
+	"akamai/atlas/sitejsoncache"
+	"akamai/atlas/sitelistcache"
+	"akamai/atlas/templatecache"
 	"bytes"
 	"crypto/sha1"
 	"encoding/base64"
@@ -50,7 +49,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -67,7 +65,9 @@ type App struct {
 	HttpAddr          string
 	EtherpadApiUrl    *url.URL
 	EtherpadApiSecret string
-	Shake             *shake.RuleSet
+	*templatecache.TemplateCache
+	*sitelistcache.SiteListCache
+	*sitejsoncache.SiteJsonCache
 }
 
 func recoverHTTP(w http.ResponseWriter, r *http.Request) {
@@ -320,33 +320,29 @@ func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 	var charts vChartLinkList = nil
 
-	filepath.Walk(self.ChartsPath, func(name string, fi os.FileInfo, err error) error {
-		log.Printf("HandleChartSetGet(): visiting path %s", name)
-		if err != nil {
-			return err
-		}
+	_, err := self.SiteListCache.Make()
+	checkHTTP(err)
 
-		chart := chart.NewChart(name, self.ChartsPath)
+	for name, ent := range self.SiteListCache.Entries {
+		if ent.Chart != nil {
+			err = ent.Chart.Read()
+			if err != nil {
+				log.Printf("HandleChartSetGet(): warning: unable to read chart %q err %v", name, err)
+				continue
+			}
 
-		if !chart.IsChart() {
-			return nil
-		}
+			link, err := self.GetChartUrl(ent.Chart)
+			if err != nil {
+				log.Printf("HandleChartSetGet(): warning: unable to get chart url %q err %v", name, err)
+				continue
+			}
 
-		err = chart.Read()
-		if err != nil {
-			return nil
-		}
-
-		link, err := self.GetChartUrl(chart)
-
-		if err == nil {
 			charts = append(charts, &vChartLink{
-				ChartMeta: chart.Meta(),
+				ChartMeta: ent.Chart.Meta(),
 				Link:      link,
 			})
 		}
-		return nil
-	})
+	}
 
 	now := time.Now()
 	date := fmt.Sprintf("%s %0.2d, %d", now.Month().String(), now.Day(), now.Year())
@@ -363,104 +359,19 @@ func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleSiteJsonGet(): start")
 
-	view := map[string]string{}
-
-	filepath.Walk(self.ChartsPath, func(name string, fi os.FileInfo, err error) error {
-		//log.Printf("HandleSiteJsonGet(): visiting path %s", name)
-		if err != nil {
-			return err
-		}
-
-		chart := chart.NewChart(name, self.ChartsPath)
-
-		isChart := chart.IsChart()
-		if !isChart {
-			return nil
-		}
-
-		key := chart.Slug()
-		log.Printf("HandleSiteJsonGet(): found key %s", key)
-
-		err = chart.Read()
-		if err != nil {
-			log.Printf("HandleSiteJsonGet(): warning after read: %s", err)
-			return nil
-		}
-
-		chartBytes := chart.Bytes()
-		//log.Printf("HandleSiteJsonGet(): found body: %s", body)
-
-		view[key] = string(chartBytes)
-
-		linkRenderer := linker.NewLinkRenderer()
-		extFlags := 0
-		extFlags |= blackfriday.EXTENSION_NO_INTRA_EMPHASIS
-		extFlags |= blackfriday.EXTENSION_TABLES
-		extFlags |= blackfriday.EXTENSION_FENCED_CODE
-		extFlags |= blackfriday.EXTENSION_AUTOLINK
-		extFlags |= blackfriday.EXTENSION_STRIKETHROUGH
-		extFlags |= blackfriday.EXTENSION_SPACE_HEADERS
-		blackfriday.Markdown([]byte(chart.Body()), linkRenderer, extFlags)
-		log.Printf("HandleSiteJsonGet(): found links: %s", linkRenderer.Links)
-
-		for _, link := range linkRenderer.Links {
-			// BUG(mistone): directory traversal
-			sfx := strings.HasSuffix(link.Href, "svg")
-			if sfx {
-				svgPath := path.Clean(path.Join(chart.Dir(), link.Href))
-				log.Printf("HandleSiteJsonGet(): found svg: %s", svgPath)
-
-				svgBody, err := ioutil.ReadFile(svgPath)
-				if err != nil {
-					log.Printf("HandleSiteJsonGet(): unable to read svg: %s, error: %s", svgPath, err)
-					continue
-				}
-				cdata, err := svgtext.GetCData(svgBody)
-				if err != nil {
-					log.Printf("HandleSiteJsonGet(): unable to parse svg: %s, error: %s", svgPath, err)
-					continue
-				}
-				log.Printf("HandleSiteJsonGet(): found svg cdata items: %s", len(cdata))
-				log.Printf("HandleSiteJsonGet(): found svg cdata: %s", cdata)
-				log.Printf("HandleSiteJsonGet(): done with svg: %s", svgPath)
-				var buf bytes.Buffer
-				for _, datum := range cdata {
-					buf.WriteString("svg: ")
-					buf.WriteString(datum)
-					buf.WriteRune('\n')
-				}
-				view[key] = view[key] + "\n" + buf.String()
-			}
-		}
-
-		return nil
-	})
-
-	//log.Printf("HandleSiteJsonGet(): view: %s", view)
-
-	writer := bufio.NewWriter(w)
-	defer writer.Flush()
-
-	encoder := json.NewEncoder(writer)
-	err := encoder.Encode(&view)
+	_, err := self.SiteJsonCache.Make()
 	checkHTTP(err)
 
-	//log.Printf("SiteJsonGet(): encoded view: %v", view)
+	http.ServeContent(w, r, "site.json", self.SiteJsonCache.ModTime, bytes.NewReader(self.SiteJsonCache.Json))
 }
 
 func (self *App) renderTemplate(w http.ResponseWriter, templateName string, view interface{}) {
-	question := TemplateQuestion{templateName}
-	answer, err := self.Shake.Make(question)
+	_, err := self.TemplateCache.Make(templateName)
 	checkHTTP(err)
 
-	tmplAnswer, ok := answer.Value.(TemplateAnswer)
-	if !ok {
-		log.Printf("renderTemplate(): tmpl: %q", answer)
-		http.Error(w, fmt.Sprintf("Oops: %q", answer), http.StatusInternalServerError)
-		return
-	}
+	tmplEnt := self.TemplateCache.Entries[templateName]
 
-	tmpl := tmplAnswer.Template
+	tmpl := tmplEnt.Template
 
 	err = tmpl.ExecuteTemplate(w, templateName, view)
 	if err != nil {
@@ -980,25 +891,20 @@ type WebQuestion struct {
 	*http.Request
 }
 
-// BUG(mistone): WebQuestion's Key() method is really scary!
-func (self WebQuestion) Key() (shake.Key, error) {
-	return shake.Key(self.Method + " " + path.Clean(self.URL.Path)), nil
-}
-
 func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer recoverHTTP(w, r)
 	log.Printf("HandleRootApp: path: %v", r.URL.Path)
 
-	question := WebQuestion{w, r}
-
-	_, err := self.Shake.Make(question)
-	switch err.(type) {
-	default:
-		panic(err)
-	case nil:
+	isStatic := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.StaticRoot))
+	if isStatic {
+		self.HandleStatic(w, r)
 		return
-	case *shake.NoMatchingRuleError:
-		break
+	}
+
+	isChart := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.ChartsRoot))
+	if isChart {
+		self.HandleChart(w, r)
+		return
 	}
 
 	log.Printf("warning: can't route path: %v", r.URL.Path)
@@ -1009,13 +915,9 @@ func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (self *App) Serve() {
 	self.StaticRoot = path.Clean("/" + self.StaticRoot)
 
-	self.Shake = shake.NewRuleSet()
-	self.Shake.Rules = []shake.Rule{
-		&StaticContentRule{self},
-		&ChartsContentRule{self},
-		&TemplateRule{self},
-		&shake.ReadFileRule{""},
-	}
+	self.SiteListCache = sitelistcache.New(self.ChartsPath)
+	self.TemplateCache = templatecache.New(self.HtmlPath)
+	self.SiteJsonCache = sitejsoncache.New(self.SiteListCache)
 
 	fmt.Printf("App: %v\n", self)
 

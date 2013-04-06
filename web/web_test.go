@@ -1,7 +1,9 @@
 package web
 
 import (
-	"akamai/atlas/shake"
+	"akamai/atlas/sitejsoncache"
+	"akamai/atlas/sitelistcache"
+	"akamai/atlas/templatecache"
 	"bytes"
 	"net/http"
 	"net/http/httptest"
@@ -36,13 +38,9 @@ func init() {
 		ChartsRoot: chartsRoot,
 	}
 
-	normalApp.Shake = shake.NewRuleSet()
-	normalApp.Shake.Rules = []shake.Rule{
-		&StaticContentRule{normalApp},
-		&ChartsContentRule{normalApp},
-		&TemplateRule{normalApp},
-		&shake.ReadFileRule{""},
-	}
+	normalApp.SiteListCache = sitelistcache.New(chartsPath)
+	normalApp.TemplateCache = templatecache.New(htmlPath)
+	normalApp.SiteJsonCache = sitejsoncache.New(normalApp.SiteListCache)
 }
 
 func TestChartsGet(t *testing.T) {

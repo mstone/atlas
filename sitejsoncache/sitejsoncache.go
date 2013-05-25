@@ -90,6 +90,10 @@ func (self *SiteJsonCache) allFresh() (fresh bool, err error) {
 	fresh = false
 	err = nil
 
+	if built, err := self.SiteListCache.Make(); built || err != nil {
+		return false, err
+	}
+
 	for _, ent := range self.Entries {
 		for _, dep := range ent.deps {
 			var fi os.FileInfo
@@ -121,11 +125,6 @@ func (self *SiteJsonCache) updateModTime(depModTime time.Time) bool {
 func (self *SiteJsonCache) rebuild() (err error) {
 	L("rebuild starting")
 	self.Entries = map[string]Ent{}
-
-	_, err = self.SiteListCache.Make()
-	if err != nil {
-		return
-	}
 
 	for name, slEnt := range self.SiteListCache.Entries {
 		chart := slEnt.Chart

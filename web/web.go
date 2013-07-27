@@ -43,6 +43,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/russross/blackfriday"
 	"html/template"
 	"io"
@@ -77,11 +78,11 @@ func recoverHTTP(w http.ResponseWriter, r *http.Request) {
 	if rec := recover(); rec != nil {
 		switch err := rec.(type) {
 		case error:
-			log.Printf("error: %v, req: %v", err, r)
+			glog.Infof("error: %v, req: %v", err, r)
 			debug.PrintStack()
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		default:
-			log.Printf("unknown error: %v, req: %v", err, r)
+			glog.Infof("unknown error: %v, req: %v", err, r)
 			debug.PrintStack()
 			http.Error(w, "unknown error", http.StatusInternalServerError)
 		}
@@ -107,13 +108,13 @@ func (self *App) HandleResumePost(w http.ResponseWriter, r *http.Request) {
 
 	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
 	checkHTTP(err)
-	log.Printf("HandleResumePost(): fp: %v\n", fp)
+	glog.Infof("HandleResumePost(): fp: %v\n", fp)
 
 	ext := path.Ext(fp)
 
 	switch ext {
 	default:
-		log.Fatalf("HandleResumePost(): bad ext: %q", ext)
+		glog.Fatalf("HandleResumePost(): bad ext: %q", ext)
 	case ".doc":
 		break
 	case ".docx":
@@ -138,7 +139,7 @@ func (self *App) HandleResumePost(w http.ResponseWriter, r *http.Request) {
 
 	displayName := resumes.SimplifyName(path.Base(fp[:len(fp)-len(ext)]))
 
-	log.Printf("HandleResumePost(): attempting to convert: %q -> %q", dstPath, dstDir)
+	glog.Infof("HandleResumePost(): attempting to convert: %q -> %q", dstPath, dstDir)
 	err = resumes.Convert(dstPath, dstDir, displayName)
 	checkHTTP(err)
 
@@ -164,7 +165,7 @@ func (self *App) HandleResumePost(w http.ResponseWriter, r *http.Request) {
 func (self *App) HandleChartPost(w http.ResponseWriter, r *http.Request) {
 	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
 	checkHTTP(err)
-	log.Printf("HandleChartPost(): fp: %v\n", fp)
+	glog.Infof("HandleChartPost(): fp: %v\n", fp)
 
 	if strings.HasPrefix(fp, "resumes/") {
 		self.HandleResumePost(w, r)
@@ -173,7 +174,7 @@ func (self *App) HandleChartPost(w http.ResponseWriter, r *http.Request) {
 
 func (self *App) HandleChartGet(w http.ResponseWriter, r *http.Request) {
 	chartUrl := path.Clean(r.URL.Path)
-	log.Printf("HandleChartGet(): chartUrl: %v\n", chartUrl)
+	glog.Infof("HandleChartGet(): chartUrl: %v\n", chartUrl)
 
 	fullPath := path.Join(self.ChartsPath, chartUrl)
 
@@ -342,7 +343,7 @@ type vChartSet struct {
 }
 
 func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleChartSetGet(): start")
+	glog.Infof("HandleChartSetGet(): start")
 
 	var charts vChartLinkList = nil
 
@@ -353,13 +354,13 @@ func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 		if ent.Chart != nil {
 			err = ent.Chart.Read()
 			if err != nil {
-				log.Printf("HandleChartSetGet(): warning: unable to read chart %q err %v", name, err)
+				glog.Infof("HandleChartSetGet(): warning: unable to read chart %q err %v", name, err)
 				continue
 			}
 
 			link, err := self.GetChartUrl(ent.Chart)
 			if err != nil {
-				log.Printf("HandleChartSetGet(): warning: unable to get chart url %q err %v", name, err)
+				glog.Infof("HandleChartSetGet(): warning: unable to get chart url %q err %v", name, err)
 				continue
 			}
 
@@ -382,7 +383,7 @@ func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 		vRoot:  newVRoot(self, "chart_set", "List of Charts", "Michael Stone", date),
 		Charts: charts,
 	}
-	log.Printf("HandleChartSetGet(): view: %s", view)
+	glog.Infof("HandleChartSetGet(): view: %s", view)
 
 	self.renderTemplate(w, "chart_set", view)
 }
@@ -401,20 +402,36 @@ func (self EntriesByDate) Swap(i, j int) {
 	self[i], self[j] = self[j], self[i]
 }
 
-func (self *App) GetAbsoluteUrl(link url.URL) (url.URL, error) {
-	// BUG(mistone): XXX DOOM...
-	return *(&url.URL{
-		Scheme: "http",
-		Host:   "localhost:3001",
-	}).ResolveReference(&link), nil
+func (self *App) GetAbsoluteBaseUrl() (*url.URL, error) {
+	scheme, err := cfg.String("approot.scheme")
+	if err != nil {
+		glog.Errorf("Unable to get approot.scheme, err %q", err)
+		return nil, err
+	}
+
+	host, err := cfg.String("approot.host")
+	if err != nil {
+		glog.Errorf("Unable to get approot.host, err: %q", err)
+		return nil, err
+	}
+
+	return &url.URL{
+		Scheme: scheme,
+		Host:   host,
+	}, nil
 }
 
 func HandleSiteAtomGet(self *App, w http.ResponseWriter, r *http.Request) {
+	glog.Infof("HandleSiteAtomGet()")
+
 	_, err := self.SiteListCache.Make()
 	checkHTTP(err)
 
 	title, _ := cfg.String("atom.title")
 	id := cfg.MustString("atom.id")
+
+	baseUrl, err := self.GetAbsoluteBaseUrl()
+	checkHTTP(err)
 
 	lastUpdated := time.Time{}
 
@@ -428,21 +445,17 @@ func HandleSiteAtomGet(self *App, w http.ResponseWriter, r *http.Request) {
 		if ent.Chart != nil {
 			err = ent.Chart.Read()
 			if err != nil {
-				log.Printf("HandleChartSetGet(): warning: unable to read chart %q err %v", name, err)
+				glog.Errorf("unable to read chart %q, err %q", name, err)
 				continue
 			}
 
 			link, err := self.GetChartUrl(ent.Chart)
 			if err != nil {
-				log.Printf("HandleChartSetGet(): warning: unable to get chart url %q err %v", name, err)
+				glog.Errorf("unable to get chart url %q, err %q", name, err)
 				continue
 			}
 
-			absLink, err := self.GetAbsoluteUrl(link)
-			if err != nil {
-				log.Printf("HandleChartSetGet(): warning: unable to get absolute chart url %q err %v", name, err)
-				continue
-			}
+			absLink := baseUrl.ResolveReference(&link)
 
 			modTime := ent.Chart.FileInfo().ModTime()
 
@@ -473,7 +486,7 @@ func HandleSiteAtomGet(self *App, w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleSiteJsonGet(self *App, w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleSiteJsonGet(): start")
+	glog.Infof("HandleSiteJsonGet(): start")
 
 	_, err := self.SiteJsonCache.Make()
 	checkHTTP(err)
@@ -501,7 +514,7 @@ func (self *App) SvgEditFile(svgName string) (*os.File, error) {
 	}
 
 	svgDir := path.Dir(svgName)
-	log.Printf("SvgEditFile(): got svg dir: %s", svgDir)
+	glog.Infof("SvgEditFile(): got svg dir: %s", svgDir)
 
 	realSvgDir := path.Join(self.ChartsPath, svgDir)
 	err := os.MkdirAll(realSvgDir, 0755)
@@ -517,10 +530,10 @@ func (self *App) HandleSvgEditorPost(w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 
 	svgName := path.Clean(path.Dir(fp))
-	log.Printf("HandleSvgEditorPost(): got svg: %s", svgName)
+	glog.Infof("HandleSvgEditorPost(): got svg: %s", svgName)
 
 	svgBodyB64 := r.FormValue("filepath")
-	log.Printf("HandleSvgEditorPost(): got svg body b64: %s", svgBodyB64)
+	glog.Infof("HandleSvgEditorPost(): got svg body b64: %s", svgBodyB64)
 
 	reader := base64.NewDecoder(base64.StdEncoding, bytes.NewBufferString(svgBodyB64))
 
@@ -531,7 +544,7 @@ func (self *App) HandleSvgEditorPost(w http.ResponseWriter, r *http.Request) {
 	written, err := io.Copy(svgFile, reader)
 	checkHTTP(err)
 
-	log.Printf("HandleSvgEditorPost(): wrote %d bytes of svg body", written)
+	glog.Infof("HandleSvgEditorPost(): wrote %d bytes of svg body", written)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -602,7 +615,7 @@ func (self *App) TxtEditFile(txtName string) (*os.File, error) {
 	}
 
 	txtDir := path.Dir(txtName)
-	log.Printf("TxtEditFile(): got txt dir: %s", txtDir)
+	glog.Infof("TxtEditFile(): got txt dir: %s", txtDir)
 
 	realTxtDir := path.Join(self.ChartsPath, txtDir)
 	err := os.MkdirAll(realTxtDir, 0755)
@@ -638,12 +651,12 @@ func (self *App) HandleTxtEditorPostSave(w http.ResponseWriter, r *http.Request,
 	resp, err := http.Get(epUrl.String())
 	checkHTTP(err)
 	defer resp.Body.Close()
-	log.Printf("HandleTxtEditorPost(): getRevisionsCount resp: %q", resp)
+	glog.Infof("HandleTxtEditorPost(): getRevisionsCount resp: %q", resp)
 	decoder := json.NewDecoder(resp.Body)
 	epResp := epResponse{}
 	err = decoder.Decode(&epResp)
 	checkHTTP(err)
-	log.Printf("HandleTxtEditorPost(): getRevisionsCount epResp: %q", epResp)
+	glog.Infof("HandleTxtEditorPost(): getRevisionsCount epResp: %q", epResp)
 	// XXX: check resp....
 	// {"code":0,"message":"ok","data":null}
 	// {"code":1,"message":"padID does already exist","data":null}
@@ -658,12 +671,12 @@ func (self *App) HandleTxtEditorPostSave(w http.ResponseWriter, r *http.Request,
 	resp, err = http.Get(epUrl.String())
 	checkHTTP(err)
 	defer resp.Body.Close()
-	log.Printf("HandleTxtEditorPost(): getRevisionsCount resp: %q", resp)
+	glog.Infof("HandleTxtEditorPost(): getRevisionsCount resp: %q", resp)
 	decoder = json.NewDecoder(resp.Body)
 	epResp = epResponse{}
 	err = decoder.Decode(&epResp)
 	checkHTTP(err)
-	log.Printf("HandleTxtEditorPost(): getRevisionsCount epResp: %q", epResp)
+	glog.Infof("HandleTxtEditorPost(): getRevisionsCount epResp: %q", epResp)
 	if epResp.Code != 0 {
 		panic("HandleTxtEditorPost(): epResp code != 0")
 	}
@@ -692,13 +705,13 @@ func (self *App) HandleTxtEditorPostSave(w http.ResponseWriter, r *http.Request,
 	resp, err = http.Get(epUrl.String())
 	checkHTTP(err)
 	defer resp.Body.Close()
-	log.Printf("HandleTxtEditorPost(): getText resp: %q", resp)
+	glog.Infof("HandleTxtEditorPost(): getText resp: %q", resp)
 	decoder = json.NewDecoder(resp.Body)
 	epResp = epResponse{}
 	err = decoder.Decode(&epResp)
 	checkHTTP(err)
-	log.Printf("HandleTxtEditorPost(): getText epResp: %t", epResp)
-	log.Printf("HandleTxtEditorPost(): getText epResp: %q", epResp)
+	glog.Infof("HandleTxtEditorPost(): getText epResp: %t", epResp)
+	glog.Infof("HandleTxtEditorPost(): getText epResp: %q", epResp)
 	if epResp.Code != 0 {
 		panic("HandleTxtEditorPost(): epResp code != 0")
 	}
@@ -723,7 +736,7 @@ func (self *App) HandleTxtEditorPostSave(w http.ResponseWriter, r *http.Request,
 	written, err := io.Copy(txtFile, reader)
 	checkHTTP(err)
 
-	log.Printf("HandleTxtEditorPost(): wrote %d bytes of txt body", written)
+	glog.Infof("HandleTxtEditorPost(): wrote %d bytes of txt body", written)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -738,16 +751,16 @@ func (self *App) HandleTxtEditorPost(w http.ResponseWriter, r *http.Request) {
 	checkHTTP(err)
 
 	txtName := path.Clean(path.Dir(fp))
-	log.Printf("HandleTxtEditorPost(): got txt: %s", txtName)
+	glog.Infof("HandleTxtEditorPost(): got txt: %s", txtName)
 
 	// get pad id
 	hash := sha1.New()
 	hash.Write([]byte(txtName))
 	padName := hex.EncodeToString(hash.Sum(nil))
-	log.Printf("HandleTxtEditorPost(): calculated pad name: %s", padName)
+	glog.Infof("HandleTxtEditorPost(): calculated pad name: %s", padName)
 
 	action := r.FormValue("action")
-	log.Printf("HandleTxtEditorPost(): processing action: %s", action)
+	glog.Infof("HandleTxtEditorPost(): processing action: %s", action)
 
 	switch action {
 	default:
@@ -785,19 +798,19 @@ func (self *App) ReloadPad(txtName, padName string) error {
 	resp, err := http.Get(epUrl.String())
 	checkHTTP(err)
 	defer resp.Body.Close()
-	log.Printf("HandleTxtEditorGet(): setText resp: %q", resp)
+	glog.Infof("HandleTxtEditorGet(): setText resp: %q", resp)
 	// XXX: check resp....
 	return nil
 }
 
 func (self *App) HandleTxtEditorGet(w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleTxtEditorGet(): starting")
+	glog.Infof("HandleTxtEditorGet(): starting")
 
 	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
 	checkHTTP(err)
 
 	txtName := path.Clean(path.Dir(fp))
-	log.Printf("HandleTxtEditorGet(): handling txtName: %s", txtName)
+	glog.Infof("HandleTxtEditorGet(): handling txtName: %s", txtName)
 
 	realTxtName := path.Join(self.ChartsPath, txtName)
 	_, err = os.Stat(realTxtName)
@@ -808,7 +821,7 @@ func (self *App) HandleTxtEditorGet(w http.ResponseWriter, r *http.Request) {
 	hash := sha1.New()
 	hash.Write([]byte(txtName))
 	padName := hex.EncodeToString(hash.Sum(nil))
-	log.Printf("HandleTxtEditorGet(): calculated pad name: %s", padName)
+	glog.Infof("HandleTxtEditorGet(): calculated pad name: %s", padName)
 
 	// create the pad
 	epUrl := *self.EtherpadApiUrl
@@ -820,12 +833,12 @@ func (self *App) HandleTxtEditorGet(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get(epUrl.String())
 	checkHTTP(err)
 	defer resp.Body.Close()
-	log.Printf("HandleTxtEditorPost(): createPad resp: %q", resp)
+	glog.Infof("HandleTxtEditorPost(): createPad resp: %q", resp)
 	decoder := json.NewDecoder(resp.Body)
 	epResp := epResponse{}
 	err = decoder.Decode(&epResp)
 	checkHTTP(err)
-	log.Printf("HandleTxtEditorPost(): createPad epResp: %t", epResp)
+	glog.Infof("HandleTxtEditorPost(): createPad epResp: %t", epResp)
 	if epResp.Code == 0 {
 		err := self.ReloadPad(txtName, padName)
 		checkHTTP(err)
@@ -856,7 +869,7 @@ func (self *App) HandleTxtEditorGet(w http.ResponseWriter, r *http.Request) {
 	}
 	chartUrl, err := self.GetChartUrl(chart)
 	checkHTTP(err)
-	log.Printf("HandleTxtEditorGet(): found chart url: %q", chartUrl)
+	glog.Infof("HandleTxtEditorGet(): found chart url: %q", chartUrl)
 
 	slug := chart.Slug()
 	title := "Chart Editor: "
@@ -871,7 +884,7 @@ func (self *App) HandleTxtEditorGet(w http.ResponseWriter, r *http.Request) {
 		TxtEditorUrl: editorUrl,
 		ChartUrl:     chartUrl,
 	}
-	log.Printf("HandleTxtEditorGet(): view: %s", view)
+	glog.Infof("HandleTxtEditorGet(): view: %s", view)
 
 	self.renderTemplate(w, "txt_editor", view)
 }
@@ -893,13 +906,13 @@ func (self *App) InitializeSvg(svgName string) error {
 }
 
 func (self *App) HandleSvgEditorGet(w http.ResponseWriter, r *http.Request) {
-	log.Printf("HandleSvgEditorGet(): starting")
+	glog.Infof("HandleSvgEditorGet(): starting")
 
 	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
 	checkHTTP(err)
 
 	svgName := path.Clean(path.Dir(fp))
-	log.Printf("HandleSvgEditorGet(): handling svgName: %s", svgName)
+	glog.Infof("HandleSvgEditorGet(): handling svgName: %s", svgName)
 
 	realSvgName := path.Join(self.ChartsPath, svgName)
 	_, err = os.Stat(realSvgName)
@@ -921,7 +934,7 @@ func (self *App) HandleSvgEditorGet(w http.ResponseWriter, r *http.Request) {
 		SvgEditorUrl:     editorUrl,
 		StaticSvgEditUrl: staticSvgEditUrl,
 	}
-	log.Printf("HandleSvgEditorGet(): view: %s", view)
+	glog.Infof("HandleSvgEditorGet(): view: %s", view)
 
 	self.renderTemplate(w, "svg_editor", view)
 }
@@ -933,8 +946,8 @@ func (self *App) RemoveUrlPrefix(urlPath string, prefix string) (string, error) 
 	up := path.Clean(urlPath)
 	sp := path.Clean("/" + prefix)
 
-	log.Printf("RemoveUrlPrefix(%q, %q)", urlPath, prefix)
-	log.Printf("RemoveUrlPrefix(): up: %q, sp: %q", up, sp)
+	glog.Infof("RemoveUrlPrefix(%q, %q)", urlPath, prefix)
+	glog.Infof("RemoveUrlPrefix(): up: %q, sp: %q", up, sp)
 
 	fp := ""
 	err := errTooShort
@@ -957,12 +970,12 @@ func (self *App) RemoveUrlPrefix(urlPath string, prefix string) (string, error) 
 func (self *App) HandleChart(w http.ResponseWriter, r *http.Request) {
 	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.ChartsRoot)
 	checkHTTP(err)
-	log.Printf("HandleChart: file path: %v", fp)
+	glog.Infof("HandleChart: file path: %v", fp)
 
 	base := path.Base(fp)
 	ext := path.Ext(path.Dir(fp))
 
-	log.Printf("HandleChart: base: %s, ext: %s", base, ext)
+	glog.Infof("HandleChart: base: %s, ext: %s", base, ext)
 
 	isSvgEditor := (base == "editor") && (ext == ".svg")
 	isTxtEditor := (base == "editor") && ((ext == ".txt") || (ext == ".text"))
@@ -1004,7 +1017,8 @@ func (self *App) HandleChart(w http.ResponseWriter, r *http.Request) {
 
 func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer recoverHTTP(w, r)
-	log.Printf("HandleRootApp: path: %v", r.URL.Path)
+
+	glog.Infof("HandleRootApp: path: %v", r.URL.Path)
 
 	isStatic := strings.HasPrefix(r.URL.Path, path.Clean("/"+self.StaticRoot))
 	if isStatic {
@@ -1018,7 +1032,7 @@ func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("warning: can't route path: %v", r.URL.Path)
+	glog.Infof("warning: can't route path: %v", r.URL.Path)
 }
 
 // Serve initializes some variables on self and then delegates to net/http to

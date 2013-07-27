@@ -3,8 +3,8 @@ package resumes
 import (
 	"flag"
 	"fmt"
+	"github.com/golang/glog"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -13,10 +13,16 @@ import (
 	"time"
 )
 
+func L(s string, v ...interface{}) {
+	if glog.V(1) {
+		glog.Infof("resume "+s, v...)
+	}
+}
+
 func handlePdf(src, fn, dst string) error {
-	log.Printf("handlePdf(): src: %q, fn: %q, dst: %q", src, fn, dst)
+	L("handlePdf(): src: %q, fn: %q, dst: %q", src, fn, dst)
 	cmd := exec.Command("cp", "-f", src, dst)
-	log.Printf("handlePdf: %s", cmd)
+	L("handlePdf: %s", cmd)
 	return cmd.Run()
 }
 
@@ -24,7 +30,7 @@ func runLibreOffice(src, dst string) error {
 	dstDir := path.Dir(dst)
 	tmpDir, err := ioutil.TempDir(dstDir, "atlas")
 	if err != nil {
-		log.Printf("runLibreOffice: warning: %q", err)
+		L("runLibreOffice: warning: %q", err)
 		return err
 	}
 	defer os.RemoveAll(tmpDir)
@@ -37,23 +43,23 @@ func runLibreOffice(src, dst string) error {
 		tmpDir,
 		src)
 
-	log.Printf("runLibreOffice: %s", cmd)
+	L("runLibreOffice: %s", cmd)
 	err = cmd.Run()
 	if err != nil {
-		log.Printf("runLibreOffice: warning: %q", err)
+		L("runLibreOffice: warning: %q", err)
 		return err
 	}
 
 	matches, err := filepath.Glob(path.Join(tmpDir, "*.pdf"))
 	if err != nil {
-		log.Printf("runLibreOffice: warning: %q", err)
+		L("runLibreOffice: warning: %q", err)
 		return err
 	}
 	if len(matches) != 1 {
-		log.Printf("runLibreOffice: warning: len(%q) != 1", matches)
+		L("runLibreOffice: warning: len(%q) != 1", matches)
 		return err
 	}
-	log.Printf("runLibreOffice: rename %q -> %q", matches[0], dst)
+	L("runLibreOffice: rename %q -> %q", matches[0], dst)
 	err = os.Rename(matches[0], dst)
 
 	return err
@@ -67,17 +73,17 @@ func runGhostScriptClip(dst string) error {
 		"-dBATCH",
 		"-f",
 		dst)
-	log.Printf("runGhostScriptClip: %s", cmd)
+	L("runGhostScriptClip: %s", cmd)
 	return cmd.Run()
 }
 
 func handleDoc(src, fn, dst string) error {
-	log.Printf("handleDoc(): src: %q, fn: %q, dst: %q", src, fn, dst)
+	L("handleDoc(): src: %q, fn: %q, dst: %q", src, fn, dst)
 	return runLibreOffice(src, dst)
 }
 
 func handleDocx(src, fn, dst string) error {
-	log.Printf("handleDocx(): src: %q, fn: %q, dst: %q", src, fn, dst)
+	L("handleDocx(): src: %q, fn: %q, dst: %q", src, fn, dst)
 	return runLibreOffice(src, dst)
 }
 
@@ -87,7 +93,7 @@ func runPdftkBurst(src, pagesDir string) error {
 		"burst",
 		"output",
 		path.Join(pagesDir, "%02d.pdf"))
-	log.Printf("runPdftkBurst: %s", cmd)
+	L("runPdftkBurst: %s", cmd)
 	return cmd.Run()
 }
 
@@ -96,12 +102,12 @@ func runInkscape(src, dst string) error {
 		"-l",
 		dst,
 		src)
-	log.Printf("runInkscape: %s", cmd)
+	L("runInkscape: %s", cmd)
 	return cmd.Run()
 }
 
 func convertPdfPages(fn string, chart string, chartFile *os.File, svgPagesDir string, walkPath string, info os.FileInfo, walkErr error) error {
-	log.Printf("convertPdfPages: fn: %q, walkPath: %q, walkErr: %q ", fn, walkPath, walkErr)
+	L("convertPdfPages: fn: %q, walkPath: %q, walkErr: %q ", fn, walkPath, walkErr)
 	if walkErr != nil {
 		return walkErr
 	}
@@ -119,14 +125,14 @@ func convertPdfPages(fn string, chart string, chartFile *os.File, svgPagesDir st
 
 	err := runInkscape(walkPath, dst)
 	if err != nil {
-		log.Printf("convertPdfPages: inkscape warning: %s", err)
+		L("convertPdfPages: inkscape warning: %s", err)
 	}
 
 	origSvgDst := path.Join(svgPagesDir, pageFn+".orig.svg")
 	cmd := exec.Command("cp", "-f", dst, origSvgDst)
 	err = cmd.Run()
 	if err != nil {
-		log.Printf("convertPdfPages: cp warning: %s", err)
+		L("convertPdfPages: cp warning: %s", err)
 	}
 
 	origSvg := path.Join("svg_pages", fn, pageFn+".orig.svg")
@@ -141,17 +147,17 @@ func convertPdfPages(fn string, chart string, chartFile *os.File, svgPagesDir st
 }
 
 func convert(inputPath, safeName, outputPath, displayName string) error {
-	log.Printf("convert: inputPath: %q, safeName: %q, outputPath: %q, displayName", inputPath, safeName, outputPath, displayName)
+	L("convert: inputPath: %q, safeName: %q, outputPath: %q, displayName", inputPath, safeName, outputPath, displayName)
 
 	safeExt := filepath.Ext(safeName)
 	if safeExt == "" {
-		log.Printf("convert: safeName: %q has no extension; skipping.", safeName)
+		L("convert: safeName: %q has no extension; skipping.", safeName)
 		return nil
 	}
 
 	err := os.MkdirAll(outputPath, 0755)
 	if err != nil {
-		log.Printf("convert: warning: unable to make chart dir %q, err: %q; skipping", outputPath, err)
+		L("convert: warning: unable to make chart dir %q, err: %q; skipping", outputPath, err)
 		return err
 	}
 
@@ -161,13 +167,13 @@ func convert(inputPath, safeName, outputPath, displayName string) error {
 
 	_, err = os.Stat(chartPath)
 	if err == nil {
-		log.Printf("convert: warning: skipping input %q since chart %q already exists.", safeName, chartPath)
+		L("convert: warning: skipping input %q since chart %q already exists.", safeName, chartPath)
 		return nil
 	}
 
 	chartFile, err := os.Create(chartPath)
 	if err != nil {
-		log.Printf("convert: warning:  unable to create chartPath: %q", chartPath)
+		L("convert: warning:  unable to create chartPath: %q", chartPath)
 		return nil
 	}
 	defer chartFile.Close()
@@ -179,7 +185,7 @@ func convert(inputPath, safeName, outputPath, displayName string) error {
 		if os.IsNotExist(err) {
 			switch safeExt {
 			default:
-				log.Printf("walkInput: skipping %s", inputPath)
+				L("walkInput: skipping %s", inputPath)
 			case ".pdf":
 				err = handlePdf(inputPath, safeName, dstPdf)
 			case ".doc":
@@ -188,16 +194,16 @@ func convert(inputPath, safeName, outputPath, displayName string) error {
 				err = handleDocx(inputPath, safeName, dstPdf)
 			}
 			if err != nil {
-				log.Printf("walkInput: ingest warning: %s", err)
+				L("walkInput: ingest warning: %s", err)
 			}
 		} else {
-			log.Printf("walkInput: stat warning: %s", err)
+			L("walkInput: stat warning: %s", err)
 		}
 	}
 
 	err = runGhostScriptClip(dstPdf)
 	if err != nil {
-		log.Printf("walkInput: gs warning: %s", err)
+		L("walkInput: gs warning: %s", err)
 	}
 
 	pdfPagesDir := path.Join(chart, "pdf_pages", safeName)
@@ -208,7 +214,7 @@ func convert(inputPath, safeName, outputPath, displayName string) error {
 
 	err = runPdftkBurst(dstPdf, pdfPagesDir)
 	if err != nil {
-		log.Printf("walkInput: pdftk warning: %s", err)
+		L("walkInput: pdftk warning: %s", err)
 	}
 
 	now := time.Now()
@@ -249,13 +255,13 @@ func main() {
 	flag.Parse()
 
 	if outputPath == nil {
-		log.Fatalf("convert: job id warning: must set output path with -o")
+		glog.Fatalf("convert: job id warning: must set output path with -o")
 	}
 
 	chartsDir := *outputPath
 	err := os.MkdirAll(chartsDir, 0755)
 	if err != nil {
-		log.Printf("convert: mkdir warning: %s", err)
+		L("convert: mkdir warning: %s", err)
 		return
 	}
 

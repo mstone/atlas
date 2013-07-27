@@ -9,9 +9,11 @@ package main
 import (
 	"akamai/atlas/web"
 	"flag"
+	"github.com/golang/glog"
 	"io/ioutil"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // htmlPath tells the web controller where to look for
@@ -39,6 +41,14 @@ var etherpadApiSecretPath = flag.String("etherpadApiSecretPath", "eplite/APIKEY.
 
 func main() {
 	flag.Parse()
+	defer glog.Flush()
+
+	go func() {
+		for {
+			glog.Flush()
+			time.Sleep(time.Second)
+		}
+	}()
 
 	etherpadApiSecretRaw, err := ioutil.ReadFile(*etherpadApiSecretPath)
 	if err != nil {

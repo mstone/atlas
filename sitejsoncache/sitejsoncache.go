@@ -7,21 +7,18 @@ import (
 	"akamai/atlas/svgtext"
 	"bytes"
 	"encoding/json"
-	"flag"
+	"github.com/golang/glog"
 	"github.com/russross/blackfriday"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"strings"
 	"time"
 )
 
-var logSiteJsonCache = flag.Bool("log.cache.sitejson", false, "log sitejson cache ops")
-
 func L(s string, v ...interface{}) {
-	if *logSiteJsonCache {
-		log.Printf("sjc "+s, v...)
+	if glog.V(1) {
+		glog.Infof("sjc "+s, v...)
 	}
 }
 
@@ -143,7 +140,6 @@ func (self *SiteJsonCache) rebuild() (err error) {
 		}
 
 		chartBytes := chart.Bytes()
-		//log.Printf("HandleSiteJsonGet(): found body: %s", body)
 
 		dep := Dep{
 			name: chart.Src(),
@@ -153,6 +149,10 @@ func (self *SiteJsonCache) rebuild() (err error) {
 		ent := Ent{}
 		ent.text = string(chartBytes)
 		ent.deps = []Dep{dep}
+
+		if glog.V(2) {
+			glog.Infof("HandleSiteJsonGet(): found body: %q", ent.text)
+		}
 
 		self.updateModTime(dep.fi.ModTime())
 

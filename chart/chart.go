@@ -1,21 +1,17 @@
 package chart
 
 import (
-	//"akamai/atlas/stat"
-	"flag"
+	"github.com/golang/glog"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 )
 
-var logCharts = flag.Bool("log.charts", false, "log chart ops")
-
 func L(s string, v ...interface{}) {
-	if *logCharts {
-		log.Printf("chart "+s, v...)
+	if glog.V(1) {
+		glog.Infof("chart "+s, v...)
 	}
 }
 
@@ -57,7 +53,9 @@ func (self *Chart) Read() (err error) {
 	}
 
 	body, err := ioutil.ReadAll(f)
-	L("read body %s", body)
+	if glog.V(2) {
+		L("read body %s", body)
+	}
 	L("read err %s", err)
 	if err != nil {
 		return

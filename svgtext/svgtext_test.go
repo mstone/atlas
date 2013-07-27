@@ -3,7 +3,6 @@ package svgtext
 import (
 	"bytes"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -42,7 +41,7 @@ func TestGetCData(t *testing.T) {
 	}
 
 	res := buf.String()
-	log.Printf("TestGetCData(): found cdata: %s", res)
+	//log.Printf("TestGetCData(): found cdata: %s", res)
 	if !strings.Contains(res, "browser") {
 		t.Fatalf("TestGetCData() failed: results string did not contain test vector 'browser'")
 	}

@@ -3,18 +3,15 @@ package sitelistcache
 import (
 	"akamai/atlas/chart"
 	"akamai/atlas/stat"
-	"flag"
+	"github.com/golang/glog"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 )
 
-var logSiteListCache = flag.Bool("log.cache.sitelist", false, "log sitelist code")
-
 func L(s string, v ...interface{}) {
-	if *logSiteListCache {
-		log.Printf("sitelist "+s, v...)
+	if glog.V(1) {
+		glog.Infof("sitelist "+s, v...)
 	}
 }
 

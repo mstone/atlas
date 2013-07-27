@@ -2,7 +2,7 @@ package linker
 
 import (
 	"bytes"
-	"log"
+	"github.com/golang/glog"
 	"regexp"
 )
 
@@ -121,10 +121,14 @@ func (self *LinkRenderer) Link(out *bytes.Buffer, link []byte, title []byte, con
 var imgRe *regexp.Regexp = regexp.MustCompile(`<img.*src="([^"]*)"`)
 
 func (self *LinkRenderer) RawHtmlTag(out *bytes.Buffer, tag []byte) {
-	log.Printf("LinkRenderer.RawHtmlTag(): %s", tag)
+	if glog.V(2) {
+		glog.Infof("LinkRenderer.RawHtmlTag(): %s", tag)
+	}
 	matches := imgRe.FindSubmatch(tag)
 	if matches != nil {
-		log.Printf("LinkRenderer.RawHtmlTag(): found matches: %s", matches)
+		if glog.V(2) {
+			glog.Infof("LinkRenderer.RawHtmlTag(): found matches: %s", matches)
+		}
 		self.Links = append(self.Links, Link{
 			Kind: IMG,
 			Href: string(matches[1]),

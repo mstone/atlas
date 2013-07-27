@@ -2,21 +2,18 @@ package templatecache
 
 import (
 	"akamai/atlas/stat"
-	"flag"
 	"fmt"
+	"github.com/golang/glog"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"text/template/parse"
 )
 
-var logTemplateCache = flag.Bool("log.cache.template", false, "log template cache ops")
-
 func L(s string, v ...interface{}) {
-	if *logTemplateCache {
-		log.Printf("tc "+s, v...)
+	if glog.V(1) {
+		glog.Infof("tc "+s, v...)
 	}
 }
 

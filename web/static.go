@@ -1,7 +1,7 @@
 package web
 
 import (
-	"log"
+	"github.com/golang/glog"
 	"net/http"
 	"path"
 )
@@ -11,6 +11,6 @@ import (
 func (self *App) HandleStatic(w http.ResponseWriter, r *http.Request) {
 	fp, err := self.RemoveUrlPrefix(r.URL.Path, self.StaticRoot)
 	checkHTTP(err)
-	log.Printf("HandleStatic: file path: %v", fp)
+	glog.Infof("HandleStatic: file path: %v", fp)
 	http.ServeFile(w, r, path.Join(self.StaticPath, fp))
 }

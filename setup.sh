@@ -10,8 +10,11 @@ URL="http://localhost:3001"
 
 (sleep 1; xdg-open "$URL" || open "$URL") &
 
-sqlite3 config.db 'CREATE TABLE IF NOT EXISTS C (key TEXT PRIMARY KEY ON CONFLICT REPLACE, val TEXT);'
-sqlite3 config.db 'INSERT INTO C (key, val) VALUES ("http.addr", "localhost:3001");'
+ATOM_ID="$(python -c 'import sys, uuid; sys.stdout.write(str(uuid.uuid4()))')"
+
+sqlite3 config.db "CREATE TABLE IF NOT EXISTS C (key TEXT PRIMARY KEY, val TEXT);"
+sqlite3 config.db "INSERT OR REPLACE INTO C (key, val) VALUES ('http.addr', 'localhost:3001');"
+sqlite3 config.db "INSERT OR IGNORE INTO C (key, val) VALUES ('atom.id', '${ATOM_ID}');"
 
 ./atlas \
   -charts                "${HOME}/charts/" \

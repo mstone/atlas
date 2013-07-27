@@ -1002,11 +1002,6 @@ func (self *App) HandleChart(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-type WebQuestion struct {
-	http.ResponseWriter
-	*http.Request
-}
-
 func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer recoverHTTP(w, r)
 	log.Printf("HandleRootApp: path: %v", r.URL.Path)

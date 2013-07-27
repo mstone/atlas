@@ -10,8 +10,10 @@ URL="http://localhost:3001"
 
 (sleep 1; xdg-open "$URL" || open "$URL") &
 
+sqlite3 config.db 'CREATE TABLE IF NOT EXISTS C (key TEXT PRIMARY KEY ON CONFLICT REPLACE, val TEXT);'
+sqlite3 config.db 'INSERT INTO C (key, val) VALUES ("http.addr", "localhost:3001");'
+
 ./atlas \
-  -http                  "localhost:3001" \
   -charts                "${HOME}/charts/" \
   -chartsroot            "" \
   -etherpadApiUrl        "http://localhost:9001/api" \

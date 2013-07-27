@@ -28,6 +28,7 @@
 package web
 
 import (
+	"akamai/atlas/cfg"
 	"akamai/atlas/chart"
 	"akamai/atlas/resumes"
 	"akamai/atlas/sitejsoncache"
@@ -62,7 +63,6 @@ type App struct {
 	ChartsRoot        string
 	HtmlPath          string
 	ChartsPath        string
-	HttpAddr          string
 	EtherpadApiUrl    *url.URL
 	EtherpadApiSecret string
 	*templatecache.TemplateCache
@@ -913,6 +913,8 @@ func (self *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // Serve initializes some variables on self and then delegates to net/http to
 // to receive incoming HTTP requests. Requests are handled by self.ServeHTTP()
 func (self *App) Serve() {
+	httpAddr := cfg.MustString("http.addr")
+
 	self.StaticRoot = path.Clean("/" + self.StaticRoot)
 
 	self.SiteListCache = sitelistcache.New(self.ChartsPath)
@@ -922,5 +924,5 @@ func (self *App) Serve() {
 	fmt.Printf("App: %v\n", self)
 
 	http.Handle("/", self)
-	log.Fatal(http.ListenAndServe(self.HttpAddr, nil))
+	log.Fatal(http.ListenAndServe(httpAddr, nil))
 }

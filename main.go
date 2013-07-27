@@ -14,10 +14,6 @@ import (
 	"strings"
 )
 
-// httpAddr tells the web controller on what address to
-// listen for requests.
-var httpAddr = flag.String("http", "127.0.0.1:3001", "addr:port")
-
 // htmlPath tells the web controller where to look for
 // HTML templates to render.
 var htmlPath = flag.String("html", "html/", "path to atlas-forms html templates")
@@ -57,7 +53,6 @@ func main() {
 	}
 
 	web := &web.App{
-		HttpAddr:          *httpAddr,
 		HtmlPath:          *htmlPath,
 		StaticPath:        *staticPath,
 		StaticRoot:        *staticRoot,

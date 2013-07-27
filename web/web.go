@@ -51,6 +51,7 @@ import (
 	"os"
 	"path"
 	"runtime/debug"
+	"sort"
 	"strings"
 	"time"
 )
@@ -304,11 +305,24 @@ func (self *App) GetChartUrl(chart *chart.Chart) (url.URL, error) {
 }
 
 type vChartLink struct {
+	ModTime time.Time
 	chart.ChartMeta
 	Link url.URL
 }
 
 type vChartLinkList []*vChartLink
+
+func (self vChartLinkList) Len() int {
+	return len(self)
+}
+
+func (self vChartLinkList) Less(i, j int) bool {
+	return self[i].ModTime.After(self[j].ModTime)
+}
+
+func (self vChartLinkList) Swap(i, j int) {
+	self[i], self[j] = self[j], self[i]
+}
 
 type vChartSet struct {
 	*vRoot
@@ -338,6 +352,7 @@ func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 			}
 
 			charts = append(charts, &vChartLink{
+				ModTime:   ent.Chart.FileInfo().ModTime(),
 				ChartMeta: ent.Chart.Meta(),
 				Link:      link,
 			})
@@ -346,6 +361,8 @@ func HandleChartSetGet(self *App, w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 	date := fmt.Sprintf("%s %0.2d, %d", now.Month().String(), now.Day(), now.Year())
+
+	sort.Sort(charts)
 
 	view := &vChartSet{
 		vRoot:  newVRoot(self, "chart_set", "List of Charts", "Michael Stone", date),

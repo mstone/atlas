@@ -19,11 +19,11 @@ import (
 
 // htmlPath tells the web controller where to look for
 // HTML templates to render.
-var htmlPath = flag.String("html", "html/", "path to atlas-forms html templates")
+var htmlPath = flag.String("html", "html/", "path to atlas html templates")
 
 // staticPath tells the web controller where to look for non-template static
 // assets
-var staticPath = flag.String("static", "static/", "path to atlas-forms static assets")
+var staticPath = flag.String("static", "static/", "path to atlas static assets")
 
 // staticRoot tells the web controller what URL prefix to discard
 var staticRoot = flag.String("staticroot", "static", "static app url prefix")

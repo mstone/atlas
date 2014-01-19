@@ -4,7 +4,7 @@ set -xe
 
 git clean -dfx
 
-go build -o ./atlas akamai/atlas
+go build
 
 URL="http://localhost:3001"
 

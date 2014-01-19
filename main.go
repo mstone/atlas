@@ -12,6 +12,7 @@ import (
 	"github.com/golang/glog"
 	"io/ioutil"
 	"net/url"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -40,6 +41,8 @@ var etherpadApiUrlStr = flag.String("etherpadApiUrl", "http://localhost:9001/api
 var etherpadApiSecretPath = flag.String("etherpadApiSecretPath", "eplite/APIKEY.txt", "path to the etherpad API secret")
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	flag.Parse()
 	defer glog.Flush()
 

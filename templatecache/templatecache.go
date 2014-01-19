@@ -24,6 +24,7 @@ type TemplateEnt struct {
 	deps     []string
 }
 
+// BUG(mistone): TemplateCache.Entries accesses need mutual exclusion!
 type TemplateCache struct {
 	HtmlPath string
 	Entries  map[string]TemplateEnt

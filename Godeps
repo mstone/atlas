@@ -1,0 +1,22 @@
+{
+	"ImportPath": "akamai/atlas",
+	"GoVersion": "go1.2.1",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/golang/glog",
+			"Rev": "20cea4dfef0c0151bba0422a6244cc1d3e8292b1"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-sqlite3",
+			"Rev": "e52d4b08c11d178166bdb6fb1b2d7742e57f2a6b"
+		},
+		{
+			"ImportPath": "github.com/russross/blackfriday",
+			"Comment": "v1.1-12-g3c0965e",
+			"Rev": "3c0965e698ef648c6bcd7284eaea0f64337e4536"
+		}
+	]
+}

@@ -1,3 +1,7 @@
+// Copyright (c) 2009-2014 Michael Stone.
+// Copyright (c) 2013-2014 Akamai Technologies, Inc.
+// License: MIT.
+
 (function($){
 $(document).ready(function(){
   // Function for implementing bookmarkable searches.

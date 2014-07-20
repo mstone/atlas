@@ -1,25 +1,40 @@
-Welcome to the https://github.com/akamai/atlas component. atlas is built using
-[Google Go](http://golang.org) and, as a result, this repository is intended to
-be included as a git submodule at
+% atlas -- an experimental wiki
+% Michael Stone
+% July 20, 2014
 
-  src/akamai/atlas
+# Overview
 
-along with other submodules for its dependencies in a git repo on GOPATH. An
-example tracking repo is available here at
+atlas is a BSD-licensed experimental wiki intended to explore low-latency
+search, editing, and mapping of the kinds of [boundary
+objects](http://en.wikipedia.org/wiki/Boundary_object) found in [complex
+sociotechnical systems](http://mitpress.mit.edu/books/engineering-safer-world).
 
-  https://github.com/akamai-tech/atls.io
+# Caveats
 
-To run atlas, install go (Debian package: golang-go), optionally install
-[etherpad-lite](http://etherpad.org), clone the atls.io tracking repo above,
-then run "make" in that repo.
+Warning: as initially published, atlas has [known issues](./issues), several of
+which have security implications that may make atlas inappropriate for use in
+your environment.
 
-Other fun:
+# Dependencies
 
-   For omni-completion in vim/emacs, see "nsf/gocode" at
+atlas:
 
-     https://github.com/nsf/gocode
+  * build-depends on [Golang](http://golang.org), [sqlite3](http://sqlite.org),
+    and several MIT- and Apache 2.0-licensed Golang libraries including 
+    [glog](https://github.com/golang/glog),
+    [mattn/go-sqlite3](https://github.com/mattn/go-sqlite3), and
+    [blackfriday](https://github.com/russross/blackfriday),
 
-   For online help, see:
+  * run-depends on [etherpad-lite](http://etherpad.org), and 
 
-     godoc -http=:6060 &
-     xdg-open "http://localhost:6060/" || open "http://localhost:6060/"
+  * bundles [atom.go](http://blog.go.googlecode.com/hg/pkg/atom/atom.go),
+    [jQuery](http://jquery.org), [svg-edit](https://code.google.com/p/svg-edit/), 
+    and several MIT-licensed jQuery plugins (Chosen, BBQ, and AutoSize).
+
+# Use
+
+This repository is intended to be mounted in your GOPATH at
+`$GOPATH/src/akamai/atlas`.
+
+For ideas on how to run an atlas instance, please see our example
+[setup.sh](./tree/master/setup.sh) script.

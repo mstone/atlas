@@ -1,3 +1,5 @@
+// Copyright (c) 2013, 2014 Akamai Technologies, Inc.
+
 // Package web implements the Atlas's HTTP handlers and codecs.
 
 package web

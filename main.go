@@ -1,3 +1,5 @@
+// Copyright (c) 2013, 2014 Akamai Technologies, Inc.
+
 // Package main calls the atlas web package.
 //
 // The web package defines the web UI and controllers.

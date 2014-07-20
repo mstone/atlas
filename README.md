@@ -1,21 +1,17 @@
-% atlas -- an experimental wiki
-% Michael Stone
-% July 20, 2014
-
-# Overview
+## Overview
 
 atlas is a BSD-licensed experimental wiki intended to explore low-latency
 search, editing, and mapping of the kinds of [boundary
 objects](http://en.wikipedia.org/wiki/Boundary_object) found in [complex
 sociotechnical systems](http://mitpress.mit.edu/books/engineering-safer-world).
 
-# Caveats
+## Caveats
 
-Warning: as initially published, atlas has [known issues](./issues), several of
+Warning: as initially published, atlas has [known issues](https://github.com/mstone/atlas/issues), several of
 which have security implications that may make atlas inappropriate for use in
 your environment.
 
-# Dependencies
+## Dependencies
 
 atlas:
 
@@ -27,14 +23,14 @@ atlas:
 
   * run-depends on [etherpad-lite](http://etherpad.org), and 
 
-  * bundles [atom.go](http://blog.go.googlecode.com/hg/pkg/atom/atom.go),
+  * bundles [atom.go](https://code.google.com/p/go/source/browse/blog/atom/atom.go?repo=tools),
     [jQuery](http://jquery.org), [svg-edit](https://code.google.com/p/svg-edit/), 
     and several MIT-licensed jQuery plugins (Chosen, BBQ, and AutoSize).
 
-# Use
+## Use
 
-This repository is intended to be mounted in your GOPATH at
+This repository is intended to be mounted in your GOPATH, presently at
 `$GOPATH/src/akamai/atlas`.
 
 For ideas on how to run an atlas instance, please see our example
-[setup.sh](./tree/master/setup.sh) script.
+[setup.sh](./setup.sh) script.
